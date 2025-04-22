@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
 import { Router, RouterModule, } from '@angular/router';
-import { faBriefcase, faBuilding, faEnvelope, faLink, faLock, faPhone, faUniversity, faUser } from '@fortawesome/free-solid-svg-icons';
-import { RegistrationService } from './services/register.service';
-import { ViewChild, ElementRef } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faBriefcase, faBuilding, faEnvelope, faLink, faLock, faPhone, faUniversity, faUser } from '@fortawesome/free-solid-svg-icons';
+import { RegistrationService } from '../services/auth/register.service';
 ;
 @Component({
   selector: 'app-register',

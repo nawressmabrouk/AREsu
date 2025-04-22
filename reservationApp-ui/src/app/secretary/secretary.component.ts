@@ -1,26 +1,32 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { Router } from '@angular/router';
-import { AuthService } from './../auth/services/auth.service'; 
-import { HostListener, ElementRef, ViewChild } from '@angular/core';
-import { 
-  faHome,  
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import {
   faArrowRight,
-  faSearch,
-  faClock, 
-  faCheckCircle, 
-  faTimesCircle, 
   faBars,
-  faKey,
+  faBriefcase,
+  faBuilding,
+  faCheckCircle,
+  faClock,
+  faEdit,
+  faEnvelope,
   faEye,
   faEyeSlash,
+  faHome,
+  faKey,
+  faLock,
+  faPhone,
+  faSearch,
   faShare,
-  faLock, 
-  faEdit,
-  faUser, faSignOutAlt , faEnvelope , faBriefcase , faPhone , faUserTag , faUserTie , faBuilding , faUniversity
+  faSignOutAlt,
+  faTimesCircle,
+  faUniversity,
+  faUser,
+  faUserTag, faUserTie
 } from '@fortawesome/free-solid-svg-icons';
+import { AuthService } from '../services/auth/auth.service';
 
 import { faLinkedin } from '@fortawesome/free-brands-svg-icons';
 

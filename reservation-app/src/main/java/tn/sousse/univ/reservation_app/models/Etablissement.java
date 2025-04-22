@@ -22,4 +22,6 @@ public class Etablissement {
     private TypeEtablissement type; //INSTITUT ECOLE FACULTE
 
     private String secretaireGeneraleId;
+    private String logo; // base64 string
+
 }

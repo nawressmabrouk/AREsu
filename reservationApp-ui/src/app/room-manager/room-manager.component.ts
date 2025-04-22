@@ -1,49 +1,48 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { Router } from '@angular/router';
-import { AuthService } from './../auth/services/auth.service'; 
-import { HostListener, ElementRef, ViewChild } from '@angular/core';
-import { 
-  faHome,  
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faLinkedin } from '@fortawesome/free-brands-svg-icons';
+import {
   faArrowRight,
-  faSearch,
-  faClock, 
-  faCheckCircle, 
-  faTimesCircle, 
   faBars,
-  faKey,
-  faPlusSquare, 
-  faSave,
-  faEdit, 
-  faTrash,  
-  faDoorOpen,
+  faBriefcase,
   faBuilding,
+  faCalendarAlt,
   faChalkboard,
-  faUsers,
-  faTools,
   faChalkboardTeacher,
+  faCheckCircle,
+  faClock,
   faDesktop,
-  faVolumeUp,
+  faDiagramProject,
+  faDoorOpen,
+  faEdit,
+  faEnvelope,
+  faEye,
+  faEyeSlash,
+  faHome,
+  faKey,
+  faLock,
+  faPhone,
   faPlusCircle,
-  faWifi, 
-  faUser, 
-  faDiagramProject, 
-  faSignOutAlt,  
-  faLock, 
-  faBriefcase, 
+  faPlusSquare,
+  faSave,
+  faSearch,
+  faSignOutAlt,
+  faTimesCircle,
+  faTools,
+  faTrash,
   faUniversity,
-  faUserTie, 
-  faEye, 
-  faCalendarAlt, 
-  faEyeSlash,  
-  faUserGraduate, 
-  faPhone, 
-  faEnvelope, 
-  faUserTag 
+  faUser,
+  faUserGraduate,
+  faUsers,
+  faUserTag,
+  faUserTie,
+  faVolumeUp,
+  faWifi
 } from '@fortawesome/free-solid-svg-icons';
-import { faLinkedin } from '@fortawesome/free-brands-svg-icons'; 
+import { AuthService } from '../services/auth/auth.service';
 interface Request {
   id: string;
   responsableAction: string;
