@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: reservation-app
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/reservation
+      database: reservation
+
+  security:
+    user:
+      name: admin
+      password: REDACTED
+
+  jwt:
+    secret-key: REDACTED_JWT_SECRET
+    expiration: 3600000
+    
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: REDACTED_OLD_APP_EMAIL
+    password: REDACTED_GMAIL_APP_PASSWORD
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+  logging:
+  level:
+    org.springframework: DEBUG
+    tn.sousse.univ.reservation_app: DEBUG
+
+  jackson:
+    time-zone: Africa/Tunis

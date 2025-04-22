@@ -1,0 +1,410 @@
+code html <div class="spaces-container">
+  <div class="admin-header">
+    <div class="header-content">
+      <!-- Partie gauche - Logo -->
+      <div class="left-section">
+        <div class="logo">logo</div>
+        <div class="site-name">Université de Sousse</div>
+      </div>
+      
+    
+      <!-- Partie centrale - Titre et sous-titre -->
+        <!-- Section centrale -->
+        <div class="center-section">
+          <div class="page-title">Espaces Disponibles</div>
+          <div class="page-subtitle" *ngIf="!selectedEtablissement">
+            Sélectionnez un établissement et réservez l’espace qui vous convient
+          </div>
+          <div class="page-subtitle" *ngIf="selectedEtablissement">
+            Espaces disponibles pour {{ selectedEtablissement?.nom }}
+          </div>
+        </div>
+      <fa-icon [icon]="faFilter" class="filter-icon" *ngIf="!selectedEstablishment"></fa-icon>
+      <div class="establishment-section">
+        
+        <div class="filter-header-text" *ngIf="!selectedEstablishment">Filtrer par :</div>
+      
+      </div>
+  
+      <div class="search-box" *ngIf="selectedEstablishment">
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher...">
+        <button class="search-button">
+          <fa-icon [icon]="faSearch"></fa-icon>
+          SEARCH
+        </button>
+      </div>
+
+      <div class="right-section">
+        <div class="breadcrumb">
+          <span>
+            <fa-icon [icon]="faHome" class="icon"></fa-icon>
+            Accueil
+          </span>
+          <span>
+            <fa-icon [icon]="faPageIcon" class="icon"></fa-icon>
+            Espaces Disponibles 
+          </span>
+        </div>
+        <div class="profile-container" #profileContainer>
+          <div class="profile-icon" (click)="toggleProfileDropdown($event)">N</div>
+          <div class="profile-dropdown" *ngIf="showProfileDropdown">
+            <div class="profile-header">
+              <div class="user-avatar">N</div>
+              <div class="user-info">
+                <div class="greeting">Bonjour Nourhen</div>
+                <div class="email">{{ 'zroudnourhen@essths.u-sousse.tn' }}</div>
+              </div>
+            </div>
+            
+            <div class="dropdown-content">
+              <div class="dropdown-item" 
+                   *ngFor="let item of menuItems" 
+                   (click)="item.action()"
+                   [class.logout]="item.logout">
+                <fa-icon [icon]="item.icon"></fa-icon>
+                <span>{{ item.title }}</span>
+                <div class="hover-arrow">></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Filtres -->
+  <div class="filters-section" *ngIf="!selectedEtablissement">
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label>Type :</label>
+        <select [(ngModel)]="currentFilters.type" (change)="applyFilters()">
+          <option value="">Tous</option>
+          <option *ngFor="let type of establishmentTypes" [value]="type">
+            {{ type }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Zone :</label>
+        <select [(ngModel)]="currentFilters.zone" (change)="applyFilters()">
+          <option value="">Toutes</option>
+          <option *ngFor="let zone of zones" [value]="zone">
+            {{ zone }}
+          </option>
+        </select>
+      </div>
+
+      <button class="reset-btn" (click)="resetFilters()">
+        <fa-icon [icon]="faSyncAlt"></fa-icon> Réinitialiser
+      </button>
+    </div>
+  </div>
+  <!-- Contenu principal -->
+ <!-- Contenu principal -->
+ <div class="main-content">
+  <!-- Écran de chargement -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Liste des établissements -->
+  <div *ngIf="!selectedEtablissement && !loading">
+    <div class="etablissements-grid">
+      <div *ngFor="let etab of etablissements" 
+           class="etablissement-card"
+           (click)="selectEtablissement(etab)">
+        <div class="card-header">
+          <h3>{{ etab.nom }}</h3>
+          <span class="badge">{{ etab.type }}</span>
+        </div>
+        
+        <div class="card-body">
+          <p class="description">{{ etab.description }}</p>
+          
+          <div class="details">
+            <div class="detail-item">
+              <fa-icon [icon]="faMapMarker"></fa-icon>
+              <span>{{ etab.adresse }}</span>
+            </div>
+            
+            <div class="detail-item">
+              <fa-icon [icon]="faBuilding"></fa-icon>
+              <span>{{ etab.zone }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="etablissements.length === 0" class="empty-state">
+      <p>Aucun établissement trouvé avec ces critères</p>
+    </div>
+  </div>
+
+  <!-- Liste des espaces -->
+  <div *ngIf="selectedEtablissement && !loading">
+    <button class="back-btn" (click)="goBackToEtablissements()">
+      <fa-icon [icon]="faArrowLeft"></fa-icon> Retour aux établissements
+    </button>
+
+    <div class="espaces-grid">
+      <div *ngFor="let espace of espaces" 
+           class="espace-card"
+           (click)="reserveSpace(espace._id)">
+        <div class="card-header">
+          <h3>{{ espace.nom }}</h3>
+          <span class="badge">{{ espace.type }}</span>
+        </div>
+
+        <div class="card-body">
+          <div class="capacity">
+            <fa-icon [icon]="faUsers"></fa-icon>
+            Capacité : {{ espace.capacite }}
+          </div>
+
+          <div class="equipment" *ngIf="espace.equipements.length > 0">
+            <fa-icon [icon]="faMicrochip"></fa-icon>
+            Équipements :
+            <span *ngFor="let equip of espace.equipements" class="equip-badge">
+              {{ equip }}
+            </span>
+          </div>
+
+          <div class="availability">
+            <fa-icon [icon]="faCalendarCheck"></fa-icon>
+            Prochaine disponibilité : {{ espace.prochaineDisponibilite }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="espaces.length === 0" class="empty-state">
+      <p>Aucun espace disponible pour cet établissement</p>
+    </div>
+  </div>
+</div>
+  
+
+  <div class="modal-overlay" *ngIf="showProfileModal" (click)="closeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      
+      <h3>Votre Profil</h3>
+      <button class="password-modal-close" (click)="closeModal()">&times;</button>
+    <div class="profile-info">
+      <div class="info-grid">
+      <div class="info-item">
+        <fa-icon [icon]="faUserTag" class="icon"></fa-icon>
+        <div class="info-content">
+          <label>Nom & Prénom</label>
+          <p>{{ profileData.nomPrenom }}</p>
+        </div>
+      </div>
+
+      <div class="info-item">
+        <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
+        <div class="info-content">
+          <label>Email</label>
+          <p>{{ profileData.email }}</p>
+        </div>
+      </div>
+
+      <div class="info-item">
+        <fa-icon [icon]="faPhone" class="icon"></fa-icon>
+        <div class="info-content">
+          <label>Téléphone</label>
+          <p>{{ profileData.telephone }}</p>
+        </div>
+      </div>
+
+      
+        <div class="info-item">
+          <fa-icon [icon]="faBriefcase" class="icon"></fa-icon>
+          <div class="info-content">
+            <label>Fonction</label>
+            <p>{{ profileData.fonction }}</p>
+          </div>
+        </div>
+        
+
+        <div class="info-item">
+          <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
+          <div class="info-content">
+            <label>Établissement</label>
+            <p>{{ profileData.etablissement }}</p>
+          </div>
+        </div>
+
+        
+
+        <div class="info-item">
+          <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
+          <div class="info-content">
+            <label>Structure</label>
+            <p>{{ profileData.structure }}</p>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <fa-icon [icon]="faUserTie" class="icon"></fa-icon>
+          <div class="info-content">
+            <label>Type</label>
+            <p>{{ profileData.type }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="info-h">
+        <fa-icon [icon]="faLinkedin" class="icon"></fa-icon>
+        <div class="info-content">
+          <label>LinkedIn</label>
+          <a [href]="profileData.linkedin" target="_blank" class="linkedin-link">
+            {{ profileData.linkedin }}
+          </a>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
+    <div class="modal-box edit-modal" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">Modifier le Profil</h3>
+      <button class="password-modal-close" (click)="closeModal()">&times;</button>
+      <form     class="edit-form"   class="edit-form" (ngSubmit)="saveChanges()">
+        <!-- Première ligne -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nom & Prénom <span class="required"></span></label>
+            <div class="input-container">
+              <i class="fas fa-user"></i>
+              <input type="text" [(ngModel)]="editData.nomPrenom" name="nomPrenom" required>
+            </div>
+          </div>
+  
+          <div class="form-group">
+            <label>Fonction <span class="required"></span></label>
+            <div class="input-container">
+              <i class="fas fa-briefcase"></i>
+              <input type="text" [(ngModel)]="editData.fonction" name="fonction" required>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Deuxième ligne -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Téléphone</label>
+            <div class="input-container">
+              <i class="fas fa-phone"></i>
+              <input type="tel" [(ngModel)]="editData.telephone" name="telephone" pattern="[0-9]{8}">
+            </div>
+          
+          </div>
+  
+          <div class="form-group">
+            <label>Profil LinkedIn</label>
+            <div class="input-container">
+              <i class="fab fa-linkedin"></i>
+              <input  type="url" [(ngModel)]="editData.linkedin" name="linkedin">
+            </div>
+          </div>
+          
+        </div>
+       
+         
+        <!-- Structure (pleine largeur) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Structure <span class="required"></span></label>
+            <div class="input-container">
+              <i class="fas fa-building"></i>
+              <input type="text" [(ngModel)]="editData.structure" name="structure" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Établissement <span class="required"></span></label>
+            <div class="input-container">
+              <i class="fas fa-university"></i>
+              <input type="text" [(ngModel)]="editData.etablissement" name="etablissement" required>
+            </div>
+          </div>
+
+        </div>
+  
+
+      
+  
+  
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" (click)="closeModal()">Annuler</button>
+          <button type="submit" class="save-btn" >Modifier</button>
+
+        </div>
+      </form>
+    </div>
+  </div>
+
+<!-- Modale Modification mot de passe -->
+<div class="password-modal-wrapper" *ngIf="showPasswordModal" (click)="closeModal()">
+  <div class="password-modal-content" (click)="$event.stopPropagation()">
+   
+      <h3 class="password-modal-heading">changer le mot de passe</h3>
+      <button class="password-modal-close" (click)="closeModal()">&times;</button>
+   
+    
+    <div class="password-modal-main">
+      <form #passwordForm="ngForm" (ngSubmit)="updatePassword()">
+        <div class="password-field">
+          <label class="password-label">Ancien mot de passe</label>
+          <div class="password-input-wrapper">
+            <i class="fas fa-lock"></i>
+            <input type="string" [(ngModel)]="passwordData.oldPassword" name="oldPassword" required>
+          </div>
+        </div>
+    
+        <div class="password-field">
+          <label class="password-label">Nouveau mot de passe</label>
+          <div class="password-input-wrapper">
+            <i class="fas fa-key"></i>
+            <input type="string" [(ngModel)]="passwordData.newPassword" name="newPassword" required>
+          </div>
+        </div>
+    
+        <div class="password-field">
+          <label class="password-label">Confirmer le nouveau mot de passe</label>
+          <div class="password-input-wrapper">
+            <i class="fas fa-key"></i>
+            <input type="string" [(ngModel)]="passwordData.confirmPassword" name="confirmPassword" required>
+          </div>
+        </div>
+    
+        <div class="password-modal-footer">
+          <button type="button" class="password-btn password-btn-cancel" (click)="closeModal()">Annuler</button>
+          <button type="submit" class="password-btn password-btn-submit" [disabled]="!passwordForm.valid">Modifier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Modale Réservations -->
+<div class="modal-overlay" *ngIf="showReservationsModal" (click)="closeModal()">
+  <div class="reservations-modal-box" (click)="$event.stopPropagation()">
+    <h3>Vos Réservations</h3>
+    
+    <div class="reservations-list">
+      <table>
+        <thead>
+          <tr>
+            <th>Salle</th>
+            <th>Date</th>
+            <th>Établissement</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+     
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div> 

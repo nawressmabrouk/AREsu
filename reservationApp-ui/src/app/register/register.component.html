@@ -1,0 +1,157 @@
+<div class="main-container">
+  <div class="unified-box">
+    <!-- Partie bleue -->
+    <div class="welcome-section">
+      <h2>Bienvenue chez<br>nous !</h2>
+      
+      <div class="welcome-link">
+        <p>Déjà Inscrit ?</p>
+        <button class="btn-login" routerLink="/navbar/auth">Se connecter</button>
+
+      </div>
+    </div>
+
+    <!-- Partie formulaire -->
+    <div class="login-section">
+      <div class="form-container">
+        <h2 class="form-title">Créer un nouveau compte</h2>
+        
+        <form class="register-form" (submit)="onSubmit(
+          lastName.value,
+          firstName.value,
+          email.value,
+          function.value,
+          phone.value,
+          etablissement.value,
+          linkedin.value,
+          structure.value,
+          interne.checked,
+          externe.checked,
+          password.value,
+          confirmPassword?.value,
+          $event
+        )">
+          <!-- Nom et Prénom -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lastName">Nom</label>
+              <div class="input-container">
+                <fa-icon [icon]="faUser" class="icon"></fa-icon>
+                <input type="text" id="lastName" name="lastName" #lastName required>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="firstName">Prénom</label>
+              <div class="input-container">
+                <fa-icon [icon]="faUser" class="icon"></fa-icon>
+                <input type="text" id="firstName" name="firstName" #firstName required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email</label>
+              <div class="input-container">
+                <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
+                <input type="email" id="email" name="email" #email required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="function">Fonction</label>
+              <div class="input-container">
+                <fa-icon [icon]="faBriefcase" class="icon"></fa-icon>
+                <input type="text" id="function" name="function" #function required>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Fonction et Téléphone -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="phone">Numéro de téléphone</label>
+              <div class="input-container">
+                <fa-icon [icon]="faPhone" class="icon"></fa-icon>
+                <input type="tel" id="phone" name="phone" #phone required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="etablissement">Établissement</label>
+              <div class="input-container">
+                <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
+                <input type="text" id="etablissement" name="etablissement" #etablissement required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Établissement et LinkedIn -->
+          <div class="form-row">
+           
+            
+            <div class="form-group">
+              <label for="linkedin">Profil LinkedIn</label>
+              <div class="input-container">
+                <fa-icon [icon]="faLink" class="icon"></fa-icon>
+                <input type="url" id="linkedin" name="linkedin" #linkedin required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="structure">Structure</label>
+              <div class="input-container">
+                <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
+                <input type="text" id="structure" name="structure" #structure required>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Structure et Type d'utilisateur -->
+          <div class="form-row">
+            
+            
+            <div class="form-group">
+              <label>Type d'utilisateur</label>
+              <div class="radio-group">
+                <label>
+                  <input type="radio" name="user-type" value="interne" #interne required> Interne
+                </label>
+                <label>
+                  <input type="radio" name="user-type" value="externe" #externe required> Externe
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mot de passe -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="password">Mot de passe</label>
+              <div class="input-container">
+                <fa-icon [icon]="faLock" class="icon"></fa-icon>
+                <input type="password" id="password" name="password" #password required>
+              </div>
+            </div>
+
+            <div class="form-group"   >
+              <label for="confirmPassword">Confirmer le mot de passe</label>
+              <div class="input-container">
+                <fa-icon [icon]="faLock" class="icon"></fa-icon>
+                <input type="password" id="confirmPassword" name="confirmPassword" #confirmPassword required>
+              </div>
+              <div *ngIf="password.value" class="password-hints">
+                <div [class.valid]="password.value.length >= 8">• 8 caractères minimum</div>
+                <div [class.valid]="hasUpperCase(password.value)">• Au moins une majuscule</div>
+                <div [class.valid]="hasNumber(password.value)">• Au moins un chiffre</div>
+                <div [class.valid]="hasSymbol(password.value)">• Au moins un symbole</div>
+            </div>
+            </div>
+          </div>
+
+          <!-- Bouton d'inscription -->
+          <button type="submit" class="btn-sumbit">S'inscrire</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,203 @@
+<div class="reservation-container">
+  <div class="admin-header">
+      <div class="header-content">
+          <!-- Partie gauche - Logo -->
+          <div class="left-section">
+              <div class="logo">logo</div>
+              <div class="site-name">Université de Sousse</div>
+          </div>
+          
+          <!-- Partie centrale - Titre et sous-titre -->
+          <div class="center-section">
+              <div class="page-title">Réservation d'Espace Universitaire</div>
+              <div class="page-subtitle">Complétez ce formulaire pour réserver votre espace</div>
+          </div>
+          
+          <div class="right-section">
+              <div class="breadcrumb">
+                  <span>
+                      <fa-icon [icon]="faHome" class="icon"></fa-icon>
+                      Accueil
+                  </span>
+                  <span>
+                      <fa-icon [icon]="faPageIcon" class="icon"></fa-icon>
+                      Formulaire de Réservation
+                  </span>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="split-form-container">
+      <!-- Partie gauche - Bienvenue -->
+      <div class="welcome-section">
+          <div class="welcome-content">
+              <h2>Réservation d'Espace Universitaire</h2>
+              <p class="subtitle">Complétez ce formulaire pour réserver votre espace</p>
+              <p class="description">Tous les champs sont obligatoires pour soumettre votre demande.</p>
+              
+              <div class="form-actions">
+                  <button type="button" class="cancel-btn" (click)="goBack()">Annuler</button>
+                  <button type="submit" class="submit-btn" 
+                          (click)="onSubmit(reservationForm)" 
+                          [disabled]="!isFormValid(reservationForm)">
+                      Envoyer
+                  </button>
+              </div>
+          </div>
+      </div>
+      
+      <!-- Partie droite - Formulaire -->
+      <div class="form-section">
+          <form class="reservation-form" #reservationForm="ngForm">
+              <!-- Responsable Action -->
+              <div class="form-row">
+                  <div class="form-group line-input full-width">
+                      <input type="text" id="responsableAction" name="responsableAction" 
+                             [(ngModel)]="reservation.responsableAction" required 
+                             placeholder="Responsable de l'action">
+                      <span class="line"></span>
+                      <div *ngIf="showError('responsableAction')" class="error-message">
+                          Ce champ est requis
+                      </div>
+                  </div>
+                  <div class="form-group line-input full-width">
+                    <input type="email" id="email" name="email" 
+                           [(ngModel)]="reservation.email" required 
+                           placeholder="Email">
+                    <span class="line"></span>
+                    <div *ngIf="showError('email')" class="error-message">
+                        Veuillez entrer un email valide 
+                    </div>
+                </div>
+              </div>
+            
+              
+              <!-- Fonction et Structure -->
+              <div class="form-row">
+                  <div class="form-group line-input half-width">
+                      <input type="text" id="fonction" name="fonction" 
+                             [(ngModel)]="reservation.fonction" required 
+                             placeholder="Fonction">
+                      <span class="line"></span>
+                      <div *ngIf="showError('fonction')" class="error-message">
+                          Ce champ est requis
+                      </div>
+                  </div>
+                  
+                  <div class="form-group line-input half-width">
+                      <input type="text" id="structure" name="structure" 
+                             [(ngModel)]="reservation.structure" required 
+                             placeholder="Structure">
+                      <span class="line"></span>
+                      <div *ngIf="showError('structure')" class="error-message">
+                          Ce champ est requis
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- Intitulé et Participants -->
+              <div class="form-row">
+                  <div class="form-group line-input half-width">
+                      <input type="text" id="intituleAction" name="intituleAction" 
+                             [(ngModel)]="reservation.intituleAction" required 
+                             placeholder="Intitulé de l'action">
+                      <span class="line"></span>
+                      <div *ngIf="showError('intituleAction')" class="error-message">
+                          Ce champ est requis
+                      </div>
+                  </div>
+                  
+                  <div class="form-group line-input half-width">
+                      <input type="number" id="nbrParticipant" name="nbrParticipant" 
+                             [(ngModel)]="reservation.nbrParticipant" required 
+                             placeholder="Nombre de participants"
+                             min="1">
+                      <span class="line"></span>
+                      <div *ngIf="showError('nbrParticipant')" class="error-message">
+                          Doit être supérieur à 0
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- Cible et LinkedIn -->
+              <div class="form-row">
+                  <div class="form-group line-input half-width">
+                      <input type="text" id="cible" name="cible" 
+                             [(ngModel)]="reservation.cible" required 
+                             placeholder="Cible">
+                      <span class="line"></span>
+                      <div *ngIf="showError('cible')" class="error-message">
+                          Ce champ est requis
+                      </div>
+                  </div>
+                  
+                  <div class="form-group line-input half-width">
+                      <input type="url" id="linkedin" name="linkedin" 
+                             [(ngModel)]="reservation.linkedin" required 
+                             placeholder="Profil LinkedIn (URL complet)">
+                      <span class="line"></span>
+                      <div *ngIf="showError('linkedin')" class="error-message">
+                          Veuillez entrer une URL valide (https://...)
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- Description -->
+              <div class="form-row">
+                  <div class="form-group line-input full-width">
+                      <input id="description" name="description" rows="3"
+                                [(ngModel)]="reservation.description" required 
+                                placeholder="Description de la réservation">
+                      <span class="line"></span>
+                      <div *ngIf="showError('description')" class="error-message">
+                          Ce champ est requis
+                      </div>
+                  </div>
+                 
+                  
+                
+              </div>
+              <div class="equipment-section">
+                <label>Équipements</label>
+                <div class="checkbox-container">
+                  <label class="checkbox-label" *ngFor="let eq of equipmentsList">
+                    <input 
+                    type="checkbox" 
+                    [value]="eq" 
+                   
+                    name="equipments"
+                    class="hidden-checkbox"
+                           [name]="eq">
+                           <span class="custom-checkbox"></span>
+                    {{eq}}
+                  </label>
+                  <!-- Le bouton existant sera modifié ci-dessous -->
+                </div>
+              </div>
+              <div class="add-button">
+              <button type="button" class="addd-equipment" (click)="showAddEquipmentModal()">
+                <fa-icon [icon]="faPlus" class="add-icon"></fa-icon>
+                Ajouter équipement
+              </button> </div>
+               <!-- Modal pour ajouter un équipement -->
+               <div class="modal-overlay" *ngIf="showEquipmentModal">
+                <div class="modal-content">
+                  <h3>Ajouter un nouvel équipement</h3>
+                  <input type="text" 
+                        [(ngModel)]="customEquipment" 
+                        placeholder="Nom de l'équipement"
+                        (keyup.enter)="addCustomEquipment()">
+                  
+                  <div class="modal-actions">
+                    <button type="button" (click)="addCustomEquipment()">Ajouter</button>
+                    <button type="button" (click)="cancelAddEquipment()">Annuler</button>
+                  </div>
+                </div>
+              </div>
+              
+            
+          </form>
+      </div>
+  </div>
+</div>

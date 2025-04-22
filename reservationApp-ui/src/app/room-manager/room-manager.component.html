@@ -1,0 +1,687 @@
+<div class="admin-container">
+  <!-- Sidebar verticale -->
+  <div class="sidebar-vertical" [class.expanded]="isSidebarExpanded">
+    <div class="sidebar-header">
+      <div class="hamburger" (click)="toggleSidebar()" [title]="isSidebarExpanded ? 'Close sidebar' : 'Open sidebar'">
+        <fa-icon [icon]="faBars"></fa-icon>
+      </div>
+      <h3 > logo </h3>
+    </div>
+    
+    <div class="sidebar-menu">
+      <div class="menu-section"
+           [class.active]="activeSection === 'access'"
+           (click)="switchSection('access')">
+        <div class="menu-title">
+          <fa-icon [icon]="faAccessIcon"></fa-icon>
+          <h4>Gestion des Réservations</h4>
+        </div>
+      </div>
+      
+      <div class="menu-section"
+           [class.active]="activeSection === 'space'"
+           (click)="switchSection('space')">
+        <div class="menu-title">
+          <fa-icon [icon]="faAddSpaceIcon"></fa-icon>
+          <h4>Ajouter un Espace</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu Principal -->
+  <div class="main-content"> 
+    <!-- Admin header -->
+    <div class="admin-header">
+      <div class="header-content">
+        <div class="hamburger" (click)="toggleSidebar()" [title]="isSidebarExpanded ? 'Close sidebar' : 'Open sidebar'">
+          <fa-icon [icon]="faBars"></fa-icon>
+        </div>
+        <!-- Partie gauche - Logo -->
+        <div class="left-section">
+          <div class="logo">logo</div>
+          <div class="site-name">Université de Sousse</div>
+        </div>
+        
+        <!-- Partie centrale - Titre et sous-titre -->
+        <div class="center-section">
+          <div class="page-title">{{ currentPageTitle }}</div>
+          <div class="page-subtitle">{{ currentPageSubtitle }}</div>
+        </div>
+        
+        <!-- Partie droite - Search Box -->
+        <div class="search-box">
+          <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher par nom , id ...">
+          <button class="search-button" (click)="onSearch()">
+            <fa-icon [icon]="faSearch"></fa-icon>
+            SEARCH
+          </button>
+        </div>
+        
+        <!-- Partie droite - Breadcrumb -->
+        <div class="right-section">
+          <div class="breadcrumb">
+            <span>
+              <fa-icon [icon]="faHome" class="icon"></fa-icon>
+              Accueil
+            </span>
+            <span>
+              <fa-icon [icon]="faPageIcon" class="icon"></fa-icon>
+              Responsable de Salle
+            </span>
+          </div>
+          <div class="profile-container" #profileContainer>
+            <div class="profile-icon" (click)="toggleProfileDropdown($event)">N</div>
+            <div class="profile-dropdown" *ngIf="showProfileDropdown">
+              <div class="profile-header">
+                <div class="user-avatar">N</div>
+                <div class="user-info">
+                  <div class="greeting">Bonjour Nourhen</div>
+                  <div class="email">{{ 'zroudnourhen@essths.u-sousse.tn' }}</div>
+                </div>
+              </div>
+              
+              <div class="dropdown-content">
+                <div class="dropdown-item" 
+                     *ngFor="let item of menuItems" 
+                     (click)="item.action()"
+                     [class.logout]="item.logout">
+                  <fa-icon [icon]="item.icon"></fa-icon>
+                  <span>{{ item.title }}</span>
+                  <div class="hover-arrow">></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenu principal dynamique -->
+    <div class="admin-dashboard">
+      <!-- Contenu pour la gestion des réservations -->
+      <div *ngIf="activeSection === 'access'">
+        <!-- [Le contenu existant pour la gestion des réservations reste inchangé] -->
+        <!-- Cartes statistiques -->
+        <div class="stats-container">
+          <div class="stat-card" 
+               [class.active]="activeTab === 'pending'"
+               (click)="setActiveTab('pending')">
+            <div class="card-content">
+              <div class="card-icon">
+                <fa-icon [icon]="faClock"></fa-icon>
+              </div>
+              <h3>Demandes en attente.</h3>
+              <div class="stat-value">{{ stats.pending }}</div>
+              <div class="stat-label">À traiter</div>
+            </div>
+          </div>
+        
+          <div class="stat-card" 
+               [class.active]="activeTab === 'approved'"
+               (click)="setActiveTab('approved')">
+            <div class="card-content">
+              <div class="card-icon">
+                <fa-icon [icon]="faCheckCircle"></fa-icon>
+              </div>
+              <h3>Demandes acceptées.</h3>
+              <div class="stat-value">{{ stats.approved }}</div>
+              <div class="stat-label">Validées</div>
+            </div>
+          </div>
+        
+          <div class="stat-card" 
+               [class.active]="activeTab === 'rejected'"
+               (click)="setActiveTab('rejected')">
+            <div class="card-content">
+              <div class="card-icon">
+                <fa-icon [icon]="faTimesCircle"></fa-icon>
+              </div>
+              <h3>Demandes refusées.</h3>
+              <div class="stat-value">{{ stats.rejected }}</div>
+              <div class="stat-label">Rejetées</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barre de titre et recherche -->
+        <div class="header-section">
+          <h2>
+            {{ activeTab === 'pending' ? 'Demandes en attente' : 
+               activeTab === 'approved' ? 'Demandes acceptées' : 'Demandes refusées' }}
+          </h2>
+        </div>
+       
+        <!-- Tab Navigation -->
+        <div class="compact-tabs">
+          <div class="tab" 
+               [class.active]="activeTab === 'pending'"
+               (click)="setActiveTab('pending')">
+            en attente
+          </div>
+          <div class="tab" 
+               [class.active]="activeTab === 'approved'"
+               [class.inactive]="activeTab !== 'approved'"
+               (click)="setActiveTab('approved')">
+            acceptées
+          </div>
+          <div class="tab" 
+               [class.active]="activeTab === 'rejected'"
+               [class.inactive]="activeTab !== 'rejected'"
+               (click)="setActiveTab('rejected')">
+             refusées
+          </div>
+        </div>
+        
+        <!-- Contenu des onglets -->
+        <div class="tab-content">
+          <!-- Onglet Demandes en attente -->
+          <div *ngIf="activeTab === 'pending'" class="requests-table">
+            <table>
+              <thead>
+                <tr class="line">
+                  <th>RESPONSABLE</th>
+                  <th>EMAIL</th>
+                  <th>FONCTION</th>
+                  <th>STRUCTURE</th>
+                  <th>TYPE</th>
+                  <th>INTITULÉ ACTION</th>
+                  <th>CIBLE</th>
+                  <th>LINKEDIN</th> <!-- Nouveau champ -->
+                  <th>NBR PARTICIPANTS</th>
+                  <th>SALLE</th>
+                  <th>ÉQUIPEMENTS</th> <!-- Nouveau champ -->
+                  <th>DATE/HEURE</th> <!-- Modifié -->
+                  <th>DESCRIPTION</th> <!-- Nouveau champ -->
+                  <th>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let request of filteredRequests; let i = index">
+                  <td>{{ request.responsableAction }}</td>
+                  <td>{{ request.email }}</td>
+                  <td>{{ request.fonction }}</td>
+                  <td>{{ request.structure }}</td>
+                  <td>{{ request.type }}</td>
+                  <td>{{ request.intituleAction }}</td>
+                  <td>{{ request.cible }}</td>
+                  <td>
+                    <a *ngIf="request.linkedin" [href]="request.linkedin" target="_blank">Profil</a>
+                    <span *ngIf="!request.linkedin">-</span>
+                  </td>
+                  <td>{{ request.nbrParticipants }}</td>
+                  <td>{{ request.nomSalle }}</td>
+                  <td>
+                    <div *ngIf="request.equipements && request.equipements.length > 0">
+                      <div *ngFor="let eq of request.equipements" class="equipment-item">
+                        <input type="checkbox" 
+                               [checked]="request.approvedEquipments.includes(eq)"
+                               (change)="toggleEquipment(request, eq)">
+                        <label>{{eq}}</label>
+                      </div>
+                    </div>
+                    <span *ngIf="!request.equipements || request.equipements.length === 0">-</span>
+                  </td>
+                  <td>
+                    {{ request.decisionDate || '20/03/2025' }} <!-- Date formatée -->
+                    ({{ request.startTime }} - {{ request.endTime }})
+                  </td>
+                  <td>{{ request.description || '-' }}</td>
+                  <td class="actions">
+                    <button class="accept-btn" (click)="approveRequest(i)">Accepter</button>
+                    <button class="reject-btn" (click)="rejectRequest(i, 'Raison administrative')">Refuser</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Onglet Demandes acceptées -->
+          <div *ngIf="activeTab === 'approved'" class="requests-table">
+            <table>
+              <thead>
+                <tr class="line">
+                 
+                  <th>RESPONSABLE</th>
+                  <th>EMAIL</th>
+                  <th>FONCTION</th>
+                  <th>STRUCTURE</th>
+                  <th>TYPE</th>
+                  <th>INTITULÉ ACTION</th>
+                  <th>CIBLE</th>
+                  <th>LINKEDIN</th>
+                  <th>NBR PARTICIPANTS</th>
+                  <th>SALLE</th>
+                  <th>ÉQUIPEMENTS</th>
+                  <th>DATE/HEURE</th>
+                  <th>DESCRIPTION</th>
+                  <th>STATUT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let request of filteredRequests">
+                  <td>{{ request.responsableAction }}</td>
+                  <td>{{ request.email }}</td>
+                  <td>{{ request.fonction }}</td>
+                  <td>{{ request.structure }}</td>
+                  <td>{{ request.type }}</td>
+                  <td>{{ request.intituleAction }}</td>
+                  <td>{{ request.cible }}</td>
+                  <td>
+                    <a *ngIf="request.linkedin" [href]="request.linkedin" target="_blank">Profil</a>
+                    <span *ngIf="!request.linkedin">-</span>
+                  </td>
+                  <td>{{ request.nbrParticipants }}</td>
+                  <!-- Nbr participants -->
+                  <td>{{ request.nomSalle }}</td>
+                  <td>
+                    <div *ngIf="request.equipements && request.equipements.length > 0">
+                      <div *ngFor="let eq of request.equipements" class="equipment-item">
+                        <input type="checkbox" [checked]="request.approvedEquipments.includes(eq)" [disabled]="true">
+                        <label>{{eq}}</label>
+                      </div>
+                    </div>
+                    <span *ngIf="!request.equipements || request.equipements.length === 0">-</span>
+                  </td>
+                  <td>
+                    {{ request.decisionDate || '20/03/2025' }}
+                    ({{ request.startTime }} - {{ request.endTime }})
+                  </td>
+                  <td>{{ request.description || '-' }}</td>
+                  <td><span class="status-badge approved">Acceptée</span></td>
+                </tr>
+          
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Onglet Demandes refusées -->
+          <div *ngIf="activeTab === 'rejected'" class="requests-table">
+            <table>
+              <thead>
+                <tr class="line">
+                  <th>RESPONSABLE</th>
+                  <th>EMAIL</th>
+                  <th>FONCTION</th>
+                  <th>STRUCTURE</th>
+                  <th>TYPE</th>
+                  <th>INTITULÉ ACTION</th>
+                  <th>CIBLE</th>
+                  <th>LINKEDIN</th>
+                  <th>NBR PARTICIPANTS</th>
+                  <th>SALLE</th>
+                  <th>DATE/HEURE</th>
+                  <th>DESCRIPTION</th>
+                  <th>STATUT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let request of filteredRequests">
+                  <!-- Autres colonnes -->
+                  <td>
+                    <a *ngIf="request.linkedin" [href]="request.linkedin" target="_blank">Profil</a>
+                    <span *ngIf="!request.linkedin">-</span>
+                  </td>
+                  <!-- Nbr participants -->
+                  <td>{{ request.nomSalle }}</td>
+                  <td>
+                    {{ request.decisionDate || '20/03/2025' }}
+                    ({{ request.startTime }} - {{ request.endTime }})
+                  </td>
+                  <td>{{ request.description || '-' }}</td>
+                  <td><span class="status-badge rejected">Refusée</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenu pour l'ajout d'espace -->
+      <div *ngIf="activeSection === 'space'" class="space-management-container">
+        <div class="space-management">
+          <!-- Formulaire d'ajout à gauche -->
+          <div class="add-space-form">
+            <h2>Ajouter un Nouvel Espace</h2>
+            <form (submit)="addSpace()">
+              <!-- Première ligne: Nom et Capacité -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Nom de l'espace</label>
+                  <div class="input-container">
+                    <fa-icon [icon]="faDoorOpen" class="input-icon"></fa-icon>
+                    <input type="text" [(ngModel)]="newSpace.name" name="spaceName" placeholder=" ">
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label>Capacité</label>
+                  <div class="input-container">
+                    <fa-icon [icon]="faUsers" class="input-icon"></fa-icon>
+                    <input type="number" [(ngModel)]="newSpace.capacity" name="capacity" value="20">
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Deuxième ligne: Établissement et Type -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Établissement</label>
+                  <div class="input-container">
+                    <fa-icon [icon]="faBuilding" class="input-icon"></fa-icon>
+                    <select [(ngModel)]="newSpace.institution" name="institution" class="selected-value">
+                      <option *ngFor="let inst of institutions" [value]="inst">{{inst}}</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label>Type d'espace</label>
+                  <div class="input-container">
+                    <fa-icon [icon]="faChalkboard" class="input-icon"></fa-icon>
+                    <select [(ngModel)]="newSpace.type" name="type" class="selected-value">
+                      <option *ngFor="let type of spaceTypes" [value]="type">{{type}}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Section Équipements -->
+  <!-- Section Équipements -->
+  <div class="equipment-section">
+    <label>Équipements</label>
+    <div class="equipment-options">
+      <label class="equipment-option" *ngFor="let eq of equipmentsList">
+        <input type="checkbox" 
+               [(ngModel)]="newSpace.equipments[eq.toLowerCase().replace(' ', '_')]" 
+               [name]="eq">
+      
+        {{eq}}
+      </label>
+      
+      <button type="button" class="add-equipment" (click)="showEquipmentModal = true">
+        <fa-icon [icon]="faPlusCircle" class="add-icon"></fa-icon>
+        Ajouter équipement
+      </button>
+    </div>
+  </div>
+  
+  <!-- Modal pour ajouter un équipement -->
+  <div class="modal-overlay" *ngIf="showEquipmentModal">
+    <div class="modal-content">
+      <h3>Ajouter un nouvel équipement</h3>
+      <input type="text" 
+             [(ngModel)]="customEquipment" 
+             placeholder="Nom de l'équipement"
+             (keyup.enter)="addCustomEquipment()">
+      
+      <div class="modal-actions">
+        <button type="button" 
+        (click)="addCustomEquipment()"
+        >
+  Ajouter
+</button>
+        <button type="button" (click)="cancelAddEquipment()">Annuler</button>
+    
+      </div>
+    </div>
+  </div>
+  
+              <!-- Boutons -->
+              <div class="form-actions">
+                <button type="submit" class="submit-btn">
+                   Enregistrer
+                </button>
+                <button type="button" class="cancel-btn" (click)="cancelAddEquipment()">
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+          
+          <!-- Liste des espaces à droite -->
+          <div class="existing-spaces">
+            <h2>Espaces existants</h2>
+            
+            <div *ngFor="let space of filteredSpaces(); let i = index" class="space-card">
+              <div class="space-header">
+                <h3>{{ space.name }}</h3>
+                <div class="space-type-badge">{{ space.type }}</div>
+              </div>
+              
+              <div class="space-details">
+                <p class="space-institution">
+                  <fa-icon [icon]="faBuilding" class="detail-icon"></fa-icon>
+                  <strong>{{ space.institution }}</strong>
+                </p>
+                <p class="space-capacity">
+                  <fa-icon [icon]="faUsers" class="detail-icon"></fa-icon>
+                  Capacité: {{ space.capacity }} personnes
+                </p>
+                <p class="space-equipments">
+                  <fa-icon [icon]="faTools" class="detail-icon"></fa-icon>
+                  Équipements: 
+                  <span *ngIf="space.equipments.projector">Projecteur, </span>
+                  <span *ngIf="space.equipments.whiteboard">Tableau blanc, </span>
+                  <span *ngIf="space.equipments.computers">Ordinateurs, </span>
+                  <span *ngIf="space.equipments.audio">Système audio, </span>
+                  <span *ngIf="space.equipments.wifi">Wi-Fi</span>
+                </p>
+              </div>
+              
+              <div class="space-actions">
+                <button (click)="editSpace(i)" class="edit-btn">
+                  <fa-icon [icon]="faEdit"></fa-icon> Modifer
+                </button>
+                <button (click)="deleteSpace(i)" class="delete-btn">
+                  <fa-icon [icon]="faTrash"></fa-icon> Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" *ngIf="showProfileModal" (click)="closeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      
+      <h3>Votre Profil</h3>
+      <button class="password-modal-close" (click)="closeModal()">&times;</button>
+    <div class="profile-info">
+      <div class="info-grid">
+      <div class="info-item">
+        <fa-icon [icon]="faUserTag" class="icon"></fa-icon>
+        <div class="info-content">
+          <label>Nom & Prénom</label>
+          <p>{{ profileData.nomPrenom }}</p>
+        </div>
+      </div>
+
+      <div class="info-item">
+        <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
+        <div class="info-content">
+          <label>Email</label>
+          <p>{{ profileData.email }}</p>
+        </div>
+      </div>
+
+      <div class="info-item">
+        <fa-icon [icon]="faPhone" class="icon"></fa-icon>
+        <div class="info-content">
+          <label>Téléphone</label>
+          <p>{{ profileData.telephone }}</p>
+        </div>
+      </div>
+
+      
+        <div class="info-item">
+          <fa-icon [icon]="faBriefcase" class="icon"></fa-icon>
+          <div class="info-content">
+            <label>Fonction</label>
+            <p>{{ profileData.fonction }}</p>
+          </div>
+        </div>
+        
+
+        <div class="info-item">
+          <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
+          <div class="info-content">
+            <label>Établissement</label>
+            <p>{{ profileData.etablissement }}</p>
+          </div>
+        </div>
+
+        
+
+        <div class="info-item">
+          <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
+          <div class="info-content">
+            <label>Structure</label>
+            <p>{{ profileData.structure }}</p>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <fa-icon [icon]="faUserTie" class="icon"></fa-icon>
+          <div class="info-content">
+            <label>Type</label>
+            <p>{{ profileData.type }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="info-h">
+        <fa-icon [icon]="faLinkedin" class="icon"></fa-icon>
+        <div class="info-content">
+          <label>LinkedIn</label>
+          <a [href]="profileData.linkedin" target="_blank" class="linkedin-link">
+            {{ profileData.linkedin }}
+          </a>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
+    <div class="modal-box edit-modal" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">Modifier le Profil</h3>
+      <button class="password-modal-close" (click)="closeModal()">&times;</button>
+      
+      <form     class="edit-form"   class="edit-form" (ngSubmit)="saveChanges()">
+        <!-- Première ligne -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nom & Prénom <span class="required"></span></label>
+            <div class="input-container">
+              <i class="fas fa-user"></i>
+              <input type="text" [(ngModel)]="editData.nomPrenom" name="nomPrenom" required>
+            </div>
+          </div>
+  
+          <div class="form-group">
+            <label>Fonction <span class="required"></span></label>
+            <div class="input-container">
+              <i class="fas fa-briefcase"></i>
+              <input type="text" [(ngModel)]="editData.fonction" name="fonction" required>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Deuxième ligne -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Téléphone</label>
+            <div class="input-container">
+              <i class="fas fa-phone"></i>
+              <input type="tel" [(ngModel)]="editData.telephone" name="telephone" pattern="[0-9]{8}">
+            </div>
+          
+          </div>
+  
+          <div class="form-group">
+            <label>Profil LinkedIn</label>
+            <div class="input-container">
+              <i class="fab fa-linkedin"></i>
+              <input  type="url" [(ngModel)]="editData.linkedin" name="linkedin">
+            </div>
+          </div>
+          
+        </div>
+       
+         
+        <!-- Structure (pleine largeur) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Structure <span class="required"></span></label>
+            <div class="input-container">
+              <i class="fas fa-building"></i>
+              <input type="text" [(ngModel)]="editData.structure" name="structure" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Établissement <span class="required"></span></label>
+            <div class="input-container">
+              <i class="fas fa-university"></i>
+              <input type="text" [(ngModel)]="editData.etablissement" name="etablissement" required>
+            </div>
+          </div>
+
+        </div>
+  
+
+      
+  
+  
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" (click)="closeModal()">Annuler</button>
+          <button type="submit" class="save-btn" >Modifier</button>
+
+        </div>
+      </form>
+    </div>
+  </div>
+
+<!-- Modale Modification mot de passe -->
+<div class="password-modal-wrapper" *ngIf="showPasswordModal" (click)="closeModal()">
+  <div class="password-modal-content" (click)="$event.stopPropagation()">
+   
+      <h3 class="password-modal-heading">Changer le mot de passe</h3>
+      <button class="password-modal-close" (click)="closeModal()">&times;</button>
+   
+    
+    <div class="password-modal-main">
+      <form #passwordForm="ngForm" (ngSubmit)="updatePassword()">
+        <div class="password-field">
+          <label class="password-label">Ancien mot de passe</label>
+          <div class="password-input-wrapper">
+            <i class="fas fa-lock"></i>
+            <input type="string" [(ngModel)]="passwordData.oldPassword" name="oldPassword" required>
+          </div>
+        </div>
+    
+        <div class="password-field">
+          <label class="password-label">Nouveau mot de passe</label>
+          <div class="password-input-wrapper">
+            <i class="fas fa-key"></i>
+            <input type="string" [(ngModel)]="passwordData.newPassword" name="newPassword" required>
+          </div>
+        </div>
+    
+        <div class="password-field">
+          <label class="password-label">Confirmer le nouveau mot de passe</label>
+          <div class="password-input-wrapper">
+            <i class="fas fa-key"></i>
+            <input type="string" [(ngModel)]="passwordData.confirmPassword" name="confirmPassword" required>
+          </div>
+        </div>
+    
+        <div class="password-modal-footer">
+          <button type="button" class="password-btn password-btn-cancel" (click)="closeModal()">Annuler</button>
+          <button type="submit" class="password-btn password-btn-submit" [disabled]="!passwordForm.valid">Modifier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</div>

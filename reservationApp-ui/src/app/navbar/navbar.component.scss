@@ -1,0 +1,336 @@
+/* Style global */
+.auth-header {
+    padding: 1.5rem 5%;
+    background-color: #2c3e50; /* Fond sombre */
+    background: linear-gradient(135deg,#2c3e50,#152763 , #4a4793, #152763, #2c3e50 );
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,1);
+    box-shadow: 
+      0 10px 25px rgba(0, 0, 0, 0.5),
+      0 5px 10px rgba(0, 0, 0, 0.6),
+      0 15px 35px rgba(0, 0, 0, 0.4);
+    transition: box-shadow 0.3s ease;
+    
+  
+    &:hover {
+      box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.6),
+        0 10px 20px rgba(0, 0, 0, 0.7),
+        0 20px 45px rgba(0, 0, 0, 0.5);
+    }
+  
+  }
+  .page-title {
+    font-size: 1.45rem; /* Réduit de 2rem à 1.4rem */
+    font-weight: bold;
+    margin: 0;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem; /* Espacement réduit entre icône et texte */
+    
+    .page-icon {
+      font-size: 1rem; /* Réduit de 1.2rem à 1rem */
+      color: #17A2B8;
+    }
+  }
+  .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 2rem;
+  }
+  
+  /* Section gauche */
+  .left-section {
+    display: flex;
+    align-items: center;
+    gap: 2rem; /* Espacement augmenté entre logo et titre */
+  }
+  
+  /* Section logo */
+  .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-shrink: 0;
+  }
+   
+  .logo {
+    font-size: 2.5rem;
+    color: #17A2B8;
+    
+  }
+  
+  .site-name {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+    color: white;
+    margin-bottom: 0; // Remplace le margin-bottom original
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    &:hover {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  }
+  h2 {
+    color: white;
+    position: absolute; // Garde le positionnement absolu existant
+    top: 10px;
+    left: 20px;
+    font-size: 2rem;
+    margin-bottom: 0; // Remplace le margin-bottom original
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  }
+  
+  /* Section droite */
+  .right-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1.5rem; /* Espacement vertical augmenté */
+  }
+  
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    flex-shrink: 0;
+  }
+  
+  .nav-link {
+    color: #17A2B8;
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 0.5rem 0;
+    transition: all 0.3s ease;
+    position: relative; // Important pour le pseudo-élément
+    
+    &:hover {
+      color: black;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background-color: black;
+        bottom: 0;
+        left: 0;
+        transform: scaleX(1);
+        transform-origin: center;
+      }
+    }
+    
+    // Animation optionnelle pour l'apparition de la ligne
+    &::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background-color: black;
+      bottom: 0;
+      left: 0;
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    
+    &.router-link-active {
+      color: #17A2B8;
+      
+      &::after {
+        background-color: #17A2B8;
+        transform: scaleX(1);
+      }
+    }
+  }
+  
+  /* Informations de page */
+  .page-info {
+    margin-left: auto; /* Pousse vers la droite */
+    margin-right: 3rem; /* Empêche d'aller trop à droite */
+    text-align: left;
+  }
+  
+  
+  
+  .breadcrumb {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.8);
+    margin-top: 0.5rem;
+  }
+  
+  
+  .breadcrumb span {
+    margin: 0 0.3rem;
+  }
+  
+  /* Contenu principal */
+  router-outlet {
+    margin-top: 150px;
+    display: block;
+    padding: 2rem 5%;
+  }
+  
+  /* Responsive */
+  @media (max-width: 992px) {
+    .header-content {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .right-section {
+      align-items: flex-start;
+    }
+    
+    .page-info {
+      margin-right: 0;
+      text-align: left;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .nav-links {
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    
+    .left-section {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    router-outlet {
+      margin-top: 220px;
+    }
+  }
+  
+  /* Add these media queries at the end of your existing CSS */
+  
+  @media (max-width: 1200px) {
+    .header-content {
+      padding: 0 2%;
+    }
+  }
+  
+  @media (max-width: 992px) {
+    .site-name {
+      font-size: 1.8rem;
+    }
+    
+    .nav-link {
+      font-size: 1rem;
+    }
+    
+    .page-title {
+      font-size: 1.3rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .auth-header {
+      padding: 1rem 5%;
+    }
+    
+    .logo {
+      font-size: 2rem;
+    }
+    
+    .site-name {
+      font-size: 1.6rem;
+    }
+    
+    .nav-links {
+      gap: 1.2rem;
+    }
+    
+    router-outlet {
+      margin-top: 180px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .left-section {
+      gap: 1rem;
+    }
+    
+    .logo-section {
+      gap: 1rem;
+    }
+    
+    .site-name {
+      font-size: 1.4rem;
+    }
+    
+    .nav-link {
+      font-size: 0.9rem;
+    }
+    
+    .page-title {
+      font-size: 1.1rem;
+      
+      .page-icon {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .breadcrumb {
+      font-size: 0.85rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .header-content {
+      gap: 1rem;
+    }
+    
+    .nav-links {
+      gap: 1rem;
+      justify-content: center;
+    }
+    
+    .logo {
+      font-size: 1.8rem;
+    }
+    
+    router-outlet {
+      margin-top: 160px;
+      padding: 1.5rem 5%;
+    }
+  }
+  
+  @media (max-width: 360px) {
+    .site-name {
+      font-size: 1.2rem;
+    }
+    
+    .nav-link {
+      font-size: 0.85rem;
+    }
+    
+    .page-title {
+      font-size: 1rem;
+    }
+    
+    .breadcrumb {
+      font-size: 0.8rem;
+    }
+  }
