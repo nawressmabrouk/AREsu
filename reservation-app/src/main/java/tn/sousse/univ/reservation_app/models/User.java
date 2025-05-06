@@ -31,6 +31,10 @@ public class User {
     private String structure;
     private String linkedInLink;
 
+    private boolean enabled = false;
+    private boolean passwordChangeRequired;
+    private boolean isPartenaire;
+
     private List<String> espacesResponsables;
 
 }

@@ -1,16 +1,24 @@
 package tn.sousse.univ.reservation_app.services;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import tn.sousse.univ.reservation_app.models.Role;
 import tn.sousse.univ.reservation_app.models.User;
+import tn.sousse.univ.reservation_app.models.VerificationToken;
 import tn.sousse.univ.reservation_app.repositories.UserRepository;
+import tn.sousse.univ.reservation_app.repositories.VerificationTokenRepository;
 
 @Service
 public class UserService {
@@ -20,6 +28,12 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private VerificationTokenRepository verificationTokenRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     public User getUserById(String id) {
         return userRepository.findById(id).orElse(null);
@@ -33,18 +47,40 @@ public class UserService {
         return userRepository.findByRole(role);
     }
 
+    // Charger le contenu du template email
+    private String loadEmailTemplate(String path) {
+        try {
+            ClassPathResource resource = new ClassPathResource(path);
+            byte[] bytes = Files.readAllBytes(resource.getFile().toPath());
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
     public User registerUser(User user) {
-        // Vérifie si l'utilisateur existe déjà
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("Un utilisateur avec cet email existe déjà.");
+        // Check if email exists
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new RuntimeException("Cet email existe déjà");
         }
 
-        // Hachage du mot de passe avant enregistrement
+        user.setEnabled(false);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User savedUser = userRepository.save(user);
 
-        // Sauvegarde de l'utilisateur
-        return userRepository.save(user);
+        String token = UUID.randomUUID().toString();
+        verificationTokenRepository.save(new VerificationToken(token, savedUser.getId()));
 
+        String activationLink = "http://localhost:8080/api/utilisateurs/activer?token=" + token;
+        String htmlTemplate = loadEmailTemplate("templates/activation-email.html");
+        String htmlContent = htmlTemplate.replace("{{activation_link}}", activationLink);
+
+        emailService.sendHtmlEmail(savedUser.getEmail(),
+                "Activation de votre compte",
+                htmlContent);
+
+        return savedUser;
     }
 
     public User authenticateUser(String email, String password) {
@@ -80,16 +116,24 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
     }
 
-    public boolean changerMotDePasse(String ancienMotDePasse, String nouveauMotDePasse) {
-        User currentUser = getCurrentUser();
+    public void changerMotDePasse(String email, String ancienMotDePasse, String nouveauMotDePasse) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
 
-        if (!passwordEncoder.matches(ancienMotDePasse, currentUser.getPassword())) {
-            throw new RuntimeException("Ancien mot de passe incorrect");
+        if (!passwordEncoder.matches(ancienMotDePasse, user.getPassword())) {
+            throw new SecurityException("Ancien mot de passe incorrect");
         }
 
-        currentUser.setPassword(passwordEncoder.encode(nouveauMotDePasse));
-        userRepository.save(currentUser);
-        return true;
+        if (nouveauMotDePasse == null || nouveauMotDePasse.length() < 8) {
+            throw new IllegalArgumentException("Le nouveau mot de passe doit contenir au moins 8 caractères");
+        }
+
+        user.setPassword(passwordEncoder.encode(nouveauMotDePasse));
+        userRepository.save(user);
+    }
+
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email);
     }
 
 }

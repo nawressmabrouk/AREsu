@@ -1,5 +1,8 @@
+
+
 <div class="main-container">
     <div class="unified-box">
+
       <!-- Partie gauche (Message) -->
       <div class="welcome-section">
         <h2>tu as oublié votre ID ?</h2>
@@ -8,7 +11,7 @@
           
         </div>
       </div>
-  
+     
       <!-- Partie droite (Formulaire) -->
       <div class="login-section">
         <div class="form-container">
@@ -22,8 +25,16 @@
               </div>
             </div>
             <button type="submit" class="btn-login">Envoyer</button>
+
+            <div *ngIf="isLoading" class="loading-indicator">
+              <i class="fas fa-spinner fa-spin"></i> Envoi en cours...
+            </div>
           </form>
+        
         </div>
+       
       </div>
+  
     </div>
   </div>
+  <app-notification></app-notification> 

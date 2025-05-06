@@ -1,22 +1,21 @@
 <div class="main-container">
   <div class="unified-box">
-    <!-- Partie bleue -->
+    <!-- Blue section -->
     <div class="welcome-section">
       <h2>Bienvenue chez<br>nous !</h2>
       
       <div class="welcome-link">
         <p>Déjà Inscrit ?</p>
         <button class="btn-login" routerLink="/navbar/auth">Se connecter</button>
-
       </div>
     </div>
 
-    <!-- Partie formulaire -->
+    <!-- Form section -->
     <div class="login-section">
       <div class="form-container">
         <h2 class="form-title">Créer un nouveau compte</h2>
         
-        <form class="register-form" (submit)="onSubmit(
+        <form class="register-form" (ngSubmit)="onSubmit(
           lastName.value,
           firstName.value,
           email.value,
@@ -31,7 +30,7 @@
           confirmPassword?.value,
           $event
         )">
-          <!-- Nom et Prénom -->
+          <!-- Name and First Name -->
           <div class="form-row">
             <div class="form-group">
               <label for="lastName">Nom</label>
@@ -50,7 +49,7 @@
             </div>
           </div>
 
-          <!-- Email -->
+          <!-- Email and Function -->
           <div class="form-row">
             <div class="form-group">
               <label for="email">Email</label>
@@ -68,7 +67,7 @@
             </div>
           </div>
           
-          <!-- Fonction et Téléphone -->
+          <!-- Phone and Establishment -->
           <div class="form-row">
             <div class="form-group">
               <label for="phone">Numéro de téléphone</label>
@@ -86,10 +85,8 @@
             </div>
           </div>
 
-          <!-- Établissement et LinkedIn -->
+          <!-- LinkedIn and Structure -->
           <div class="form-row">
-           
-            
             <div class="form-group">
               <label for="linkedin">Profil LinkedIn</label>
               <div class="input-container">
@@ -106,10 +103,8 @@
             </div>
           </div>
           
-          <!-- Structure et Type d'utilisateur -->
+          <!-- User Type -->
           <div class="form-row">
-            
-            
             <div class="form-group">
               <label>Type d'utilisateur</label>
               <div class="radio-group">
@@ -123,7 +118,7 @@
             </div>
           </div>
 
-          <!-- Mot de passe -->
+          <!-- Password -->
           <div class="form-row">
             <div class="form-group">
               <label for="password">Mot de passe</label>
@@ -133,22 +128,24 @@
               </div>
             </div>
 
-            <div class="form-group"   >
+            <div class="form-group">
               <label for="confirmPassword">Confirmer le mot de passe</label>
               <div class="input-container">
                 <fa-icon [icon]="faLock" class="icon"></fa-icon>
                 <input type="password" id="confirmPassword" name="confirmPassword" #confirmPassword required>
               </div>
-              <div *ngIf="password.value" class="password-hints">
-                <div [class.valid]="password.value.length >= 8">• 8 caractères minimum</div>
-                <div [class.valid]="hasUpperCase(password.value)">• Au moins une majuscule</div>
-                <div [class.valid]="hasNumber(password.value)">• Au moins un chiffre</div>
-                <div [class.valid]="hasSymbol(password.value)">• Au moins un symbole</div>
-            </div>
+              @if (password.value) {
+                <div class="password-hints">
+                  <div [class.valid]="password.value.length >= 8">• 8 caractères minimum</div>
+                  <div [class.valid]="hasUpperCase(password.value)">• Au moins une majuscule</div>
+                  <div [class.valid]="hasNumber(password.value)">• Au moins un chiffre</div>
+                  <div [class.valid]="hasSymbol(password.value)">• Au moins un symbole</div>
+                </div>
+              }
             </div>
           </div>
 
-          <!-- Bouton d'inscription -->
+          <!-- Submit button -->
           <button type="submit" class="btn-sumbit">S'inscrire</button>
         </form>
       </div>

@@ -1,6 +1,8 @@
 package tn.sousse.univ.reservation_app.controllers;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,7 @@ public class DemandeurController {
         return ResponseEntity.ok("Reservation request submitted.");
     }
 
+    /* 
     @PostMapping("/annulerReservation")
     public ResponseEntity<String> annulerReservation(
             @RequestParam String reservationId,
@@ -51,6 +54,30 @@ public class DemandeurController {
     }
 
 @GetMapping("/{demandeurId}/reservations")
+    public ResponseEntity<List<ReservationResponseDTO>> getReservationsByDemandeur(@PathVariable String demandeurId) {
+        List<ReservationResponseDTO> reservations = demandeurService.getReservationsByDemandeur(demandeurId);
+        return ResponseEntity.ok(reservations);
+    }*/
+    @PostMapping("/annulerReservation")
+    @PreAuthorize("#demandeurId == authentication.principal.getUserId()")
+    public ResponseEntity<Map<String, String>> annulerReservation(
+            @RequestParam String reservationId,
+            @RequestParam String demandeurId,
+            @RequestParam(required = false) String raison) {
+        try {
+            reservationService.annulerReservation(reservationId, demandeurId);
+            return ResponseEntity.ok(
+                Collections.singletonMap("message", "Réservation annulée avec succès.")
+            );
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(
+                Collections.singletonMap("error", "Erreur : " + e.getMessage())
+            );
+        }
+    }
+
+@GetMapping("/{demandeurId}/reservations")
+@PreAuthorize("#demandeurId == authentication.principal.userId")
     public ResponseEntity<List<ReservationResponseDTO>> getReservationsByDemandeur(@PathVariable String demandeurId) {
         List<ReservationResponseDTO> reservations = demandeurService.getReservationsByDemandeur(demandeurId);
         return ResponseEntity.ok(reservations);

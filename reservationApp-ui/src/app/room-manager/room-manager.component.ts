@@ -43,6 +43,8 @@ import {
   faWifi
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthService } from '../services/auth/auth.service';
+import { ProfileComponent } from '../shared/components/profile/profile.component';
+
 interface Request {
   id: string;
   responsableAction: string;
@@ -53,18 +55,19 @@ interface Request {
   intituleAction: string;
   nbrParticipants: number;
   cible: string;
-  linkedin?: string; // Nouveau champ
+  linkedin?: string;
   nomSalle: string;
   equipements: string[];
   approvedEquipments: string[];
   startTime: string;
   endTime: string;
-  description?: string; // Nouveau champ
+  description?: string;
   status: 'pending' | 'approved' | 'rejected';
   decisionDate?: string;
   reason?: string;
   role?: string;
 }
+
 interface Space {
   name: string;
   institution: string;
@@ -83,12 +86,18 @@ interface Space {
 @Component({
   selector: 'app-room-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, FontAwesomeModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    FontAwesomeModule,
+    ProfileComponent
+  ],
   templateUrl: './room-manager.component.html',
   styleUrls: ['./room-manager.component.scss']
 })
 export class RoomManagerComponent {
   @ViewChild('profileContainer', { static: true }) profileContainer!: ElementRef;
+  
   // Font Awesome icons
   faHome = faHome; 
   faSearch = faSearch;
@@ -169,60 +178,6 @@ export class RoomManagerComponent {
     }
   };
 
-  // User data
-  menuItems = [
-    { 
-      icon: faUser, 
-      title: 'Voir votre profil', 
-      action: () => this.openProfile(),
-      logout: false
-    },
-    { 
-      icon: faEdit, 
-      title: 'Modifier votre profil', 
-      action: () => this.openEditProfile(),
-      logout: false
-    },
-    { 
-      icon: faLock, 
-      title: 'Modifier mot de passe', 
-      action: () => this.openPasswordModal(),
-      logout: false
-    },
-    { 
-      icon: faSignOutAlt, 
-      title: 'Se déconnecter', 
-      action: () => this.logout(),
-      logout: true
-    }
-  ];
-
-  passwordData = {
-    oldPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  };
-  
-  editData = {
-    nomPrenom: '', 
-    fonction: '',
-    telephone: '',
-    linkedin: '',
-    structure: '',
-    etablissement: ''
-  };
-
-  profileData = {
-    nomPrenom: 'Nourhene Zroud',
-    email: 'nourhe****oud2003@gmail.com',
-    telephone: '+216 28 473 550',
-    fonction: 'Étudiante en Ingénierie Informatique',
-    etablissement: 'ESSTHS',
-    linkedin: 'https://www.linkedin.com/in/nourhen-zroud/',
-    structure: '4C',
-    type: 'Interne'
-  };
-
   // Sample data
   spaces: Space[] = [
     {
@@ -286,34 +241,32 @@ export class RoomManagerComponent {
       description: 'Réunion mensuelle du département',
       status: 'pending',
       role: 'Demandeur'
-    },
-    // ... autres exemples
+    }
   ];
 
   editingIndex: number | null = null;
 
-  constructor(private router: Router , private authService: AuthService) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
+  // User data
+  currentUser = {
+    role: 'roomManager',
+    nomPrenom: 'Responsable Salle',
+    email: 'salle@universite.tn'
+  };
 
   @HostListener('document:click', ['$event'])
-onClick(event: MouseEvent) {
-  console.log('Document clicked', event.target);
-  if (this.profileContainer?.nativeElement) {
-    console.log('Profile container contains target?', 
-      this.profileContainer.nativeElement.contains(event.target));
+  onClick(event: MouseEvent) {
+    if (this.profileContainer?.nativeElement && !this.profileContainer.nativeElement.contains(event.target)) {
+      this.showProfileDropdown = false;
+    }
   }
-  
-  if (this.profileContainer?.nativeElement && !this.profileContainer.nativeElement.contains(event.target)) {
-    console.log('Closing dropdown');
-    this.showProfileDropdown = false;
+
+  toggleProfileDropdown(event: MouseEvent) {
+    event.stopPropagation();
+    this.showProfileDropdown = !this.showProfileDropdown;
   }
-}
 
-
- toggleProfileDropdown(event: MouseEvent) {
-   event.stopPropagation(); // Prevent the click from reaching document
-   this.showProfileDropdown = !this.showProfileDropdown;
- }
   // Navigation methods
   switchSection(section: 'access' | 'space') {
     this.activeSection = section;
@@ -375,13 +328,11 @@ onClick(event: MouseEvent) {
   // Equipment methods
   showAddEquipmentModal() {
     this.showEquipmentModal = true;
- 
   }
 
   cancelAddEquipment() {
     this.showEquipmentModal = false;
     this.customEquipment = '';
- 
   }
 
   addCustomEquipment() {
@@ -446,6 +397,7 @@ onClick(event: MouseEvent) {
     this.activeTab = tab;
     this.searchTerm = '';
   }
+
   toggleEquipment(request: Request, equipment: string): void {
     const index = request.approvedEquipments.indexOf(equipment);
     if (index === -1) {
@@ -457,15 +409,14 @@ onClick(event: MouseEvent) {
 
   approveRequest(index: number) {
     const request = this.allRequests[index];
-  if (request && request.status === 'pending') {
-    // Conserver uniquement les équipements approuvés
-    request.equipements = [...request.approvedEquipments];
-    request.status = 'approved';
-    request.decisionDate = new Date().toISOString().split('T')[0];
-    
-    const year = new Date().getFullYear();
-    const seq = this.allRequests.filter(r => r.status === 'approved').length + 1;
+    if (request && request.status === 'pending') {
+      request.equipements = [...request.approvedEquipments];
+      request.status = 'approved';
+      request.decisionDate = new Date().toISOString().split('T')[0];
       
+      const year = new Date().getFullYear();
+      const seq = this.allRequests.filter(r => r.status === 'approved').length + 1;
+        
       if (request.role === 'Demandeur') {
         request.id = `${request.type === 'interne' ? 'INT' : 'EXT'}-${year}-${seq.toString().padStart(3, '0')}`;
       } else if (request.role === 'Responsable salle') {
@@ -497,80 +448,22 @@ onClick(event: MouseEvent) {
     // La recherche est gérée par les getters filteredRequests et filteredSpaces
   }
 
-
-
-
-  
-  
   openProfile() {
     this.showProfileModal = true;
     this.showProfileDropdown = false;
   }
-  
-  openEditProfile() {
-    this.editData = {
-      nomPrenom: this.profileData.nomPrenom,
-      fonction: this.profileData.fonction,
-      telephone: this.profileData.telephone,
-      linkedin: this.profileData.linkedin,
-      structure: this.profileData.structure,
-      etablissement: this.profileData.etablissement
-    };
-    this.showEditModal = true;
-    this.showProfileDropdown = false;
-  }
-  
-  openReservations() {
-    this.showReservationsModal = true;
-    this.showProfileDropdown = false;
-  }
-  
-  closeModal() {
-    this.showProfileModal = false;
-    this.showEditModal = false;
-    this.showReservationsModal = false;
-    this.showPasswordModal = false;
-    this.passwordData = { oldPassword: '', newPassword: '', confirmPassword: '' };
-  }
 
-  openPasswordModal() {
-    this.showPasswordModal = true;
-    this.showProfileDropdown = false;
+  logout() {
+    this.authService.logout().subscribe({
+      next: () => {
+        // Optional: Show success message
+      },
+      error: (err) => {
+        console.error('Logout error:', err);
+        // Optional: Show error message
+      }
+    });
   }
-
-  updatePassword() {
-    if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
-      alert('Les mots de passe ne correspondent pas!');
-      return;
-    }
-    
-    if (this.passwordData.newPassword.length < 8) {
-      alert('Le mot de passe doit contenir au moins 8 caractères');
-      return;
-    }
-    
-    console.log('Mot de passe changé:', this.passwordData);
-    this.closeModal();
-  }
-
-  saveChanges() {
-    this.profileData = { ...this.profileData, ...this.editData };
-    console.log('Données mises à jour:', this.profileData);
-    this.closeModal();
-  }
-
-  // In your component
-logout() {
-  this.authService.logout().subscribe({
-    next: () => {
-      // Optional: Show success message
-    },
-    error: (err) => {
-      console.error('Logout error:', err);
-      // Optional: Show error message
-    }
-  });
-}
 
   // Password visibility toggles
   togglePasswordVisibility(field: 'oldPassword' | 'newPassword' | 'confirmPassword') {

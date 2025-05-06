@@ -77,7 +77,7 @@ describe('EtablissementService', () => {
         ]
       };
 
-      service.getEtablissementWithEspaces('1').subscribe((etab) => {
+      service.getEtablissementWithEspaces(1).subscribe((etab) => {
         expect(etab).toEqual(mockEtab);
       });
 

@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import tn.sousse.univ.reservation_app.models.Reservation;
+import tn.sousse.univ.reservation_app.models.StatusReservation;
 
 @Repository
 public interface ReservationRepository extends MongoRepository<Reservation, String> {
@@ -16,4 +17,10 @@ public interface ReservationRepository extends MongoRepository<Reservation, Stri
 
     List<Reservation> findByStatut(String statut);
     // Trouver les réservations par statut
+
+
+    List<Reservation> findByEspaceIdAndStatut(ObjectId espaceId, StatusReservation statut);
+
+    List<Reservation> findByEspaceIdAndDemandeurId(ObjectId espaceId, String demandeurId);
+
 }

@@ -1,6 +1,8 @@
 package tn.sousse.univ.reservation_app.controllers;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,9 @@ import tn.sousse.univ.reservation_app.dto.UserDTO;
 import tn.sousse.univ.reservation_app.mappers.UserMapper;
 import tn.sousse.univ.reservation_app.models.Role;
 import tn.sousse.univ.reservation_app.models.User;
+import tn.sousse.univ.reservation_app.models.VerificationToken;
+import tn.sousse.univ.reservation_app.repositories.UserRepository;
+import tn.sousse.univ.reservation_app.repositories.VerificationTokenRepository;
 import tn.sousse.univ.reservation_app.services.UserService;
 
 @RestController
@@ -30,11 +35,32 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private VerificationTokenRepository verificationTokenRepository;
+    /*
+     * @PostMapping("/inscription")
+     * public UserDTO inscrireUtilisateur(@RequestBody UserDTO userDTO) {
+     * User user = UserMapper.toEntity(userDTO);
+     * User savedUser = userService.registerUser(user);
+     * return UserMapper.toDTO(savedUser);
+     * }
+     */
+
     @PostMapping("/inscription")
-    public UserDTO inscrireUtilisateur(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<?> inscrireUtilisateur(@RequestBody UserDTO userDTO) {
+        // Check if email exists first
+        if (userService.emailExists(userDTO.getEmail())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Cet email existe déjà");
+        }
+
         User user = UserMapper.toEntity(userDTO);
         User savedUser = userService.registerUser(user);
-        return UserMapper.toDTO(savedUser);
+        return ResponseEntity.ok(UserMapper.toDTO(savedUser));
     }
 
     @GetMapping("/parRole/{role}")
@@ -50,9 +76,21 @@ public class UserController {
     }
 
     @PutMapping("/modifierProfil")
-    public ResponseEntity<UserDTO> modifierProfil(@RequestBody UserDTO updatedDTO) {
-        User updatedData = UserMapper.toEntity(updatedDTO);
-        User updatedUser = userService.updateUserProfile(updatedData);
+    public ResponseEntity<UserDTO> modifierProfil(@RequestBody UserDTO updatedDTO, Authentication authentication) {
+        String email = authentication.getName(); // Récupère l'email de l'utilisateur connecté
+        User existingUser = userService.getUserByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        // Mettre à jour uniquement les champs autorisés
+        existingUser.setNom(updatedDTO.getNom());
+        existingUser.setPrenom(updatedDTO.getPrenom());
+        existingUser.setNumTel(updatedDTO.getNumTel());
+        existingUser.setFonction(updatedDTO.getFonction());
+        existingUser.setNomEtablissement(updatedDTO.getNomEtablissement());
+        existingUser.setStructure(updatedDTO.getStructure());
+        existingUser.setLinkedInLink(updatedDTO.getLinkedInLink());
+
+        User updatedUser = userService.updateUserProfile(existingUser);
         return ResponseEntity.ok(UserMapper.toDTO(updatedUser));
     }
 
@@ -66,14 +104,48 @@ public class UserController {
     }
 
     @PostMapping("/changer-mot-de-passe")
-    public ResponseEntity<?> changerMotDePasse(@RequestParam String ancienMotDePasse,
-            @RequestParam String nouveauMotDePasse) {
+    public ResponseEntity<?> changerMotDePasse(
+            @RequestBody Map<String, String> requestBody,
+            Authentication authentication) {
         try {
-            userService.changerMotDePasse(ancienMotDePasse, nouveauMotDePasse);
+            String email = authentication.getName();
+            String ancienMotDePasse = requestBody.get("ancienMotDePasse");
+            String nouveauMotDePasse = requestBody.get("nouveauMotDePasse");
+
+            if (ancienMotDePasse == null || nouveauMotDePasse == null) {
+                return ResponseEntity.badRequest()
+                        .body("Les champs 'ancienMotDePasse' et 'nouveauMotDePasse' sont requis");
+            }
+
+            userService.changerMotDePasse(email, ancienMotDePasse, nouveauMotDePasse);
             return ResponseEntity.ok("Mot de passe modifié avec succès !");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/activer")
+    public ResponseEntity<String> activerCompte(@RequestParam String token) {
+        Optional<VerificationToken> optionalToken = verificationTokenRepository.findByToken(token);
+
+        if (optionalToken.isEmpty() || optionalToken.get().getExpiryDate().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body("Token invalide ou expiré.");
+        }
+
+        VerificationToken verificationToken = optionalToken.get();
+        Optional<User> optionalUser = userRepository.findById(verificationToken.getUserId());
+
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.badRequest().body("Utilisateur introuvable.");
+        }
+
+        User user = optionalUser.get();
+        user.setEnabled(true);
+        userRepository.save(user);
+
+        verificationTokenRepository.delete(verificationToken); // suppression du token
+
+        return ResponseEntity.ok("Votre compte a été activé avec succès !");
     }
 
 }

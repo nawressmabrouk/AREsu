@@ -48,6 +48,11 @@ public class AuthService {
             System.out.println("Identifiants manquants");
             return null;
         }
+
+
+        if (!user.isEnabled()) {
+            throw new RuntimeException("Votre compte n’est pas activé. Veuillez vérifier votre email.");
+        }
     
         return user;
     }

@@ -49,7 +49,7 @@ export class AuthComponent {
   navigateToRegister() {
     this.router.navigate(['/auth/register']);
   }
-
+/*
   login(): void {
     this.isLoading = true;
     const password = this.password;
@@ -87,8 +87,50 @@ export class AuthComponent {
         }
       }
     });
-  }
-
+  }*/
+    login(): void {
+      this.isLoading = true;
+      this.errorMessage = null;
+    
+      this.authService.login(this.email, this.password).subscribe({
+        next: (response) => {
+          this.isLoading = false;
+          const token = this.authService.getToken();
+          
+          if (token) {
+            const decoded = this.authService.decodeToken(token); // Use service method
+            const roles = decoded?.roles;
+            
+            if (roles) {
+              this.redirectUserByRole(roles);
+            } else {
+              this.errorMessage = "Rôle non trouvé dans le token.";
+              this.authService.logout().subscribe();
+            }
+          } else {
+            this.errorMessage = "Erreur d'authentification : jeton non reçu.";
+          }
+        },
+        error: (err) => {
+          this.handleLoginError(err);
+        }
+      });
+    }
+    
+    
+    
+    
+    
+    private handleLoginError(err: any): void {
+      if (err.status === 401) {
+        this.errorMessage = "Email ou mot de passe incorrect.";
+      } else if (err.status === 0) {
+        this.errorMessage = "Impossible de se connecter au serveur.";
+      } else {
+        this.errorMessage = "Erreur inconnue lors de la connexion.";
+      }
+    }
+/*
   private decodeToken(token: string): any {
     try {
       const payload = token.split('.')[1];
@@ -98,7 +140,7 @@ export class AuthComponent {
       console.error('Erreur lors du décodage du token:', error);
       return null;
     }
-  }
+  }*/
 
   private redirectUserByRole(roles: any): void {
     let normalizedRole = '';

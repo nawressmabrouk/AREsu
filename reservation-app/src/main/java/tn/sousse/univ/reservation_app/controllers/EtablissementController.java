@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +19,7 @@ import tn.sousse.univ.reservation_app.models.TypeEtablissement;
 import tn.sousse.univ.reservation_app.models.Zone;
 import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
 import tn.sousse.univ.reservation_app.repositories.EtablissementRepository;
+import tn.sousse.univ.reservation_app.services.EspaceService;
 import tn.sousse.univ.reservation_app.services.EtablissementService;
 
 @RestController
@@ -36,6 +38,9 @@ public class EtablissementController {
     @Autowired
     private EspaceRepository espaceRepository;
 
+    @Autowired
+    private EspaceService espaceService;
+
     // Get all establishments with their spaces
     @GetMapping("/with-espaces")
     public List<EtablissementWithEspacesDTO> etablissementsWithEspaces() {
@@ -50,8 +55,6 @@ public class EtablissementController {
                 })
                 .collect(Collectors.toList());
     }
-
-
 
     @GetMapping("/filter")
     public ResponseEntity<List<Etablissement>> filterEtablissements(
@@ -126,6 +129,32 @@ public class EtablissementController {
         return ResponseEntity.ok(espaces);
     }
 
+    @GetMapping("/id/{id}")
+    public ResponseEntity<Etablissement> getEtablissementById(@PathVariable String id) {
+        try {
+            Etablissement etablissement = etablissementService.getEtablissementById(id);
+            if (etablissement != null) {
+                return ResponseEntity.ok(etablissement);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
+    // Single Space Endpoint
+    @GetMapping("/espaces/id/{id}")
+    public ResponseEntity<Espace> getEspaceById(@PathVariable String id) {
+        try {
+            Espace espace = espaceService.getEspaceById(id);
+            if (espace != null) {
+                return ResponseEntity.ok(espace);
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
 }

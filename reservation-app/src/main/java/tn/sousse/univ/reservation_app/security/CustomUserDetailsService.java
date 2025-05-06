@@ -20,6 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
+    
 
     /*@Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -33,7 +34,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         );
     }*/
 
-    @Override
+  /*   @Override
 public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
     User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
@@ -48,5 +49,25 @@ public UserDetails loadUserByUsername(String email) throws UsernameNotFoundExcep
             user.getPassword() == null ? "" : user.getPassword(),
             authorities
     );
-}
-}
+} */
+
+
+@Override
+public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+
+    List<GrantedAuthority> authorities = Collections.singletonList(
+        new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+    );
+
+    // Ajout crucial du statut d'activation
+    return new CustomUserDetails(
+        user.getId(),
+        user.getEmail(),
+        user.getPassword(),
+        user.isEnabled(), // ← Ceci est ESSENTIEL
+        true, true, true, // accountNonExpired, credentialsNonExpired, accountNonLocked
+        authorities
+    );
+}}

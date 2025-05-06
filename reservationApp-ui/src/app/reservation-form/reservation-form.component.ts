@@ -1,146 +1,297 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { faInfoCircle, faSearch, faBuilding, faCheckCircle, faHome, faArrowRight , faPlus , faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { CommonModule, DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import {
+  faArrowRight,
+  faHome,
+  faPlus,
+  faTimes
+} from '@fortawesome/free-solid-svg-icons';
+import { AuthService } from '../services/auth/auth.service';
+import { ReservationsubmissionService } from '../services/reservationflow/reservationsubmission.service';
+import { User } from '../shared/interfaces/user.interface';
 
 @Component({
   selector: 'app-reservation-form',
   standalone: true,
-  imports: [FontAwesomeModule, FormsModule, CommonModule],
+  imports: [FontAwesomeModule, FormsModule, CommonModule, RouterModule],
   templateUrl: './reservation-form.component.html',
-  styleUrls: ['./reservation-form.component.scss']
+  styleUrls: ['./reservation-form.component.scss'],
+  providers: [DatePipe]
 })
-export class ReservationFormComponent {
+export class ReservationFormComponent implements OnInit {
+  // Font Awesome icons
   faPageIcon = faArrowRight;
   faHome = faHome;
-  faPlus = faPlus ;
-  faTimes  = faTimes  ;
-  isTooltipVisible = false;
- 
-// Ajoutez ces nouvelles propriétés à votre classe
-
-selectedEquipments: string[] = [];
-
-equipmentsList = ['Projecteur', 'Tableau blanc', 'Ordinateurs', 'Système audio', 'Wi-Fi'];
-customEquipment: string = '';
- 
- 
-  showEquipmentModal = false;
-  newEquipmentName = '';
- 
+  faPlus = faPlus;
+  faTimes = faTimes;
   
+  // Form state
+  isTooltipVisible = false;
+  formSubmitted = false;
+  showEquipmentModal = false;
+  isLoading = false;
+  errorMessage: string | null = null;
+  
+  // Equipment management
+  selectedEquipments: string[] = [];
+  equipmentsList = ['Projecteur', 'Tableau blanc', 'Ordinateurs', 'Système audio', 'Wi-Fi'];
+  customEquipment: string = '';
+
+  // Add these methods to handle equipment selection
+isEquipmentSelected(equipment: string): boolean {
+  return this.selectedEquipments.includes(equipment);
+}
+
+
+toggleEquipmentSelection(equipment: string): void {
+  const index = this.selectedEquipments.indexOf(equipment);
+  if (index === -1) {
+    this.selectedEquipments.push(equipment);
+  } else {
+    this.selectedEquipments.splice(index, 1);
+  }
+}
+
+  // Reservation data
   reservation = {
     responsableAction: '',
     intituleAction: '',
     nbrParticipant: null as number | null,
-    numTel: '',
+    numTelR: '',
     cible: '',
-    email: '',
-    fonction: '',
+    emailR: '',
+    fonctionR: '',
     structure: '',
-    linkedin: '',
-    description: ''
+    lienLinkedInR: '',
+    description: '',
+    etablissementId: '',
+    espaceId: '',
+    heureDebut: '',
+    heureFin: '',
+    statut: 'EN_ATTENTE',
+    vueParSecretaire: false,
+ 
   };
 
-  formSubmitted = false;
-
-  constructor(private router: Router) {}
-  showAddEquipmentModal() {
-    this.showEquipmentModal = true;
-    this.newEquipmentName = '';
-  }
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private datePipe: DatePipe,
+    private authService: AuthService,
+    private reservationService: ReservationsubmissionService
+  ) {}
  
- // Méthode pour annuler l'ajout
-cancelAddEquipment() {
-  this.showEquipmentModal = false;
-  this.customEquipment = ''; // Ceci vide le champ
-  this.newEquipmentName = ''; // Ceci vide également l'autre variable si nécessaire
-}
-  // Modifiez la méthode pour ajouter un équipement
-  addCustomEquipment() {
+  ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const requiredParams = [
+        'date', 
+        'startTime', 
+        'endTime',
+        'etablissementId',
+        'espaceId'
+      ];
+      
+      const missingParams = requiredParams.filter(p => !params[p]);
+      
+      if (missingParams.length > 0) {
+        console.error('Missing required parameters:', missingParams);
+        this.router.navigate(['/calendar'], {
+          queryParams: {
+            etablissementId: params['etablissementId'],
+            espaceId: params['espaceId']
+          }
+        });
+        return;
+      }
+  
+      // Set all parameters from URL
+      this.reservation = {
+        ...this.reservation,
+        etablissementId: params['etablissementId'],
+        espaceId: params['espaceId'],
+        heureDebut: this.formatISODateTime(params['date'], params['startTime']),
+        heureFin: this.formatISODateTime(params['date'], params['endTime'])
+      };
+    });
+  }
+
+  private formatISODateTime(dateStr: string, timeStr: string): string {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const date = new Date(dateStr);
+    date.setHours(hours, minutes, 0, 0);
+    return date.toISOString();
+  }
+
+  // Equipment methods
+  showAddEquipmentModal(): void {
+    this.showEquipmentModal = true;
+    this.customEquipment = '';
+  }
+
+  cancelAddEquipment(): void {
+    this.showEquipmentModal = false;
+    this.customEquipment = '';
+  }
+
+  addCustomEquipment(): void {
     const newEq = this.customEquipment.trim();
     if (newEq) {
-      const key = newEq.toLowerCase().replace(/\s+/g, '_');
-      
-      // Ajout à la liste
       if (!this.equipmentsList.some(e => e.toLowerCase() === newEq.toLowerCase())) {
         this.equipmentsList = [...this.equipmentsList, newEq];
       }
-      
-     
-      
       this.customEquipment = '';
       this.showEquipmentModal = false;
     }
   }
-  // Validation email
+
+
+
+
+  // Form validation methods
   emailIsValid(): boolean {
-    return this.reservation.email.includes('@') && 
-           this.reservation.email.includes('.') &&
-           this.reservation.email.length > 5;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(this.reservation.emailR);
   }
-  // Réinitialiser le formulaire
-  resetSpaceForm() {
-   
-   
-   
-  }
-  // Validation LinkedIn URL
+
   linkedInIsValid(): boolean {
-    if (!this.reservation.linkedin) return false;
-    
+    if (!this.reservation.lienLinkedInR) return false;
     try {
-      const url = new URL(this.reservation.linkedin);
+      const url = new URL(this.reservation.lienLinkedInR);
       return url.protocol === 'http:' || url.protocol === 'https:';
     } catch {
       return false;
     }
   }
 
-  // Validation nombre de participants
   participantsIsValid(): boolean {
     return this.reservation.nbrParticipant !== null && 
            this.reservation.nbrParticipant > 0;
   }
 
-  isFormValid(form: NgForm): boolean {
-    // Check all validations in one pass
-    return this.reservation.responsableAction.trim() !== '' &&
-           this.reservation.intituleAction.trim() !== '' &&
-           this.participantsIsValid() &&
-           this.reservation.cible.trim() !== '' &&
-           this.emailIsValid() &&
-           this.reservation.fonction.trim() !== '' &&
-           this.reservation.structure.trim() !== '' &&
-           this.linkedInIsValid() &&
-           this.reservation.description.trim() !== '';
+  timeSlotIsValid(): boolean {
+    if (!this.reservation.heureDebut || !this.reservation.heureFin) {
+      return false;
+    }
+  
+    try {
+      const startDate = new Date(this.reservation.heureDebut);
+      const endDate = new Date(this.reservation.heureFin);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return false;
+      }
+  
+      return endDate > startDate;
+    } catch (e) {
+      return false;
+    }
   }
+  
+  
+  
+  
+  isFormValid(form: NgForm): boolean {
+    return !!(
+      form.valid &&
+      this.reservation.responsableAction.trim() !== '' &&
+      this.reservation.intituleAction.trim() !== '' &&
+      this.participantsIsValid() &&
+      this.reservation.cible.trim() !== '' &&
+      this.emailIsValid() &&
+      this.reservation.fonctionR.trim() !== '' &&
+      this.reservation.structure.trim() !== '' &&
+      this.linkedInIsValid() &&
+      this.reservation.description.trim() !== '' &&
+      this.timeSlotIsValid()
+    );
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
-  onSubmit(form: NgForm) {
+  async onSubmit(form: NgForm): Promise<void> {
     this.formSubmitted = true;
+    this.errorMessage = null;
     
-    if (this.isFormValid(form)) {
-      this.router.navigate(['/calendar'], {
-        state: { reservationData: this.reservation }
+    if (!this.isFormValid(form)) {
+      this.errorMessage = 'Veuillez remplir tous les champs obligatoires correctement';
+      return;
+    }
+  
+    this.isLoading = true;
+  
+    try {
+      const currentUser = this.authService.getCurrentUser();
+      if (!currentUser?.id) {
+        this.router.navigate(['/auth/login'], {
+          queryParams: { returnUrl: this.router.url }
+        });
+        return;
+      }
+  
+      const reservationPayload = {
+        ...this.reservation,
+        nbrParticipant: Number(this.reservation.nbrParticipant),
+        equipements: this.selectedEquipments,
+        demandeurId: currentUser.id,
+        heureDebut: this.reservation.heureDebut,
+        heureFin: this.reservation.heureFin
+      };
+  
+      const response = await this.reservationService.createReservation(reservationPayload).toPromise();
+      
+      this.router.navigate(['/spaces'], {
+        state: { 
+          reservationData: reservationPayload,
+          reservationId: response.id 
+        }
       });
-    } else {
-      // Les erreurs seront affichées via le template
-      console.warn('Formulaire invalide');
+      
+    } catch (error: any) {
+      console.error('Erreur de soumission:', error);
+      this.errorMessage = error.message || 'Une erreur est survenue lors de la soumission';
+      
+      if (error instanceof HttpErrorResponse) {
+        if (error.status === 401) {
+          this.authService.logout();
+        } else if (error.status === 400) {
+          this.errorMessage = 'Données invalides. Veuillez vérifier les informations saisies.';
+        } else if (error.status === 500) {
+          this.errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
+        }
+      }
+    } finally {
+      this.isLoading = false;
     }
   }
 
-  goBack() {
+  goBack(): void {
     this.router.navigate(['/spaces']);
   }
 
-  // Helper pour afficher les erreurs de champ
+  
+  
+ 
+ 
   showError(field: string): boolean {
-    return this.formSubmitted && 
-           (this.reservation[field as keyof typeof this.reservation] === '' || 
-            (field === 'nbrParticipant' && !this.participantsIsValid()) ||
-            (field === 'email' && !this.emailIsValid()) ||
-            (field === 'linkedin' && !this.linkedInIsValid()));
+    const reservation = this.reservation as any;
+    if (!this.formSubmitted) return false;
+    
+    return reservation[field] === '' || 
+           (field === 'nbrParticipant' && !this.participantsIsValid()) ||
+           (field === 'emailR' && !this.emailIsValid()) ||
+           (field === 'lienLinkedInR' && !this.linkedInIsValid());
   }
+ 
+  
 }

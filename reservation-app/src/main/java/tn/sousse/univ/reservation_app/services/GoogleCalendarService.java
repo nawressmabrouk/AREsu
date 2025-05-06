@@ -1,32 +1,78 @@
 package tn.sousse.univ.reservation_app.services;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import com.google.api.client.util.DateTime;
-import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
 
+import tn.sousse.univ.reservation_app.dto.CalendarSlotDTO;
+import tn.sousse.univ.reservation_app.models.Espace;
 import tn.sousse.univ.reservation_app.models.Reservation;
+import tn.sousse.univ.reservation_app.models.Role;
+import tn.sousse.univ.reservation_app.models.StatusReservation;
+import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
+import tn.sousse.univ.reservation_app.repositories.ReservationRepository;
 
 @Service
 public class GoogleCalendarService {
+    private static final Logger log = LoggerFactory.getLogger(GoogleCalendarService.class);
+    private static final ZoneId TUNIS_ZONE = ZoneId.of("Africa/Tunis");
+    private static final String CALENDAR_ID = "REDACTED_OLD_APP_EMAIL";
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm");
 
     @Autowired
-    private Calendar googleCalendar;
+    private com.google.api.services.calendar.Calendar googleCalendar;
 
-    private static final String CALENDAR_ID = "REDACTED_OLD_APP_EMAIL";
+    @Autowired
+    private ReservationRepository reservationRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private HolidayService holidayService;
+
+    @Autowired
+    private EspaceRepository espaceRepository;
+
+    // Helper method to parse date strings
+    private Date parseDate(String dateString) throws ParseException {
+        return DATE_FORMAT.parse(dateString);
+    }
+
+    // Helper method to create Java Calendar instance
+    private java.util.Calendar createCalendarInstance() {
+        return java.util.Calendar.getInstance();
+    }
 
     public List<String> getUnavailableSlots(Date date) throws IOException {
-        List<String> unavailableSlots = new ArrayList<>();
-
         Date startOfDay = getStartOfDay(date);
         Date endOfDay = getEndOfDay(date);
 
@@ -37,31 +83,17 @@ public class GoogleCalendarService {
                 .setSingleEvents(true)
                 .execute();
 
-        for (Event event : events.getItems()) {
-            if (event.getStart().getDateTime() != null) {
-                unavailableSlots.add(event.getStart().getDateTime().toStringRfc3339());
-            } else if (event.getStart().getDate() != null) {
-                unavailableSlots.add(event.getStart().getDate().toStringRfc3339());
-            }
-        }
-
-        return unavailableSlots;
+        return events.getItems().stream()
+                .map(event -> event.getStart().getDateTime() != null ? event.getStart().getDateTime().toStringRfc3339()
+                        : event.getStart().getDate().toStringRfc3339())
+                .collect(Collectors.toList());
     }
 
     public boolean isEspaceDisponible(ObjectId espaceId, Date startDate, Date endDate) throws IOException {
-        String calendarId = getCalendarIdFromEspaceId(espaceId);
-
-        if (calendarId == null) {
-            System.err.println("No calendar mapping found for espaceId: " + espaceId);
-            return false;
-        }
-
-        DateTime startDateTime = new DateTime(startDate);
-        DateTime endDateTime = new DateTime(endDate);
-
+        String calendarId = espaceId.toString();
         Events events = googleCalendar.events().list(calendarId)
-                .setTimeMin(startDateTime)
-                .setTimeMax(endDateTime)
+                .setTimeMin(new DateTime(startDate))
+                .setTimeMax(new DateTime(endDate))
                 .setSingleEvents(true)
                 .setOrderBy("startTime")
                 .execute();
@@ -70,49 +102,245 @@ public class GoogleCalendarService {
     }
 
     private Date getStartOfDay(Date date) {
-        // Ensure the start of the day is 00:00:00 for the provided date.
-        return new Date(date.getTime() - (date.getHours() * 3600000) - (date.getMinutes() * 60000)
-                - (date.getSeconds() * 1000));
+        return Date.from(date.toInstant().atZone(TUNIS_ZONE).toLocalDate()
+                .atStartOfDay(TUNIS_ZONE).toInstant());
     }
 
     private Date getEndOfDay(Date date) {
-        // Ensure the end of the day is 23:59:59 for the provided date.
-        return new Date(date.getTime() + (23 - date.getHours()) * 3600000 + (59 - date.getMinutes()) * 60000
-                + (59 - date.getSeconds()) * 1000);
-    }
-
-    private String getCalendarIdFromEspaceId(ObjectId espaceId) {
-        return espaceId.toString();
+        return Date.from(date.toInstant().atZone(TUNIS_ZONE).toLocalDate()
+                .atTime(23, 59, 59).atZone(TUNIS_ZONE).toInstant());
     }
 
     public void marquerEvenementCommeAnnule(String eventId, Reservation reservation) {
         try {
             Event event = googleCalendar.events().get("primary", eventId).execute();
-
-            // Met à jour le titre
-            String originalTitle = event.getSummary();
-            if (!originalTitle.contains("[ANNULÉ]")) {
-                event.setSummary("[ANNULÉ] " + originalTitle);
-            }
-
-            // Ajoute une note dans la description
-            String description = event.getDescription() != null ? event.getDescription() : "";
-            description += "\nCet événement a été annulé par le demandeur.";
-            event.setDescription(description);
-
-            // Change la couleur (optionnelle)
-            event.setColorId("11"); // Rouge = "11" dans Google Calendar
-
-            // Mise à jour de l'événement dans Google Calendar
+            event.setSummary("[ANNULÉ] " + event.getSummary());
+            event.setDescription((event.getDescription() != null ? event.getDescription() : "") +
+                    "\nAnnulé par: " + reservation.getResponsableAction());
+            event.setColorId("11");
             googleCalendar.events().update("primary", eventId, event).execute();
-
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Erreur lors de la mise à jour de l'événement dans Google Calendar : " + e.getMessage());
+            log.error("Failed to cancel event", e);
+            throw new RuntimeException("Failed to cancel event: " + e.getMessage());
         }
     }
 
     public void deleteEvent(String eventId) throws IOException {
         googleCalendar.events().delete(CALENDAR_ID, eventId).execute();
     }
+
+    private boolean isSlotReserved(Reservation reservation, CalendarSlotDTO slot) {
+        return !reservation.getHeureFin().before(slot.getHeureDebut()) &&
+                !reservation.getHeureDebut().after(slot.getHeureFin());
+    }
+
+    private List<CalendarSlotDTO> generateTimeSlots(Date date) {
+        List<CalendarSlotDTO> slots = new ArrayList<>();
+        LocalDate localDate = date.toInstant().atZone(TUNIS_ZONE).toLocalDate();
+        LocalTime startTime = LocalTime.of(8, 0);
+        LocalTime endTime = LocalTime.of(18, 0);
+
+        while (startTime.isBefore(endTime)) {
+            CalendarSlotDTO slot = new CalendarSlotDTO();
+            slot.setHeureDebut(Date.from(localDate.atTime(startTime).atZone(TUNIS_ZONE).toInstant()));
+            slot.setHeureFin(Date.from(localDate.atTime(startTime.plusMinutes(30)).atZone(TUNIS_ZONE).toInstant()));
+            slots.add(slot);
+            startTime = startTime.plusMinutes(30);
+        }
+        return slots;
+    }
+
+    public boolean checkSlotAvailability(String date, String espaceId) {
+        try {
+            Date requestedDate = parseDate(date);
+            java.util.Calendar requestedSlot = createCalendarInstance();
+            requestedSlot.setTime(requestedDate);
+
+            Criteria criteria = Criteria.where("espaceId").is(new ObjectId(espaceId))
+                    .and("statut").ne(StatusReservation.REFUSÉE)
+                    .and("heureDebut").lt(requestedSlot.getTime())
+                    .and("heureFin").gt(requestedSlot.getTime());
+
+            return !mongoTemplate.exists(Query.query(criteria), Reservation.class);
+        } catch (Exception e) {
+            log.error("Error checking slot availability", e);
+            return false;
+        }
+    }
+
+    public List<String> getUnavailableSlotsForSpace(String espaceId, String date) {
+        try {
+            Date requestedDate = parseDate(date);
+            List<Reservation> reservations = getReservationsForDate(new ObjectId(espaceId), requestedDate);
+
+            Set<String> unavailableSlots = new HashSet<>();
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+
+            for (Reservation res : reservations) {
+                Date start = res.getHeureDebut();
+                Date end = res.getHeureFin();
+
+                // Convert to LocalTime for easier hour/minute manipulation
+                LocalTime startTime = start.toInstant().atZone(TUNIS_ZONE).toLocalTime();
+                LocalTime endTime = end.toInstant().atZone(TUNIS_ZONE).toLocalTime();
+
+                // Generate slots in 30-minute intervals
+                LocalTime current = startTime;
+                while (current.isBefore(endTime)) {
+                    unavailableSlots.add(String.format("%02d:%02d", current.getHour(), current.getMinute()));
+                    current = current.plusMinutes(30);
+                }
+            }
+
+            return new ArrayList<>(unavailableSlots).stream()
+                    .sorted()
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error getting unavailable slots", e);
+            return Collections.emptyList();
+        }
+    }
+
+    public List<String> getUnavailableSlotsForEtablissement(String etablissementId, String date) {
+        try {
+            Date requestedDate = parseDate(date);
+            List<Espace> espaces = espaceRepository.findByEtablissementId(etablissementId);
+            Set<String> allUnavailableSlots = new HashSet<>();
+
+            // Check if establishment is fully reserved
+            if (isEtablissementReservedForDate(new ObjectId(etablissementId), requestedDate)) {
+                // Return all time slots as unavailable
+                return generateTimeSlots(requestedDate).stream()
+                        .map(slot -> TIME_FORMAT.format(slot.getHeureDebut()))
+                        .collect(Collectors.toList());
+            }
+
+            // Otherwise check individual spaces
+            for (Espace espace : espaces) {
+                allUnavailableSlots.addAll(getUnavailableSlotsForSpace(espace.getId(), date));
+            }
+
+            return new ArrayList<>(allUnavailableSlots).stream()
+                    .sorted()
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error getting etablissement unavailable slots", e);
+            return Collections.emptyList();
+        }
+    }
+
+    private Optional<Reservation> findReservationForSlot(List<Reservation> reservations, CalendarSlotDTO slot) {
+        return reservations.stream()
+                .filter(res -> !res.getHeureFin().before(slot.getHeureDebut()) &&
+                        !res.getHeureDebut().after(slot.getHeureFin()))
+                .findFirst();
+    }
+
+    private Map<String, String> getEspaceNamesForReservations(List<Reservation> reservations) {
+        Set<String> espaceIds = reservations.stream()
+                .map(Reservation::getEspaceId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if (espaceIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Espace> espaces = espaceRepository.findAllById(espaceIds);
+
+        return espaces.stream()
+                .collect(Collectors.toMap(
+                        Espace::getId,
+                        Espace::getNom,
+                        (existing, replacement) -> existing));
+    }
+
+    public List<CalendarSlotDTO> getCalendarView(ObjectId etablissementId, ObjectId espaceId, String date,
+            Role userRole, String userId) {
+        try {
+            Date requestedDate = parseDate(date);
+            boolean isDemandeur = userRole == Role.DEMANDEUR_INTERNE || userRole == Role.DEMANDEUR_EXTERNE;
+
+            // Get all accepted reservations for the establishment on this date
+            boolean etablissementReserved = isEtablissementReservedForDate(etablissementId, requestedDate);
+
+            // Get reservations for the specific space
+            List<Reservation> reservations = getReservationsForDate(espaceId, requestedDate);
+            Map<String, String> espaceNames = getEspaceNamesForReservations(reservations);
+
+            // Generate time slots (8:00-18:00 in 30-minute intervals)
+            List<CalendarSlotDTO> slots = generateTimeSlots(requestedDate);
+
+            return slots.stream()
+                    .map(slot -> {
+                        // First check if establishment is fully reserved
+                        if (etablissementReserved) {
+                            slot.setReserved(true);
+                            slot.setEtablissementReserved(true);
+                            return slot;
+                        }
+
+                        // Check if slot is reserved
+                        Optional<Reservation> reservation = findReservationForSlot(reservations, slot);
+
+                        // For demandeurs, show all reservations as unavailable except their own
+                        if (isDemandeur) {
+                            if (reservation.isPresent()) {
+                                Reservation res = reservation.get();
+                                // If this is the demandeur's own reservation, mark it differently
+                                if (res.getDemandeurId().equals(userId)) {
+                                    slot.setReserved(false);
+                                    slot.setUsersReservation(true);
+                                    slot.setIntituleAction(res.getIntituleAction());
+                                } else {
+                                    slot.setReserved(true);
+                                }
+                            }
+                        }
+                        // For other roles (secretary, room manager), show full details
+                        else {
+                            slot.setReserved(reservation.isPresent());
+                            if (reservation.isPresent()) {
+                                Reservation res = reservation.get();
+                                slot.setIntituleAction(res.getIntituleAction());
+                                slot.setEspaceName(espaceNames.getOrDefault(res.getEspaceId(), "Unknown Espace"));
+                                slot.setResponsableAction(res.getResponsableAction());
+                            }
+                        }
+
+                        return slot;
+                    })
+                    .collect(Collectors.toList());
+        } catch (ParseException e) {
+            log.error("Invalid date format", e);
+            return Collections.emptyList();
+        }
+    }
+
+    private boolean isEtablissementReservedForDate(ObjectId etablissementId, Date date) {
+        Date startOfDay = getStartOfDay(date);
+        Date endOfDay = getEndOfDay(date);
+
+        Criteria criteria = Criteria.where("etablissementId").is(etablissementId)
+                .and("statut").is(StatusReservation.ACCEPTÉE)
+                .and("heureDebut").lte(startOfDay) // Starts before or at start of day
+                .and("heureFin").gte(endOfDay); // Ends after or at end of day
+
+        return mongoTemplate.exists(Query.query(criteria), Reservation.class);
+    }
+
+    private List<Reservation> getReservationsForDate(ObjectId espaceId, Date date) {
+        Date startOfDay = getStartOfDay(date);
+        Date endOfDay = getEndOfDay(date);
+
+        Criteria criteria = Criteria.where("espaceId").is(espaceId)
+                .and("statut").ne(StatusReservation.REFUSÉE) // Include all non-refused reservations
+                .and("heureDebut").gte(startOfDay)
+                .and("heureFin").lte(endOfDay);
+
+        return mongoTemplate.find(Query.query(criteria)
+                .with(Sort.by(Sort.Direction.ASC, "heureDebut")),
+                Reservation.class);
+    }
+
 }

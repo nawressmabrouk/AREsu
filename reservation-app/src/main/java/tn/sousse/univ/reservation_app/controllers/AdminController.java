@@ -20,6 +20,7 @@ import tn.sousse.univ.reservation_app.services.UserService;
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
+
 public class AdminController {
 
     @Autowired
@@ -31,19 +32,35 @@ public class AdminController {
     // Add sub-admins
     @PostMapping("/addSousAdmins")
     public ResponseEntity<?> addSubAdmins(@RequestBody User user) {
-        if (user.getRole() != Role.SECRETAIRE_GENERALE && user.getRole() != Role.RESPONSABLE_SALLE) {
-            return ResponseEntity.badRequest()
-                    .body("Only SECRETAIRE_GENERALE or RESPONSABLE_SALLE roles can be created.");
-        }
+        try {
+            System.out.println("Reçu: " + user.toString()); // Log les données reçues
 
-        User created = userService.registerUser(user);
-        return ResponseEntity.ok(created);
+            if (user.getRole() != Role.SECRETAIRE_GENERALE && user.getRole() != Role.RESPONSABLE_SALLE) {
+                return ResponseEntity.badRequest()
+                        .body("Seuls les rôles SECRETAIRE_GENERALE ou RESPONSABLE_SALLE sont autorisés");
+            }
+
+            User created = userService.registerUser(user);
+            System.out.println("Créé: " + created.toString()); // Log la réponse
+            return ResponseEntity.ok(created);
+
+        } catch (Exception e) {
+            System.err.println("Erreur: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("Erreur serveur: " + e.getMessage());
+        }
     }
 
     // Add a new space
+    // Dans le contrôleur
     @PostMapping("/{responsableId}/ajouterEspace")
-    public ResponseEntity<Espace> addSpace(@PathVariable String responsableId, @RequestBody Espace espace) {
-        return ResponseEntity.ok(adminService.ajouterEspace(responsableId, espace));
+    public ResponseEntity<?> addSpace(@PathVariable String responsableId, @RequestBody Espace espace) {
+        try {
+            return ResponseEntity.ok(adminService.ajouterEspace(responsableId, espace));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // Modify a space

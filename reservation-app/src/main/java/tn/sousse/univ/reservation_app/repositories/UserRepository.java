@@ -17,6 +17,8 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     List<User> findByRole(Role role); // Trouver tous les utilisateurs par rôle
 
+    boolean existsByEmail(String email);
+    
     @Query("{ 'espacesResponsables': ?0, 'role': ?1 }")
     List<User> findByEspacesResponsablesContainsAndRole(ObjectId espaceId, Role role);
 

@@ -54,7 +54,12 @@ public class DemandeurService {
          * }
          */
 
-        public List<ReservationResponseDTO> getReservationsByDemandeur(String demandeurId) {
+        
+        
+
+        
+        
+         public List<ReservationResponseDTO> getReservationsByDemandeur(String demandeurId) {
                 List<Reservation> reservations = reservationRepository.findByDemandeurId(demandeurId);
 
                 User demandeur = userRepository.findById(demandeurId)

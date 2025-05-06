@@ -1,0 +1,16 @@
+{
+  "/api": {
+    "target": "http://localhost:8080",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/google-calendar": {
+    "target": "https://www.googleapis.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/google-calendar": ""
+    }
+  }
+}

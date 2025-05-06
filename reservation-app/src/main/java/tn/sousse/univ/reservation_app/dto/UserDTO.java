@@ -23,4 +23,5 @@ public class UserDTO {
     private String structure;
     private String linkedInLink;
 
+    private boolean isPartenaire;
 }

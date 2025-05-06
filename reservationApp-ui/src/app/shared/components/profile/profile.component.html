@@ -1,0 +1,338 @@
+ <!-- shared/profile/profile.component.html -->
+ <div class="profile-container" #profileDropdown>
+    <!-- Profile icon with first letter of name -->
+    <div class="profile-icon" (click)="toggleDropdown($event)">
+      {{ profileData?.nom?.charAt(0) || 'U' }}
+    </div>
+  
+    <!-- Profile dropdown menu -->
+    <div class="profile-dropdown" *ngIf="showDropdown">
+      <div class="profile-header">
+        <div class="user-avatar">{{ profileData?.nom?.charAt(0) || 'U' }}</div>
+        <div class="user-info">
+          <div class="greeting">Bonjour {{ profileData?.nom || 'Utilisateur' }} ! </div>
+          <div class="email">{{ profileData?.email || '' }}</div>
+        </div>
+      </div>
+      
+      <div class="dropdown-content">
+        <!-- View Profile -->
+        <div class="dropdown-item" (click)="openProfileModal()">
+          <fa-icon [icon]="faUser"></fa-icon>
+          <span>Voir votre profil</span>
+        </div>
+        
+        <!-- Edit Profile -->
+        <div class="dropdown-item" (click)="openEditModal()">
+          <fa-icon [icon]="faEdit"></fa-icon>
+          <span>Modifier votre profil</span>
+        </div>
+        
+        <!-- Change Password -->
+        <div class="dropdown-item" (click)="openPasswordModal()">
+          <fa-icon [icon]="faLock"></fa-icon>
+          <span>Changer mot de passe</span>
+        </div>
+        
+        <!-- View Reservations (only for demandeur) -->
+        <div class="dropdown-item" (click)="openReservationsModal()" *ngIf="isDemandeur()">
+          <fa-icon [icon]="faCalendar"></fa-icon>
+          <span>Consulter vos réservations</span>
+        </div>
+        
+        <!-- Logout -->
+        <div class="dropdown-item logout" (click)="openLogoutModal()">
+          <fa-icon [icon]="faSignOutAlt"></fa-icon>
+          <span>Se déconnecter</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Profile View Modal -->
+<!-- Profile View Modal -->
+<div class="modal-overlay" *ngIf="showProfileModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+    
+      <h3>Mon Profil</h3>
+      <button class="modal-close" (click)="closeModal()">&times;</button>
+    </div>
+
+    <div class="profile-content">
+      <div class="profile-header">
+        <div class="user-avatar">{{ profileData?.nom?.charAt(0) || 'U' }}</div>
+        <div class="user-main-info">
+          <h4>{{ profileData?.prenom || '-' }} {{ profileData?.nom || '-' }}</h4>
+          <p class="user-email">{{ profileData?.email || '-' }}</p>
+        </div>
+      
+      </div>
+
+      <div class="personal-info-section">
+        <h4>Informations personnelles</h4>
+        <div class="info-grid">
+          <!-- Keep existing info items -->
+          <div class="info-item">
+            <label>Nom</label>
+            <p>{{ profileData?.nom || '-' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Prénom</label>
+            <p>{{ profileData?.prenom || '-' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Téléphone</label>
+            <p>{{ profileData?.numTel || '-' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Fonction</label>
+            <p>{{ profileData?.fonction || '-' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Établissement</label>
+            <p>{{ profileData?.nomEtablissement || '-' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Structure</label>
+            <p>{{ profileData?.structure || '-' }}</p>
+          </div>
+          <div class="info-item">
+            <label>Rôle</label>
+            <p>{{ profileData?.role || '-' }}</p>
+          </div>
+          <button class="edit-profile-btn" (click)="openEditModal()"> 
+            <fa-icon [icon]="faEdit"></fa-icon>
+             Modifier  
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <!-- Edit Profile Modal -->
+<!-- Edit Profile Modal -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
+  <div class="modal-box edit-modal" (click)="$event.stopPropagation()">
+    <app-notification></app-notification>
+    <div class="modal-header">
+      <h3>Modifier le Profil</h3>
+      <button class="modal-close" (click)="closeModal()">&times;</button>
+    </div>
+
+    <div class="profile-content">
+      <!-- En-tête avec avatar et infos -->
+      <div class="profile-header">
+        <div class="user-avatar">{{ profileData?.nom?.charAt(0) || 'U' }}</div>
+        <div class="user-main-info">
+          <h4>{{ profileData?.prenom || '-' }} {{ profileData?.nom || '-' }}</h4>
+          <p class="user-email">{{ profileData?.email || '-' }}</p>
+        </div>
+      </div>
+
+      <!-- Formulaire d'édition -->
+      <form class="edit-form" #editForm="ngForm" (ngSubmit)="saveProfile()">
+        <div class="form-grid">
+          <!-- Rangée 1 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nom</label>
+              <input type="text" [(ngModel)]="editData.nom" name="nom" required>
+            </div>
+            
+            <div class="form-group">
+              <label>Prénom</label>
+              <input type="text" [(ngModel)]="editData.prenom" name="prenom" required>
+            </div>
+          </div>
+
+          <!-- Rangée 2 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Téléphone</label>
+              <input type="tel" [(ngModel)]="editData.numTel" name="numTel" pattern="[0-9]{8}" required>
+            </div>
+            
+            <div class="form-group">
+              <label>Fonction</label>
+              <input type="text" [(ngModel)]="editData.fonction" name="fonction" required>
+            </div>
+          </div>
+
+          <!-- Rangée 3 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Structure</label>
+              <input type="text" [(ngModel)]="editData.structure" name="structure" required>
+            </div>
+            
+            <div class="form-group">
+              <label>Établissement</label>
+              <input type="text" [(ngModel)]="editData.nomEtablissement" name="nomEtablissement" required>
+            </div>
+          </div>
+
+          <!-- LinkedIn -->
+          <div class="form-row">
+            <div class="form-group1 ">
+              <label>Profil LinkedIn</label>
+              <input type="url" [(ngModel)]="editData.linkedInLink" name="linkedInLink">
+          
+          
+            </div>
+            
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" (click)="closeModal()">Annuler</button>
+          <button type="submit" class="save-btn">Enregistrer</button>
+        </div>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+  
+  <!-- Change Password Modal (reste inchangé) -->
+  <div class="modal-overlay" *ngIf="showPasswordModal" (click)="closeModal()">
+    <div class="modal-box password-modal" (click)="$event.stopPropagation()">
+      <app-notification></app-notification>
+      <div class="modal-header">
+        
+        <h3>Changer le mot de passe</h3>
+        <button class="modal-close" (click)="closeModal()">&times;</button>
+      </div>
+  
+      <form (ngSubmit)="changePassword()">
+        <div class="password-content">
+          <!-- Ancien mot de passe -->
+          <div class="password-group">
+            <label>Ancien mot de passe</label>
+            <div class="password-input">
+              <fa-icon [icon]="faKey" class="input-icon"></fa-icon>
+              <input [type]="showOldPassword ? 'text' : 'password'"
+                     [(ngModel)]="passwordData.oldPassword" 
+                     name="oldPassword" 
+                     required>
+      
+            </div>
+          </div>
+  
+          <!-- Nouveau mot de passe -->
+          <div class="password-group">
+            <label>Nouveau mot de passe</label>
+            <div class="password-input">
+              <fa-icon [icon]="faLock" class="input-icon"></fa-icon>
+              <input [type]="showNewPassword ? 'text' : 'password'"
+                     [(ngModel)]="passwordData.newPassword" 
+                     name="newPassword" 
+                     required>
+              
+            </div>
+          </div>
+  
+          <!-- Confirmation -->
+          <div class="password-group">
+            <label>Confirmer le nouveau mot de passe</label>
+            <div class="password-input">
+              <fa-icon [icon]="faLock" class="input-icon"></fa-icon>
+              <input [type]="showConfirmPassword ? 'text' : 'password'"
+                     [(ngModel)]="passwordData.confirmPassword" 
+                     name="confirmPassword" 
+                     required>
+           
+            </div>
+          </div>
+  
+          <!-- Actions -->
+          <div class="form-actions">
+            <button type="button" class="cancel-btn"  (click)="closeModal()">Annuler</button>
+            <button type="submit" class="save-btn">Modifier</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Logout Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showLogoutModal" (click)="closeLogoutModal()">
+  <div class="modal-box logout-modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="closeModal()">&times;</button>
+    <h3>Souhaitez-vous vraiment <br> vous déconnecter ?</h3>
+    <p>Se déconnecter en tant que <br><strong>{{ profileData?.email || '' }}</strong></p>
+    
+    <div class="logout-actions">
+      <button class="logout-btn" (click)="logout()">Se déconnecter</button>
+      <button class="cancel-btn" (click)="closeLogoutModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+  <!-- Reservations Modal (only for demandeur) -->
+  
+<div class="modal-overlay" *ngIf="showReservationsModal && isDemandeur()" (click)="closeModal()">
+  <div class="modal-box reservations-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="reservation-title">
+        <h3>Consulter Vos Réservations</h3>
+        <p class="subtitle">Voir ou annuler vos réservations</p>
+      </div>
+      <button class="modal-close" (click)="closeModal()">&times;</button>
+    </div>
+
+    <div class="reservations-content">
+      <!-- État de chargement -->
+      <div *ngIf="loadingReservations" class="loading-spinner">
+        <div class="spinner"></div>
+        Chargement en cours...
+      </div>
+
+      <!-- Message d'erreur -->
+      <div *ngIf="errorReservations" class="error-message">
+        {{ errorReservations }}
+      </div>
+
+      <!-- Liste des réservations -->
+      <div *ngIf="!loadingReservations && reservations.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Espace</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let res of reservations">
+              <td>{{ res.espaceNom || 'Non spécifié' }}</td>
+              <td>
+                {{ res.heureDebut | date:'dd/MM/yy HH:mm' }} - 
+                {{ res.heureFin | date:'HH:mm' }}
+              </td>
+              <td>
+                <span class="status-badge" [class.status-pending]="res.statut === 'En attente'"
+                                     [class.status-cancelled]="res.statut === 'Annulée'"
+                                     [class.status-approved]="res.statut === 'Validée'">
+                  {{ res.statut }}
+                </span>
+              </td>
+              <td>
+                <button *ngIf="canCancel(res)" 
+                        class="cancel-reservation-btn"
+                        (click)="onCancelReservation(res.id)">
+                  Annuler
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Aucune réservation -->
+      <div *ngIf="!loadingReservations && reservations.length === 0" class="no-reservations">
+        <fa-icon [icon]="faCalendarTimes" class="empty-icon"></fa-icon>
+        <p>Aucune réservation trouvée</p>
+      </div>
+    </div>
+  </div>
+</div>

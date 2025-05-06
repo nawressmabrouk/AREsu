@@ -8,448 +8,345 @@
     
     <!-- Partie centrale - Titre et sous-titre -->
     <div class="center-section">
-      <div class="page-title">Gestion globale des utilisateurs et des ressources</div>
-     
+      <div class="page-title">Console Administrative</div>
+      <div class="page-subtitle">
+        Gestion des sous-administrateurs et des espaces
+      </div>
     </div>
-      
-    <!-- Partie droite - Breadcrumb -->
+
     <div class="right-section">
       <div class="breadcrumb">
-          <span>
-              <fa-icon [icon]="faHome" class="icon"></fa-icon> <!-- Icône Font Awesome -->
-                Accueil
-                </span>
-       
-        <span>  <fa-icon [icon]="faPageIcon" class="icon"></fa-icon> <!-- Icône Font Awesome -->
-          Console d'Administration</span>
+        <span>
+          <fa-icon [icon]="faHome" class="icon"></fa-icon>
+          Accueil
+        </span>
+        <span>
+          <fa-icon [icon]="faPageIcon" class="icon"></fa-icon>
+          Console Administrative
+        </span>
       </div>
-      <div class="profile-container" #profileContainer>
-               <div class="profile-icon" (click)="toggleProfileDropdown($event)">N</div>
-               <div class="profile-dropdown" *ngIf="showProfileDropdown">
-          <div class="profile-header">
-            <div class="user-avatar">N</div>
-            <div class="user-info">
-              <div class="greeting">Bonjour Nourhen</div>
-              <div class="email">{{ 'zroudnourhen@essths.u-sousse.tn' }}</div>
-            </div>
-          </div>
-          
-          <div class="dropdown-content">
-            <div class="dropdown-item" 
-                 *ngFor="let item of menuItems" 
-                 (click)="item.action()"
-                 [class.logout]="item.logout">
-              <fa-icon [icon]="item.icon"></fa-icon>
-              <span>{{ item.title }}</span>
-              <div class="hover-arrow">></div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <app-profile [user]="currentUser"></app-profile>
     </div>
   </div>
 </div>
 
-<div class="admin-dashboard">
-  <div class="admin-layout">
-    <!-- Sidebar style WhatsApp -->
-    <div class="admin-sidebar">
-      <div *ngFor="let section of sections" 
-           class="sidebar-section" 
-           [class.active]="activeSection === section.id"
-           (click)="setActiveSection(section.id)">
-        {{ section.title }}
+<!-- Contenu principal -->
+<div class="main-content">
+  <!-- Écran de choix initial -->
+  <div *ngIf="!showModal" class="choice-container">
+    <div class="choice-box">
+      <div class="choice-card">
+        <h2 class="choice-title">Que souhaitez-vous faire aujourd'hui ?</h2>
+        <p class="choice-subtitle">C'est très simple, choisissez une option ci-dessous</p>
+    
+        <div class="icon-button-group">
+          <div class="icon-wrapper">
+            <span class="icon-circle">
+              <fa-icon [icon]="faUsersCog" class="btn-icon"></fa-icon>
+            </span>
+            <button class="choice-btn" (click)="openModal('sous-admin')">
+              Gestion des Sous-Admins
+            </button>
+          </div>
+          
+          <div class="icon-wrapper">
+            <span class="icon-circle">
+              <fa-icon [icon]="faBuilding" class="btn-icon"></fa-icon>
+            </span>
+            <button class="choice-btn" (click)="toggleEspaceOptions()">
+              Gestion des Espaces
+            </button>
+          </div>
+        </div>
+    
+        <!-- Sous-boutons pour Gestion des Espaces -->
+<!-- Sous-boutons pour Gestion des Espaces -->
+<div *ngIf="showEspaceOptions" class="sub-buttons-container">
+  <div class="sub-buttons-row">
+    <div class="icon-wrapper">
+      <span class="icon-circle small">
+        <fa-icon [icon]="faPlusCircle" class="btn-icon"></fa-icon>
+      </span>
+      <button class="sub-btn" (click)="currentEspaceView = 'ajouter'; showModal = 'espaces'">
+        Ajouter Espace
+      </button>
+    </div>
+    
+    <div class="icon-wrapper">
+      <span class="icon-circle small">
+        <fa-icon [icon]="faTasks" class="btn-icon"></fa-icon>
+      </span>
+      <button class="sub-btn" (click)="currentEspaceView = 'gerer'; showModal = 'espaces'">
+        Gérer Espaces
+      </button>
+    </div>
+  </div>
+</div>
       </div>
     </div>
+  </div>
 
-    <!-- Contenu principal -->
-    <div class="admin-main-content">
-      <div *ngIf="activeSection === 'add-personnel'" class="section-content">
-        <div class="personnel-form-container">
-          <h2>Gestion du Personnel</h2>
-          <p>Ajouter ou modifier des membres du personnel</p>
+  <!-- Modal Gestion Sous-Admins -->
+  <div *ngIf="showModal === 'sous-admin'" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button class="close-modal" (click)="closeModal()">&times;</button>
+      <h2>Ajouter un sous-admin</h2>
+      <app-notification></app-notification>
+      <form class="register-form" (submit)="onSubmit(
+        lastName.value,
+        firstName.value,
+        email.value,
+        function.value,
+        phone.value,
+        etablissement.value,
+        linkedin.value,
+        structure.value,
+        secretaire.checked,
+        responsable.checked,
+        password.value,
+        confirmPassword.value,
+        espacesResponsables.value,
+        $event
+      )">
+        <!-- Nom et Prénom -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="lastName">Nom</label>
+            <div class="input-container">
+              <fa-icon [icon]="faUser" class="icon"></fa-icon>
+              <input type="text" id="lastName" #lastName required>
+            </div>
+          </div>
           
-          <form #personnelForm="ngForm" (ngSubmit)="savePersonnel()" class="personnel-form">
-            <!-- Première ligne - 2 champs -->
-            <div class="form-row">
-              <div class="form-field">
-                <fa-icon [icon]="faUserTag" class="input-icon"></fa-icon>
-                <label>Nom&prénom</label>
-                <input type="text" class="form-input" [(ngModel)]="currentPersonnel.nom" name="nom" required>
-              </div>
-              <div class="form-field">
-                <label>Email</label>
-                <fa-icon [icon]="faEnvelope" class="input-icon"></fa-icon>
-                <input type="email" class="form-input" [(ngModel)]="currentPersonnel.email" name="email" required>
-              </div>
+          <div class="form-group">
+            <label for="firstName">Prénom</label>
+            <div class="input-container">
+              <fa-icon [icon]="faUser" class="icon"></fa-icon>
+              <input type="text" id="firstName" #firstName required>
             </div>
-        
-            <!-- Deuxième ligne - 2 champs -->
-            <div class="form-row">
-              <div class="form-field">
-                <fa-icon [icon]="faPhone" class="input-icon"></fa-icon>
-                <label>Téléphone</label>
-                <input type="tel" class="form-input" [(ngModel)]="currentPersonnel.telephone" name="telephone">
-              </div>
-              <div class="form-field">
-                <label>Fonction</label>
-                <fa-icon [icon]="faBriefcase" class="input-icon"></fa-icon>
-                <input type="text" class="form-input" [(ngModel)]="currentPersonnel.fonction" name="fonction" required>
-              </div>
-            </div>
-        
-            <!-- Troisième ligne - Type de personnel (radio buttons) -->
-            <div class="form-row">
-              <div class="form-field">
-                <label>Salle concernée</label>
-                <fa-icon [icon]="faChalkboard" class="input-icon"></fa-icon>
-                <input type="text" class="form-input" [(ngModel)]="currentPersonnel.salleConcernee" name="salleConcernee">
-              </div>
-              <div class="form-field">
-                <label>Structure</label>
-                <fa-icon [icon]="faBuilding" class="input-icon"></fa-icon>
-                <input type="text" class="form-input" [(ngModel)]="currentPersonnel.structure" name="structure" required>
-              </div>
-            </div>
-        
-            <!-- Quatrième ligne - 2 champs -->
-            <div class="form-row">
-              <div class="form-field">
-                <label>Établissement</label>
-                <fa-icon [icon]="faUniversity" class="input-icon"></fa-icon>
-                <input type="text" class="form-input" [(ngModel)]="currentPersonnel.etablissement" name="etablissement" required>
-              </div>
-              <div class="form-field radio-group">
-                <label>Type de personnel</label>
-                <div class="radio-options">
-                  <label>
-                    <input type="radio" name="typePersonnel" [(ngModel)]="currentPersonnel.typePersonnel" value="responsable" required>
-                    Responsable
-                  </label>
-                  <label>
-                    <input type="radio" name="typePersonnel" [(ngModel)]="currentPersonnel.typePersonnel" value="secretaire" required>
-                    Secrétaire
-                  </label>
-                 
-                </div>
-              </div>
-              
-            </div>
-        
-            <!-- Boutons d'action -->
-            <div class="form1-actions">
-              <button type="button" class="cancel-btn" (click)="cancelEdit()">Annuler</button>
-              <button type="submit" class="submit-btn" [disabled]="!personnelForm.form.valid">
-                {{ isEditing ? 'Modifier' : 'Ajouter' }}
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
-      </div>
-      <!-- Section Ajout Espace -->
-    <!-- Section Ajout Espace -->
-<!-- Section Ajout Espace -->
-<!-- Section Ajout Espace -->
-<div *ngIf="activeSection === 'add-espace'" class="section-content">
-  <div class="form-container">
-    <h2>Gestion des Espaces</h2>
-    <p>Ajouter ou modifier des espaces de travail</p>
-    
-    <form (ngSubmit)="saveEspace()" #espaceForm="ngForm">
-      <!-- Première ligne - 2 champs -->
-      <div class="form-row">
-        <div class="form-field">
-          <fa-icon [icon]="faBuilding" class="input-icon"></fa-icon>
-          <label>Nom d'espace</label>
-          <input type="text" class="form-input" [(ngModel)]="currentEspace.nom" name="nomEspace" required>
-        </div>
-        <div class="form-field">
-          <fa-icon [icon]="faUsers" class="input-icon"></fa-icon>
-          <label>Capacité</label>
-          <input type="number" class="form-input" [(ngModel)]="currentEspace.capacite" name="capacite" required>
-        </div>
-      </div>
 
-      <!-- Deuxième ligne - 2 champs -->
-      <div class="form-row">
-        <div class="form-field">
-          <fa-icon [icon]="faUniversity" class="input-icon"></fa-icon>
-          <label>Établissement</label>
-          <input type="text" class="form-input" [(ngModel)]="currentEspace.etablissement" name="etablissement" required>
+        <!-- Email et Fonction -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <div class="input-container">
+              <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
+              <input type="email" id="email" #email required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="function">Fonction</label>
+            <div class="input-container">
+              <fa-icon [icon]="faBriefcase" class="icon"></fa-icon>
+              <input type="text" id="function" #function required>
+            </div>
+          </div>
         </div>
-        <div class="form-field">
-          <fa-icon [icon]="faLaptop" class="input-icon"></fa-icon>
-          <label>Équipement</label>
-          <input type="text" class="form-input" [(ngModel)]="currentEspace.equipement" name="equipement" required>
-        </div>
-      </div>
 
-      <!-- Troisième ligne - 1 champ seul -->
-      <div class="form-row single-field">
-        <div class="form-field">
-          <fa-icon [icon]="faUserTie" class="input-icon"></fa-icon>
-          <label>Responsable concerné</label>
-          <input type="text" class="form-input" [(ngModel)]="currentEspace.responsable" name="responsable" required>
+        <!-- Téléphone et Établissement -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">Téléphone</label>
+            <div class="input-container">
+              <fa-icon [icon]="faPhone" class="icon"></fa-icon>
+              <input type="tel" id="phone" #phone required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="etablissement">Établissement</label>
+            <div class="input-container">
+              <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
+              <input type="text" id="etablissement" #etablissement required>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- Boutons d'action -->
-      <div class="form1-actions">
-        <button type="button" class="cancel-btn" (click)="cancelEdit()">Annuler</button>
-        <button type="submit" class="submit-btn" [disabled]="!espaceForm.form.valid">
-          {{ isEditing ? 'Modifier' : 'Ajouter' }}
+        <!-- LinkedIn et Structure -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="linkedin">LinkedIn</label>
+            <div class="input-container">
+              <fa-icon [icon]="faLink" class="icon"></fa-icon>
+              <input type="url" id="linkedin" #linkedin >
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="structure">Structure</label>
+            <div class="input-container">
+              <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
+              <input type="text" id="structure" #structure required>
+            </div>
+          </div>
+        </div>
+
+      
+        <div class="form-row">
+
+ 
+               <!-- Espaces Responsables -->
+          <div class="form-group">
+            <label for="espacesResponsables">Espaces Responsables (séparés par des virgules)</label>
+            <div class="input-container">
+              <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
+              <input type="text" 
+                    id="espacesResponsables" 
+                    name="espacesResponsables" 
+                    #espacesResponsables
+                    placeholder="Ex: Salle1,Salle2,Salle3">
+            </div>
+          </div>
+                     <!-- Rôle -->
+                     <div class="form-group">
+                      <label>Rôle</label>
+                      <div class="radio-group">
+                        <label>
+                          <input type="radio" name="role" #secretaire value="secretaire" required>
+                          Secrétaire Générale
+                        </label>
+                        <label>
+                          <input type="radio" name="role" #responsable value="responsable" required>
+                          Responsable Salle
+                        </label>
+                      </div>
+                    </div>
+        </div>
+
+   
+
+        <!-- Mot de passe -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <div class="input-container">
+              <fa-icon [icon]="faLock" class="icon"></fa-icon>
+              <input type="password" id="password" #password required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="confirmPassword">Confirmation</label>
+            <div class="input-container">
+              <fa-icon [icon]="faLock" class="icon"></fa-icon>
+              <input type="password" id="confirmPassword" #confirmPassword required>
+            </div>
+           
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit">Créer le compte</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Gestion Espaces -->
+  <div *ngIf="showModal === 'espaces'" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button class="close-modal" (click)="closeModal()">&times;</button>
+      <app-notification></app-notification>
+      <!-- Sous-menu Espaces -->
+      <div class="espace-submenu">
+        <button (click)="currentEspaceView = 'ajouter'" 
+                [class.active]="currentEspaceView === 'ajouter'">
+          Ajouter Espace
+        </button>
+        <button (click)="currentEspaceView = 'gerer'" 
+                [class.active]="currentEspaceView === 'gerer'">
+          Gérer Espaces
         </button>
       </div>
-    </form>
-  </div>
-</div>
 
-      <!-- Liste Personnel -->
-      <div *ngIf="activeSection === 'manage-personnel'" class="management-section">
-        <h2>Liste des Personnels</h2> 
-        <div class="search-box">
-          <input type="text" [(ngModel)]="searchPersonnel" placeholder="Rechercher...">
-        </div>
-      
-        <div class="list-container">
-          <div *ngFor="let p of filteredPersonnel" class="list-item">
-            <div class="item-info">
-              <h3>{{ p.nom }}</h3>
-              <p><strong>Email:</strong> {{ p.email }}</p>
-              <p><strong>Téléphone:</strong> {{ p.telephone }}</p>
-              <p><strong>Fonction:</strong> {{ p.fonction }}</p>
-              <p><strong>Salle concernée:</strong> {{ p.salleConcernee }}</p>
-              <p><strong>Structure:</strong> {{ p.structure }}</p>
-              <p><strong>Établissement:</strong> {{ p.etablissement }}</p>
-              <p><strong>Type:</strong> {{ p.typePersonnel }}</p>
-            </div>
-            <div class="item-actions">
-              <button class="edit-btn" (click)="editPersonnel(p)">Modifier</button>
-              <button class="delete-btn" (click)="deletePersonnel(p)">Supprimer</button>
-            </div>
-          </div>
+      <!-- Formulaire Ajout Espace -->
+<!-- Dans la partie "Ajouter Espace" du modal, remplacez les inputs par ceci : -->
+<div *ngIf="currentEspaceView === 'ajouter'" class="form-section">
+  <h2>{{ isEditingEspace ? 'Modifier' : 'Ajouter' }} un espace</h2>
+  <form #espaceForm="ngForm" (submit)="isEditingEspace ? onModifierEspace() : onSubmitEspace(responsableId.value)">
+    <div class="form-row">
+      <!-- ID du Responsable -->
+      <div class="form-group">
+        <label for="responsableId">ID du Responsable</label>
+        <div class="input-container">
+          <fa-icon [icon]="faUser" class="icon"></fa-icon>
+          <input type="text" id="responsableId" #responsableId  required>
         </div>
       </div>
+      
+      <!-- Nom de l'Espace -->
+      <div class="form-group">
+        <label for="nomEspace">Nom de l'espace</label>
+        <div class="input-container">
+          <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
+          <input type="text" id="nomEspace" [(ngModel)]="espaceFormData.nom" name="nom" required>
+        </div>
+      </div>
+    </div>
 
-      <!-- Liste Espaces -->
-<!-- Liste Espaces -->
-<div *ngIf="activeSection === 'manage-espaces'" class="management-section">
-  <h2>Liste des Espaces</h2>
+    <div class="form-row">
+      <!-- Capacité -->
+      <div class="form-group">
+        <label for="capacite">Capacité</label>
+        <div class="input-container">
+          <fa-icon [icon]="faUsers" class="icon"></fa-icon>
+          <input type="number" id="capacite" [(ngModel)]="espaceFormData.capacite" name="capacite" required>
+        </div>
+      </div>
+      
+      <!-- Équipements -->
+      <div class="form-group">
+        <label for="equipement">Équipements</label>
+        <div class="input-container">
+          <fa-icon [icon]="faTools" class="icon"></fa-icon>
+          <input type="text" id="equipement" [(ngModel)]="espaceFormData.equipement" name="equipement">
+        </div>
+      </div>
+    </div>
+
+    <!-- ID Établissement -->
+    <div class="form-row">
+    <div class="form-group">
+      <label for="etablissementId">ID Établissement</label>
+      <div class="input-container">
+        <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
+        <input type="text" id="etablissementId" [(ngModel)]="espaceFormData.etablissementId" name="etablissementId" required>
+      </div>
+    </div>
+    </div>
+    <button type="submit" class="btn-submit">{{ isEditingEspace ? 'Modifier' : 'Ajouter' }} l'espace</button>
+    <button type="button" class="btn-cancel" (click)="cancelEditEspace()" *ngIf="isEditingEspace">Annuler</button>
+  </form>
+</div>
+
+      <!-- Liste des Espaces -->
+<div *ngIf="currentEspaceView === 'gerer'" class="espace-list">
+  <h2>Liste des espaces</h2>
+  
   <div class="search-box">
     <input type="text" [(ngModel)]="searchEspace" placeholder="Rechercher...">
   </div>
-
-  <div class="list-container">
-    <div *ngFor="let e of filteredEspaces" class="list-item">
-      <div class="item-info">
-        <h3>{{ e.nom }}</h3>
-        <p><strong>Capacité:</strong> {{ e.capacite }} personnes</p>
-        <p><strong>Équipement:</strong> {{ e.equipement }}</p>
-        <p><strong>Responsable:</strong> {{ e.responsable }}</p>
-        <p><strong>Établissement:</strong> {{ e.etablissement }}</p>
-      </div>
-      <div class="item-actions">
-        <button class="edit-btn" (click)="editEspace(e)">Modifier</button>
-        <button class="delete-btn" (click)="deleteEspace(e)">Supprimer</button>
-      </div>
-    </div>
-  </div>
-</div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" *ngIf="showProfileModal" (click)="closeModal()">
-    <div class="modal-box" (click)="$event.stopPropagation()">
-      <h3>Votre Profil</h3>
-      <button class="password-modal-close" (click)="closeModal()">&times;</button>
-      <div class="profile-info">
-        <div class="info-grid">
-          <div class="info-item">
-            <fa-icon [icon]="faUserTag" class="icon"></fa-icon>
-            <div class="info-content">
-              <label>Nom & Prénom</label>
-              <p>{{ profileData.nomPrenom }}</p>
-            </div>
-          </div>
-
-          <div class="info-item">
-            <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
-            <div class="info-content">
-              <label>Email</label>
-              <p>{{ profileData.email }}</p>
-            </div>
-          </div>
-
-          <div class="info-item">
-            <fa-icon [icon]="faPhone" class="icon"></fa-icon>
-            <div class="info-content">
-              <label>Téléphone</label>
-              <p>{{ profileData.telephone }}</p>
-            </div>
-          </div>
-
-          <div class="info-item">
-            <fa-icon [icon]="faBriefcase" class="icon"></fa-icon>
-            <div class="info-content">
-              <label>Fonction</label>
-              <p>{{ profileData.fonction }}</p>
-            </div>
-          </div>
-
-          <div class="info-item">
-            <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
-            <div class="info-content">
-              <label>Établissement</label>
-              <p>{{ profileData.etablissement }}</p>
-            </div>
-          </div>
-
-          <div class="info-item">
-            <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
-            <div class="info-content">
-              <label>Structure</label>
-              <p>{{ profileData.structure }}</p>
-            </div>
-          </div>
-
-          <div class="info-item">
-            <fa-icon [icon]="faUserTie" class="icon"></fa-icon>
-            <div class="info-content">
-              <label>Type</label>
-              <p>{{ profileData.type }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="info-h">
-          <fa-icon [icon]="faLinkedin" class="icon"></fa-icon>
-          <div class="info-content">
-            <label>LinkedIn</label>
-            <a [href]="profileData.linkedin" target="_blank" class="linkedin-link">
-              {{ profileData.linkedin }}
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div> 
-    <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
-    <div class="modal-box edit-modal" (click)="$event.stopPropagation()">
-      <h3 class="modal-title">Modifier le Profil</h3>
-      <button class="password-modal-close" (click)="closeModal()">&times;</button>
-      <form     class="edit-form"   class="edit-form" (ngSubmit)="saveChanges()">
-        <!-- Première ligne -->
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nom & Prénom <span class="required"></span></label>
-            <div class="input-container">
-              <i class="fas fa-user"></i>
-              <input type="text" [(ngModel)]="editData.nomPrenom" name="nomPrenom" required>
-            </div>
-          </div>
   
-          <div class="form-group">
-            <label>Fonction <span class="required"></span></label>
-            <div class="input-container">
-              <i class="fas fa-briefcase"></i>
-              <input type="text" [(ngModel)]="editData.fonction" name="fonction" required>
-            </div>
-          </div>
-        </div>
-  
-        <!-- Deuxième ligne -->
-        <div class="form-row">
-          <div class="form-group">
-            <label>Téléphone</label>
-            <div class="input-container">
-              <i class="fas fa-phone"></i>
-              <input type="tel" [(ngModel)]="editData.telephone" name="telephone" pattern="[0-9]{8}">
-            </div>
-          
-          </div>
-  
-          <div class="form-group">
-            <label>Profil LinkedIn</label>
-            <div class="input-container">
-              <i class="fab fa-linkedin"></i>
-              <input  type="url" [(ngModel)]="editData.linkedin" name="linkedin">
-            </div>
-          </div>
-          
-        </div>
-       
-         
-        <!-- Structure (pleine largeur) -->
-        <div class="form-row">
-          <div class="form-group">
-            <label>Structure <span class="required"></span></label>
-            <div class="input-container">
-              <i class="fas fa-building"></i>
-              <input type="text" [(ngModel)]="editData.structure" name="structure" required>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Établissement <span class="required"></span></label>
-            <div class="input-container">
-              <i class="fas fa-university"></i>
-              <input type="text" [(ngModel)]="editData.etablissement" name="etablissement" required>
-            </div>
-          </div>
-
-        </div>
-  
-
+  <div class="espace-grid">
+    <div *ngFor="let espace of filteredEspaces" class="espace-card">
+      <h3>{{ espace.nom }}</h3>
+      <p><strong>ID Responsable:</strong> {{ espace.responsableId }}</p>
+      <p><strong>Capacité:</strong> {{ espace.capacite }} personnes</p>
+      <p><strong>Équipements:</strong> {{ espace.equipement }}</p>
+      <p><strong>ID Établissement:</strong> {{ espace.etablissementId }}</p>
       
-  
-  
-        <div class="form-actions">
-          <button type="button" class="cancel-btn" (click)="closeModal()">Annuler</button>
-          <button type="submit" class="save-btn" >Modifier</button>
-
-        </div>
-      </form>
-    </div>
-  </div>
-
-<!-- Modale Modification mot de passe -->
-<div class="password-modal-wrapper" *ngIf="showPasswordModal" (click)="closeModal()">
-  <div class="password-modal-content" (click)="$event.stopPropagation()">
-   
-      <h3 class="password-modal-heading"> Changer le mot de passe</h3>
-      <button class="password-modal-close" (click)="closeModal()">&times;</button>
-   
-    
-    <div class="password-modal-main">
-      <form #passwordForm="ngForm" (ngSubmit)="updatePassword()">
-        <div class="password-field">
-          <label class="password-label">Ancien mot de passe</label>
-          <div class="password-input-wrapper">
-            <i class="fas fa-lock"></i>
-            <input type="string" [(ngModel)]="passwordData.oldPassword" name="oldPassword" required>
-          </div>
-        </div>
-    
-        <div class="password-field">
-          <label class="password-label">Nouveau mot de passe</label>
-          <div class="password-input-wrapper">
-            <i class="fas fa-key"></i>
-            <input type="string" [(ngModel)]="passwordData.newPassword" name="newPassword" required>
-          </div>
-        </div>
-    
-        <div class="password-field">
-          <label class="password-label">Confirmer le nouveau mot de passe</label>
-          <div class="password-input-wrapper">
-            <i class="fas fa-key"></i>
-            <input type="string" [(ngModel)]="passwordData.confirmPassword" name="confirmPassword" required>
-          </div>
-        </div>
-    
-        <div class="password-modal-footer">
-          <button type="button" class="password-btn password-btn-cancel" (click)="closeModal()">Annuler</button>
-          <button type="submit" class="password-btn password-btn-submit" [disabled]="!passwordForm.valid">Modifier</button>
-        </div>
-      </form>
+      <div class="espace-actions">
+        <button (click)="onEditEspace(espace)" (click)="currentEspaceView = 'ajouter'; showModal = 'espaces'">
+          Modifier
+        </button>
+        <button (click)="onSupprimerEspace(espace.responsableId, espace.id)">
+          Supprimer
+        </button>
+      </div>
     </div>
   </div>
 </div>
+    </div>
+  </div>
 </div>
