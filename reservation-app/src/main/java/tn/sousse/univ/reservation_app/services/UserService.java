@@ -140,10 +140,6 @@ public class UserService {
 
 }*/
 
-
-
-
-
 // nouveau code 
 package tn.sousse.univ.reservation_app.services;
 
@@ -155,12 +151,14 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import tn.sousse.univ.reservation_app.models.Role;
 import tn.sousse.univ.reservation_app.models.User;
 import tn.sousse.univ.reservation_app.models.VerificationToken;
@@ -173,27 +171,42 @@ public class UserService {
     // Injection des dépendances
     @Autowired
     private VerificationTokenRepository verificationTokenRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private PasswordEncoder passwordEncoder;
-    
+
     @Autowired
     private EmailService emailService;
 
-    // Méthode existante pour l'inscription normale
     public User registerUser(User user) {
-        return handleUserRegistration(user, false, null);
+        // Check if email exists
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new RuntimeException("Cet email existe déjà");
+        }
+        user.setEnabled(false);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User savedUser = userRepository.save(user);
+        String token = UUID.randomUUID().toString();
+        verificationTokenRepository.save(new VerificationToken(token, savedUser.getId()));
+        String activationLink = "http://localhost:8080/api/utilisateurs/activer?token=" + token;
+        String htmlTemplate = loadEmailTemplate("templates/activation-email.html");
+        String htmlContent = htmlTemplate.replace("{{activation_link}}", activationLink);
+        emailService.sendHtmlEmail(savedUser.getEmail(),
+                "Activation de votre compte",
+                htmlContent);
+        return savedUser;
     }
 
-    //  méthode pour les créations par l'admin
+    // méthode pour les créations par l'admin
     public User registerAdminCreatedUser(User user) {
         // Générer le mot de passe ici
         String plainPassword = generateRandomPassword(12);
         return handleUserRegistration(user, true, plainPassword);
     }
+
     private User handleUserRegistration(User user, boolean isAdminCreation, String plainPassword) {
         // Vérification de l'email existant
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -231,12 +244,12 @@ public class UserService {
             String activationLink = "http://localhost:8080/api/utilisateurs/activer?token=" + token;
             String htmlTemplate = loadEmailTemplate("templates/activation-email.html");
             String htmlContent = htmlTemplate
-                .replace("{{activation_link}}", activationLink)
-                .replace("{{user.prenom}}", user.getPrenom());
+                    .replace("{{activation_link}}", activationLink)
+                    .replace("{{user.prenom}}", user.getPrenom());
 
-            emailService.sendHtmlEmail(user.getEmail(), 
-                "Activation de votre compte", 
-                htmlContent);
+            emailService.sendHtmlEmail(user.getEmail(),
+                    "Activation de votre compte",
+                    htmlContent);
         } catch (Exception e) {
             throw new RuntimeException("Échec de l'envoi de l'email d'activation", e);
         }
@@ -246,13 +259,13 @@ public class UserService {
         try {
             String htmlTemplate = loadEmailTemplate("templates/admin-creation-email.html");
             String htmlContent = htmlTemplate
-                .replace("{{user.prenom}}", user.getPrenom())
-                .replace("{{email}}", user.getEmail())
-                .replace("{{password}}", plainPassword);
+                    .replace("{{user.prenom}}", user.getPrenom())
+                    .replace("{{email}}", user.getEmail())
+                    .replace("{{password}}", plainPassword);
 
             emailService.sendHtmlEmail(user.getEmail(),
-                "Création de votre compte par l'administrateur",
-                htmlContent);
+                    "Création de votre compte par l'administrateur",
+                    htmlContent);
         } catch (Exception e) {
             throw new RuntimeException("Échec de l'envoi de l'email d'administration", e);
         }
@@ -262,8 +275,8 @@ public class UserService {
     public String generateRandomPassword(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
         return new Random().ints(length, 0, chars.length())
-                         .mapToObj(i -> String.valueOf(chars.charAt(i)))
-                         .collect(Collectors.joining());
+                .mapToObj(i -> String.valueOf(chars.charAt(i)))
+                .collect(Collectors.joining());
     }
 
     // Méthodes existantes (inchangées)
@@ -291,7 +304,8 @@ public class UserService {
 
     public User authenticateUser(String email, String password) {
         Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isEmpty()) return null;
+        if (userOptional.isEmpty())
+            return null;
 
         User user = userOptional.get();
         return passwordEncoder.matches(password, user.getPassword()) ? user : null;
