@@ -11,8 +11,11 @@ export class AdminRegistrationService {
   constructor(private http: HttpClient) { }
 
   registerAdmin(userData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/addSousAdmins`, userData , {
-      withCredentials: true // Important pour les cookies de session
+    // Retirer le password du payload
+    const { password, ...dataWithoutPassword } = userData;
+    
+    return this.http.post(`${this.apiUrl}/addSousAdmins`, dataWithoutPassword, {
+      withCredentials: true
     });
   }
 

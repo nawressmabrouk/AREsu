@@ -103,8 +103,6 @@
         structure.value,
         secretaire.checked,
         responsable.checked,
-        password.value,
-        confirmPassword.value,
         espacesResponsables.value,
         $event
       )">
@@ -216,27 +214,7 @@
                     </div>
         </div>
 
-   
 
-        <!-- Mot de passe -->
-        <div class="form-row">
-          <div class="form-group">
-            <label for="password">Mot de passe</label>
-            <div class="input-container">
-              <fa-icon [icon]="faLock" class="icon"></fa-icon>
-              <input type="password" id="password" #password required>
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="confirmPassword">Confirmation</label>
-            <div class="input-container">
-              <fa-icon [icon]="faLock" class="icon"></fa-icon>
-              <input type="password" id="confirmPassword" #confirmPassword required>
-            </div>
-           
-          </div>
-        </div>
 
         <button type="submit" class="btn-submit">Créer le compte</button>
       </form>
@@ -350,3 +328,4 @@
     </div>
   </div>
 </div>
+

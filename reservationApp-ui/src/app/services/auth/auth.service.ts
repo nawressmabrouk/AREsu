@@ -413,49 +413,47 @@ private normalizeRole(role: string): string {
 }
 
 getCurrentUser(): User & { id: string } | null {
-  // Version 1 approach - get from token if no user data
-  const token = this.getToken();
-  if (!token) return null;
-
-  // Try version 2 approach first (from localStorage)
+  // Version 1: Récupération depuis le localStorage
   const userDataStr = localStorage.getItem(this.userDataKey);
   if (userDataStr) {
     try {
       const parsed = JSON.parse(userDataStr);
-     
-      // Normalize roles
-      const roles = parsed.roles?.map((r: string) => this.normalizeRole(r)) || [];
-      const role = roles.length > 0 ? roles[0] : '';
-
+      console.log('User data from localStorage:', parsed); // Debug
+      
+      // Extraction depuis les données sauvegardées
       return {
-        id: parsed.id || parsed.sub || parsed.userId,
+        id: parsed.userId || parsed.id || parsed.sub, // <-- Correction ici
         userId: parsed.userId || parsed.sub,
         sub: parsed.sub,
-        role: role,
-        roles: roles
+        role: parsed.role,
+        roles: parsed.roles
       };
     } catch (error) {
-      console.error('Error parsing user data:', error);
-      // Fall through to version 1 approach
+      console.error('Error parsing localStorage data:', error);
     }
   }
 
-  // Version 1 fallback - decode from token
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    console.log('JWT Payload:', payload);
-   
-    return {
-      id: payload.userId || payload.sub,
-      userId: payload.userId || payload.sub,
-      sub: payload.sub,
-      role: payload.role || '',
-      roles: payload.roles || []
-    };
-  } catch (error) {
-    console.error('Error decoding token:', error);
-    return null;
+  // Version 2: Récupération depuis le JWT
+  const token = this.getToken();
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('JWT payload:', payload); // Debug
+
+      // Extraction directe depuis le JWT
+      return {
+        id: payload.userId || payload.sub, // <-- Priorité au userId du JWT
+        userId: payload.userId || payload.sub,
+        sub: payload.sub,
+        role: payload.role || '',
+        roles: payload.roles || []
+      };
+    } catch (error) {
+      console.error('Error decoding JWT:', error);
+    }
   }
+
+  return null;
 }
 
 /* hedhy version m3a nourhen 

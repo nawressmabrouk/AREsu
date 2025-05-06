@@ -3,8 +3,15 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faKey, faSignInAlt, faUser, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faKey, faSignInAlt, faUser, faUserPlus,
+  faEnvelope, faBriefcase, faPhone, faBuilding,
+  faUniversity, faDoorOpen, faLock, faLink 
+} from '@fortawesome/free-solid-svg-icons';
 import { AuthService } from '../services/auth/auth.service';
+import { RegistrationService } from '../services/auth/register.service';
+import { NotificationComponent } from '../alert-notif/notification.component';
+import { NotificationService } from '../services/alert-notif/notification.service';
 
 @Component({
   selector: 'app-auth',
@@ -13,158 +20,234 @@ import { AuthService } from '../services/auth/auth.service';
     CommonModule,
     RouterModule,
     FontAwesomeModule,
-    FormsModule
+    FormsModule,
+    NotificationComponent
   ],
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.scss']
 })
 export class AuthComponent {
   // Icons
-  faUser = faUser;
   faKey = faKey;
+  faDoorOpen = faDoorOpen;
+  faUser = faUser;
   faSignInAlt = faSignInAlt;
   faUserPlus = faUserPlus;
+  faEnvelope = faEnvelope;
+  faBriefcase = faBriefcase;
+  faPhone = faPhone;
+  faBuilding = faBuilding;
+  faUniversity = faUniversity;
+  faLink = faLink;
+  faLock = faLock;
 
-  email: string = '';
-  password: string = '';
+  // Form states
+  isAccountPage: boolean = false;
   isLoading: boolean = false;
   errorMessage: string | null = null;
+  loginErrorMessage: string | null = null;
+  confirmPassword: string = '';
+
+  // Form data models
+  registerData = {
+    nom: '',
+    prenom: '',
+    email: '',
+    fonction: '',
+    numTel: '',
+    nomEtablissement: '',
+    linkedin: '',
+    structure: '',
+    role: '',
+    password: ''
+  };
+
+  loginData = {
+    email: '',
+    password: ''
+  };
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private registrationService: RegistrationService,
+    private notificationService: NotificationService
   ) {}
 
-  onSubmit(event: Event) {
+  toggleView() {
+    this.isAccountPage = !this.isAccountPage;
+    this.resetFormStates();
+  }
+
+  private resetFormStates() {
+    this.errorMessage = null;
+    this.loginErrorMessage = null;
+    this.isLoading = false;
+  }
+
+  // Login Submit
+  onLoginSubmit(event: Event) {
+    event.preventDefault();
+    this.loginErrorMessage = null;
+
+    if (!this.validateLogin()) return;
+
+    this.isLoading = true;
+
+    this.authService.login(this.loginData.email, this.loginData.password).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.handleLoginSuccess();
+      },
+      error: (err) => {
+        this.handleLoginError(err);
+      }
+    });
+  }
+
+  private validateLogin(): boolean {
+    if (!this.loginData.email || !this.loginData.password) {
+      this.notificationService.showError('Veuillez remplir tous les champs');
+      return false;
+    }
+
+    if (!this.isValidEmail(this.loginData.email)) {
+      this.notificationService.showError('Veuillez entrer une adresse email valide');
+      return false;
+    }
+
+    return true;
+  }
+
+  private handleLoginSuccess() {
+    const token = this.authService.getToken();
+    if (token) {
+      const decoded = this.authService.decodeToken(token);
+      this.redirectUserByRole(decoded?.roles);
+    } else {
+      this.notificationService.showError('Erreur d\'authentification : jeton non reçu');
+    }
+  }
+
+  private handleLoginError(err: any) {
+    this.isLoading = false;
+    if (err.status === 401) {
+      this.notificationService.showError('Email ou mot de passe incorrect');
+    } else if (err.status === 0) {
+      this.notificationService.showError('Impossible de se connecter au serveur');
+    } else {
+      this.notificationService.showError('Erreur lors de la connexion');
+    }
+  }
+
+  // Registration Submit
+  onRegisterSubmit(event: Event) {
     event.preventDefault();
     this.errorMessage = null;
 
-    if (this.email && this.password) {
-      this.login();
-    } else {
-      this.errorMessage = "Veuillez remplir tous les champs.";
-    }
-  }
+    if (!this.validateRegistration()) return;
 
-  navigateToRegister() {
-    this.router.navigate(['/auth/register']);
-  }
-/*
-  login(): void {
     this.isLoading = true;
-    const password = this.password;
-    this.authService.login(this.email, this.password).subscribe({
-      next: (response) => {
+
+    this.registrationService.register(this.registerData).subscribe({
+      next: () => {
         this.isLoading = false;
-
-        const token = this.authService.getToken();
-        if (token) {
-          console.log('Connexion réussie.');
-
-          // Decode token to get the role
-          const decoded = this.decodeToken(token);
-          const roles = decoded?.roles;
-          if (roles) {
-            this.redirectUserByRole(roles);
-          } else {
-            this.errorMessage = "Rôle non trouvé dans le token.";
-          }
-        } else {
-          console.log('Échec - Token manquant');
-          this.errorMessage = "Erreur d'authentification : jeton non reçu après la connexion.";
-        }
+        this.notificationService.showSuccess('Inscription réussie !');
+        this.toggleView();
       },
-      error: (err) => {
-        this.isLoading = false;
-        console.error('Login error:', err);
-
-        if (err.status === 401) {
-          this.errorMessage = "Email ou mot de passe incorrect.";
-        } else if (err.status === 0) {
-          this.errorMessage = "Impossible de se connecter au serveur. Vérifiez votre connexion.";
-        } else {
-          this.errorMessage = "Une erreur s'est produite lors de la connexion.";
-        }
+      error: (error) => {
+        this.handleRegistrationError(error);
       }
     });
-  }*/
-    login(): void {
-      this.isLoading = true;
-      this.errorMessage = null;
-    
-      this.authService.login(this.email, this.password).subscribe({
-        next: (response) => {
-          this.isLoading = false;
-          const token = this.authService.getToken();
-          
-          if (token) {
-            const decoded = this.authService.decodeToken(token); // Use service method
-            const roles = decoded?.roles;
-            
-            if (roles) {
-              this.redirectUserByRole(roles);
-            } else {
-              this.errorMessage = "Rôle non trouvé dans le token.";
-              this.authService.logout().subscribe();
-            }
-          } else {
-            this.errorMessage = "Erreur d'authentification : jeton non reçu.";
-          }
-        },
-        error: (err) => {
-          this.handleLoginError(err);
-        }
-      });
+  }
+
+  private validateRegistration(): boolean {
+    if (Object.values(this.registerData).some(value => !value)) {
+      this.notificationService.showError('Veuillez remplir tous les champs obligatoires');
+      return false;
     }
-    
-    
-    
-    
-    
-    private handleLoginError(err: any): void {
-      if (err.status === 401) {
-        this.errorMessage = "Email ou mot de passe incorrect.";
-      } else if (err.status === 0) {
-        this.errorMessage = "Impossible de se connecter au serveur.";
-      } else {
-        this.errorMessage = "Erreur inconnue lors de la connexion.";
-      }
+
+    if (!this.isValidEmail(this.registerData.email)) {
+      this.notificationService.showError('Veuillez entrer une adresse email valide');
+      return false;
     }
-/*
-  private decodeToken(token: string): any {
-    try {
-      const payload = token.split('.')[1];
-      const decodedPayload = atob(payload);
-      return JSON.parse(decodedPayload);
-    } catch (error) {
-      console.error('Erreur lors du décodage du token:', error);
-      return null;
+
+    if (this.registerData.linkedin && !this.isValidLinkedInUrl(this.registerData.linkedin)) {
+      this.notificationService.showError('Veuillez entrer une URL LinkedIn valide');
+      return false;
     }
-  }*/
+
+    if (this.registerData.password !== this.confirmPassword) {
+      this.notificationService.showError('Les mots de passe ne correspondent pas');
+      return false;
+    }
+
+    if (!this.isPasswordStrong(this.registerData.password)) {
+      this.notificationService.showError('Le mot de passe doit contenir au moins 8 caractères avec majuscule, chiffre et symbole');
+      return false;
+    }
+
+    return true;
+  }
+
+  private handleRegistrationError(error: any) {
+    this.isLoading = false;
+    if (error?.error?.includes('email')) {
+      this.notificationService.showError('Cet email existe déjà');
+    } else {
+      this.notificationService.showError('Erreur lors de l\'inscription');
+    }
+  }
+
+  // Validation helpers
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  }
+
+  private isValidLinkedInUrl(url: string): boolean {
+    if (!url) return true;
+    const linkedInRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9-]+\/?$/;
+    return linkedInRegex.test(url);
+  }
+
+  private isPasswordStrong(password: string): boolean {
+    return password.length >= 8 && 
+           this.hasUpperCase(password) && 
+           this.hasNumber(password) && 
+           this.hasSymbol(password);
+  }
+
+  private hasUpperCase(text: string): boolean {
+    return /[A-Z]/.test(text);
+  }
+
+  private hasNumber(text: string): boolean {
+    return /[0-9]/.test(text);
+  }
+
+  private hasSymbol(text: string): boolean {
+    return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(text);
+  }
 
   private redirectUserByRole(roles: any): void {
     let normalizedRole = '';
-  
+    
     if (Array.isArray(roles)) {
-      // Gérer le cas où plusieurs rôles sont envoyés
-      normalizedRole = roles[0].replace('ROLE_', '').toLowerCase(); // Prendre le premier rôle et supprimer "ROLE_"
+      normalizedRole = roles[0].replace('ROLE_', '').toLowerCase();
     } else if (typeof roles === 'string') {
-      // Si un seul rôle est renvoyé
-      normalizedRole = roles.replace('ROLE_', '').toLowerCase(); // Supprimer "ROLE_" et mettre en minuscule
+      normalizedRole = roles.replace('ROLE_', '').toLowerCase();
     }
-  
+
     const roleRoutes: { [key: string]: string } = {
-      'demandeur_interne': '/spaces',    // Fixed typo (added missing "r")
+      'demandeur_interne': '/spaces',
       'demandeur_externe': '/spaces',
       'secretaire_generale': '/secretary',
       'admin': '/admin',
       'responsable_salle': '/room-manager'
     };
-  
+
     const targetRoute = roleRoutes[normalizedRole] || '/unauthorized';
-  
-    console.log(`Redirection vers: ${targetRoute} (rôle: ${roles})`);
     this.router.navigate([targetRoute]);
   }
-  
 }

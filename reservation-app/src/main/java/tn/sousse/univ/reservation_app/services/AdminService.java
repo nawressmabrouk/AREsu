@@ -27,29 +27,24 @@ public class AdminService {
 
     // Ajouter un nouvel espace
     public Espace ajouterEspace(String responsableId, Espace espace) {
-        User responsable = userRepository.findById(responsableId)
-                .orElseThrow(() -> new RuntimeException("Responsable not found"));
-
-        if (responsable.getRole() != Role.RESPONSABLE_SALLE) {
-            throw new RuntimeException("User is not authorized to manage spaces.");
+        User user = userRepository.findById(responsableId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    
+        // Modifier la vérification du rôle
+        if (user.getRole() != Role.RESPONSABLE_SALLE && user.getRole() != Role.SECRETAIRE_GENERALE) {
+            throw new RuntimeException("L'utilisateur doit être un Responsable Salle ou Secrétaire Générale");
         }
-
-        // link espace to responsable
+    
         espace.setResponsableId(responsableId);
-
-        // save the espace
         espace = espaceRepository.save(espace);
-
-        // ensure list is initialized
-        if (responsable.getEspacesResponsables() == null) {
-            responsable.setEspacesResponsables(new ArrayList<>());
+    
+        if (user.getEspacesResponsables() == null) {
+            user.setEspacesResponsables(new ArrayList<>());
         }
-
-        responsable.getEspacesResponsables().add(espace.getId());
-
-        // save updated responsable
-        userRepository.save(responsable);
-
+    
+        user.getEspacesResponsables().add(espace.getId());
+        userRepository.save(user);
+    
         return espace;
     }
 
@@ -83,3 +78,5 @@ public class AdminService {
     }
 
 }
+
+

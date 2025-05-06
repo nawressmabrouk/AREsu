@@ -1,52 +1,196 @@
-<div class="main-container">
-  <div class="unified-box">
-    <!-- Partie gauche (Welcome) -->
-    <div class="welcome-section">
-      <h2>Ravis de vous retrouver!</h2>
-      <div class="welcome-text">
-        <p>Nouveau parmi nous ? Créez votre compte en moins d'une minute !</p>
-        <p>Votre inscription offre un accès immédiat à toutes les fonctionnalités.</p>
+<div class="main-container" [class.sor-account-page]="isAccountPage">
+  <app-notification></app-notification>
+  <div class="main-content">
+    <!-- SIGN IN CONTAINER (REGISTER) -->
+    <div class="login-container">
+      <div class="signin-container">
+        <div class="signin-content">
+          <div class="form-content">
+            <h2 class="register-title">Créer un Nouveau compte</h2>
+            
+            <form class="form-grid" (ngSubmit)="onRegisterSubmit($event)">
+              <!-- Nom et Prénom -->
+              <div class="form-group">
+                <label>Nom</label>
+                <div class="input-container">
+                  <fa-icon [icon]="faUser" class="icon"></fa-icon>
+                  <input type="text" [(ngModel)]="registerData.nom" name="nom" required>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label>Prénom</label>
+                <div class="input-container">
+                  <fa-icon [icon]="faUser" class="icon"></fa-icon>
+                  <input type="text" [(ngModel)]="registerData.prenom" name="prenom" required>
+                </div>
+              </div>
+
+              <!-- Email et Fonction -->
+              <div class="form-group">
+                <label>Email</label>
+                <div class="input-container">
+                  <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
+                  <input type="email" [(ngModel)]="registerData.email" name="email" required>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label>Fonction</label>
+                <div class="input-container">
+                  <fa-icon [icon]="faBriefcase" class="icon"></fa-icon>
+                  <input type="text" [(ngModel)]="registerData.fonction" name="fonction" required>
+                </div>
+              </div>
+
+              <!-- Téléphone et Établissement -->
+              <div class="form-group">
+                <label>Numéro de téléphone</label>
+                <div class="input-container">
+                  <fa-icon [icon]="faPhone" class="icon"></fa-icon>
+                  <input type="tel" [(ngModel)]="registerData.numTel" name="numTel" required>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label>Établissement</label>
+                <div class="input-container">
+                  <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
+                  <input type="text" [(ngModel)]="registerData.nomEtablissement" name="nomEtablissement" required>
+                </div>
+              </div>
+
+              <!-- LinkedIn et Structure -->
+              <div class="form-group">
+                <label>Profil LinkedIn</label>
+                <div class="input-container">
+                  <fa-icon [icon]="faLink" class="icon"></fa-icon>
+                  <input type="url" [(ngModel)]="registerData.linkedin" name="linkedin" required>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label>Structure</label>
+                <div class="input-container">
+                  <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
+                  <input type="text" [(ngModel)]="registerData.structure" name="structure" required>
+                </div>
+              </div>
+
+              <!-- Type d'utilisateur -->
+              <div class="form-group full-width">
+                <label>Type d'utilisateur</label>
+                <div class="radio-group">
+                  <label>
+                    <input type="radio" name="user-type" value="interne" 
+                      [(ngModel)]="registerData.role" [value]="'DEMANDEUR_INTERNE'" required> Interne
+                  </label>
+                  <label>
+                    <input type="radio" name="user-type" value="externe" 
+                      [(ngModel)]="registerData.role" [value]="'DEMANDEUR_EXTERNE'" required> Externe
+                  </label>
+                </div>
+              </div>
+
+              <!-- Mot de passe -->
+              <div class="form-group">
+                <label>Mot de passe</label>
+                <div class="input-container">
+                  <fa-icon [icon]="faLock" class="icon"></fa-icon>
+                  <input type="password" [(ngModel)]="registerData.password" name="password" required>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label>Confirmer le mot de passe</label>
+                <div class="input-container">
+                  <fa-icon [icon]="faLock" class="icon"></fa-icon>
+                  <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required>
+                </div>
+              </div>
+
+              <!-- Error messages -->
+              <div *ngIf="errorMessage" class="error-message">
+                {{ errorMessage }}
+              </div>
+
+              <button type="submit" class="main-button1" [disabled]="isLoading">
+                {{ isLoading ? 'Inscription en cours...' : 'S\'inscrire' }}
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
-      <button class="btn-signup" (click)="navigateToRegister()">
-        <fa-icon [icon]="faUserPlus"></fa-icon> S'inscrire
-      </button>
     </div>
-  
-    <!-- Partie droite (Formulaire) -->
-    <div class="login-section">
+
+    <!-- SIGN UP CONTAINER (LOGIN) -->
+    <div class="container account-container">
+
+      <div class="greeting-container">
+                
+      </div>
+      <div class="signup-content">
+        <div class="form-content">
+          <span class="title">Se connecter</span>
+
+          <form (ngSubmit)="onLoginSubmit($event)">
+            <!-- Email -->
+            <div class="form-group">
+              <label>Email</label>
+              <div class="input-container">
+                <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
+                <input type="email" [(ngModel)]="loginData.email" name="loginEmail" placeholder="Entrez votre email" required>
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+              <label>Mot de passe</label>
+              <div class="input-container">
+                <fa-icon [icon]="faLock" class="icon"></fa-icon>
+                <input type="password" [(ngModel)]="loginData.password" name="loginPassword" placeholder="Entrez votre mot de passe" required>
+              </div>
+              <a routerLink="/navbar/id-oublie" class="forgot-password">Mot de passe oublié ?</a>
+            </div>
+
+            <!-- Error messages -->
+            <div *ngIf="loginErrorMessage" class="error-message">
+              {{ loginErrorMessage }}
+            </div>
+
+            <button type="submit" class="main-button" [disabled]="isLoading">
+              {{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE SHAPE WITH TOGGLE BUTTON -->
+    <div class="slide-shape">
       <div class="form-container">
-        <h2 class="form-title">Se connecter</h2>
-        <form class="login-form" (submit)="onSubmit($event)">
-          <div class="form-group">
-            <label>Email</label>
-            <div class="input-field">
-              <fa-icon [icon]="faUser" class="icon"></fa-icon>
-              <input type="email" [(ngModel)]="email" name="email" placeholder="Entrez votre email" required>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Password</label>
-            <div class="input-field">
-              <fa-icon [icon]="faKey" class="icon"></fa-icon>
-              <input type="password" [(ngModel)]="password" name="password" placeholder="Entrez votre password" required>
-            </div>
-          </div>
-          
-          <!-- Error message display -->
-          <div *ngIf="errorMessage" class="error-message">
-            {{ errorMessage }}
-          </div>
-          
-          <div class="login-links">
-            <a routerLink="/navbar/id-oublie">Mot de passe Oubliée ?</a>
-          </div>
-          <button type="submit" class="btn-login" [disabled]="isLoading">
-            <span *ngIf="!isLoading">
-              <fa-icon [icon]="faSignInAlt"></fa-icon> Connexion
+        <div class="transparent-card">
+          <h2 class="welcome-title" [class.hidden]="isAccountPage">Bienvenue chez nous !</h2>
+          <h2 class="welcome-title" [class.hidden]="!isAccountPage">Ravis de vous retrouver!</h2>
+
+          <div class="role-text-container">
+            <span class="role-text" [class.hidden]="isAccountPage">
+              Déjà Inscrit ?
             </span>
-            <span *ngIf="isLoading">Connexion en cours...</span>
+            <span class="role-text1" [class.hidden]="!isAccountPage">
+              <p class="titre">Nouveau parmi nous ? </p>
+              <br>  
+              <p class="text">Créez votre compte en moins d'une minute !</p>
+            </span>
+          </div>
+
+          <button (click)="toggleView()" class="signup-button">
+            <div class="button-content">
+              <span class="sign-in" [class.hidden]="isAccountPage">SE CONNECTER</span>
+              <span class="sign-up" [class.hidden]="!isAccountPage">S'INSCRIRE</span>
+            </div>
           </button>
-        </form>
+        </div>
       </div>
     </div>
   </div>

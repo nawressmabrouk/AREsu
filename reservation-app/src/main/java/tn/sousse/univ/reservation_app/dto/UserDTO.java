@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
@@ -23,5 +23,9 @@ public class UserDTO {
     private String structure;
     private String linkedInLink;
 
+    private boolean enabled = false;
     private boolean isPartenaire;
+
+    private List<String> espacesResponsables; 
 }
+

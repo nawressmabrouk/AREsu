@@ -122,8 +122,8 @@ isEditingEspace: boolean = false; // Mode édition
 
 
   onSubmit(
-    firstName: string,
     lastName: string,
+    firstName: string,
     email: string,
     fonction: string,
     numTel: string,
@@ -132,8 +132,6 @@ isEditingEspace: boolean = false; // Mode édition
     structure: string,
     isSecretaire: boolean,
     isResponsable: boolean,
-    password: string,
-    confirmPassword: string,
     espacesResponsables: string,
     event: Event
   ) {
@@ -151,8 +149,7 @@ isEditingEspace: boolean = false; // Mode édition
       'Structure': structure,
       'espaces responsables': espacesResponsables ,
       'Rôle': (isSecretaire || isResponsable),
-      'Mot de passe': password,
-      'Confirmation mot de passe': confirmPassword
+   
     };
   
     // Vérification des champs obligatoires
@@ -162,20 +159,14 @@ isEditingEspace: boolean = false; // Mode édition
         return;
       }
     }
-    if (!this.passwordsMatch(password, confirmPassword)) {
-      this.notificationService.showError('Les mots de passe ne correspondent pas.');
-      return;
-    }
+  
       // Validation du format de l'email
   if (!this.isValidEmail(email)) {
     this.notificationService.showError('Veuillez entrer une adresse email valide (ex: exemple@domain.com)');
     return;
   }
 
-  if (!this.passwordsMatch(password, confirmPassword)) {
-    this.notificationService.showError('Les mots de passe ne correspondent pas.');
-    return;
-  }
+ 
   
   
     // Préparation des données (linkedInLink reste optionnel)
@@ -187,7 +178,6 @@ isEditingEspace: boolean = false; // Mode édition
       role: isSecretaire ? 'SECRETAIRE_GENERALE' : 'RESPONSABLE_SALLE',
       fonction: fonction,
       nomEtablissement: nomEtablissement,
-      password: password,
       structure: structure,
       linkedin: linkedInLink, // Ce champ reste optionnel
       espacesResponsables: espacesResponsables 
@@ -205,9 +195,7 @@ isEditingEspace: boolean = false; // Mode édition
       }
     });
   }
-  passwordsMatch(password: string, confirmPassword: string): boolean {
-    return password === confirmPassword;
-  }
+
 
  //  méthodes pour ajouter  les espaces
  onSubmitEspace(responsableId: string) {

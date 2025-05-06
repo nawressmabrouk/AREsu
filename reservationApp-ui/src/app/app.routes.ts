@@ -79,20 +79,17 @@ export const routes: Routes = [
   { 
     path: 'admin',
     component: AdminComponent,
-    canActivate: [AuthGuard], // Only for authenticated admin users
-    data: { roles: ['ADMIN'] } // Optional role-based protection
+   
   },
   { 
     path: 'secretary',
     component: SecretaryComponent,
-    canActivate: [AuthGuard],
-    data: { roles: ['SECRETARY'] }
+   
   },
   { 
     path: 'room-manager',
     component: RoomManagerComponent,
-    canActivate: [AuthGuard],
-    data: { roles: ['ADMIN', 'MANAGER'] }
+    
   },
   { 
     path: 'reservation-form',

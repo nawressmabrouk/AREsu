@@ -1,0 +1,14 @@
+<!-- src/main/resources/templates/admin-creation-email.html -->
+<html>
+<body>
+    <h2>Bienvenue sur notre plateforme</h2>
+    <p>Bonjour {{user.prenom}},</p>
+    <p>Votre compte a été créé par un administrateur :</p>
+    <div>
+        <p><strong>Email:</strong> {{email}}</p>
+        <p><strong>Mot de passe temporaire:</strong> {{password}}</p>
+    </div>
+    <p>Veuillez changer votre mot de passe dès votre première connexion.</p>
+</body>
+</html>
+
