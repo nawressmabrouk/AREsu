@@ -33,13 +33,11 @@ export class ReservationsubmissionService {
   }
 }
 */
-
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
-import { User } from '../../shared/interfaces/user.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -53,35 +51,20 @@ export class ReservationsubmissionService {
   ) {}
 
   createReservation(reservationData: any): Observable<any> {
-    const currentUser = this.authService.getCurrentUser();
-    
-    if (!currentUser?.userId) {
-      return throwError(() => new Error('No authenticated user available'));
-    }
-
-    // Ensure reservation data includes the demandeurId
-    const completeReservationData = {
-      ...reservationData,
-      demandeurId: currentUser.userId
-    };
-
     return this.http.post(
       `${this.apiUrl}/demandeur/demanderReservation`, 
-      completeReservationData,
+      reservationData,
       { 
         headers: this.getHeaders(),
-        observe: 'response'
+       
       }
     ).pipe(
       catchError(this.handleError)
     );
   }
+  
 
   sendReservation(reservationId: string): Observable<any> {
-    if (!reservationId) {
-      return throwError(() => new Error('Reservation ID is required'));
-    }
-
     return this.http.post(
       `${this.apiUrl}/reservations/${reservationId}/envoyer`, 
       {},
@@ -94,25 +77,30 @@ export class ReservationsubmissionService {
     );
   }
 
-  private getHeaders(): HttpHeaders {
+  private getHeaders() {
     const token = this.authService.getToken();
     if (!token) {
       throw new Error('No authentication token available');
     }
-
-    return new HttpHeaders({
+    return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
-    });
+    };
   }
 
-  private handleError(error: HttpErrorResponse): Observable<never> {
+  private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An unknown error occurred';
     
     if (error.error instanceof ErrorEvent) {
       // Client-side error
       errorMessage = `Error: ${error.error.message}`;
-    } else {
+    }
+    if (error.status === 200) {
+      console.warn('Received 200 status with non-JSON response');
+      return throwError(() => new Error('Server returned unexpected format'));
+    }
+    
+     else {
       // Server-side error
       switch (error.status) {
         case 0:
@@ -131,13 +119,13 @@ export class ReservationsubmissionService {
           errorMessage = 'Resource not found';
           break;
         case 500:
-          errorMessage = 'Internal server error';
+          errorMessage = error.error?.message || 'Internal server error';
           break;
         default:
           errorMessage = error.error?.message || `Server returned ${error.status}`;
       }
     }
-
+    
     console.error('API Error:', errorMessage, error);
     return throwError(() => new Error(errorMessage));
   }

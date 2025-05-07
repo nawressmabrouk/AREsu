@@ -678,6 +678,33 @@ min-width: 200px;
     }
   }
 }
+.radio-group {
+  display: flex;
+  flex-direction: column; // Empilement vertical
+  gap: 10px;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    input[type="radio"] {
+      margin: 0;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+
 
 /* Animations */
 @keyframes fadeIn {

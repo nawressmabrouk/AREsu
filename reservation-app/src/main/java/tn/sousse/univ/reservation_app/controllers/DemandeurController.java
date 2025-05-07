@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +23,7 @@ import tn.sousse.univ.reservation_app.services.ReservationService;
 
 @RestController
 @RequestMapping("/api/demandeur")
-@PreAuthorize("hasAnyRole('DEMANDEUR_INTERNE', 'DEMANDEUR_EXTERNE')") // Restricts to demandeurs
+@PreAuthorize("hasAnyRole('ROLE_DEMANDEUR_INTERNE', 'ROLE_DEMANDEUR_EXTERNE')")
 public class DemandeurController {
 
     @Autowired
@@ -33,10 +34,24 @@ public class DemandeurController {
 
     // Demander une réservation
     @PostMapping("/demanderReservation")
-    public ResponseEntity<String> reserveSpace(@RequestBody ReservationRequestDTO reservationDTO) {
-        reservationService.creerReservation(reservationDTO);
-        return ResponseEntity.ok("Reservation request submitted.");
+public ResponseEntity<Map<String, Object>> reserveSpace(@RequestBody ReservationRequestDTO reservationDTO) {
+    try {
+        ReservationResponseDTO response = reservationService.creerReservation(reservationDTO);
+        
+        return ResponseEntity.ok()
+            .body(Map.of(
+                "status", "success",
+                "message", "Reservation request submitted",
+                "id", response.getId()
+            ));
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(Map.of(
+                "status", "error",
+                "message", "Error creating reservation: " + e.getMessage()
+            ));
     }
+}
 
     /* 
     @PostMapping("/annulerReservation")
@@ -82,6 +97,9 @@ public class DemandeurController {
         List<ReservationResponseDTO> reservations = demandeurService.getReservationsByDemandeur(demandeurId);
         return ResponseEntity.ok(reservations);
     }
+
+
+    
 
     @GetMapping("/reservation/{reservationId}")
     public ResponseEntity<ReservationResponseDTO> getReservationById(@PathVariable String reservationId) {

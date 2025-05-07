@@ -317,44 +317,37 @@ public class ReservationService {
     public String transmettreReservation(String reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
-
+    
         String espaceId = reservation.getEspaceId();
         Optional<Espace> optionalEspace = espaceRepository.findById(espaceId);
-
+    
         if (optionalEspace.isEmpty()) {
             return "ESPACE_NOT_FOUND";
         }
-
+    
         Espace espace = optionalEspace.get();
         String responsableId = espace.getResponsableId();
-
+    
         if (responsableId != null) {
-            // Dispatch to Responsable
+            // Update reservation status and assign responsible
             reservation.setStatut(StatusReservation.ATTRIBUÉE);
             reservation.setResponsableEspaceId(responsableId);
             reservationRepository.save(reservation);
-
+    
+            // Send notification
             notificationService.sendNotification(
                     responsableId,
                     "Nouvelle demande de réservation à examiner.",
                     reservationId);
-
-            // Visa by SG
-            // secretaireGeneraleService.viewReservation(reservation);
-
-            return "ENVOYÉ_RESPONSABLE_ET_SG";
+    
+            return "ENVOYÉ_RESPONSABLE";
         } else {
-            // SG handles it fully
+            // Handle case where space has no responsible
             reservation.setStatut(StatusReservation.EN_ATTENTE);
             reservationRepository.save(reservation);
-
-            secretaireGeneraleService.handleReservation(reservation);
-
-            return "ENVOYÉ_SG_SEUL";
+            return "ENVOYÉ_SG";
         }
     }
-
-
     
     
     

@@ -23,9 +23,15 @@ public class Espace {
     private List<String> equipement;
     private String type;
     private String categorie;
+
     private String responsableId;
+    private String responsableNom; 
+    
     private List<ObjectId> reservationsId;
+
     private String etablissementId;
+    private String etablissementNom;
+
     private String googleCalendarId;
     
 }

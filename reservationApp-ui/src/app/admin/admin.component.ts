@@ -21,6 +21,8 @@ interface Espace {
   equipement: string;
   responsableId: string;
   etablissementId: string;
+  categorie: string;
+  type: string;
 }
 @Component({
   selector: 'app-admin',
@@ -59,8 +61,25 @@ currentEspace: Espace = {
   capacite: 0,
   equipement: '',
   responsableId: '',
-  etablissementId: ''
+  etablissementId: '', 
+  categorie: '',
+  type: ''
 };
+
+
+categories = [
+  { 
+    name: 'Espaces administratifs & académiques',
+    types: ['Laboratoire_de_recherche', 'Salle_de_conference', 'Salle_de_marche/bourse']
+  },
+  { 
+    name: "Espaces d'employabilité & d'innovation",
+    types: ['Espace_4C', 'Incubateur', 'FabLab', 'Coworking_space', 'Pole_etudiant_entrepreneur']
+  }
+];
+
+selectedCategory: string = '';
+selectedType: string = '';
 
   // currentUser pour le profile
   currentUser: any = {
@@ -96,7 +115,10 @@ isEditingEspace: boolean = false; // Mode édition
     nom: '',
     capacite: null,
     equipement: '',
-    etablissementId: ''
+    etablissementId: '',
+    categorie: '',
+    type: '',
+    responsableId: ''
   }; 
 
   constructor(
@@ -114,6 +136,11 @@ isEditingEspace: boolean = false; // Mode édition
     if (savedEspaces) {
       this.espaces = JSON.parse(savedEspaces);
     }
+  }
+
+  getTypesForCategory(categoryName: string): string[] {
+    const category = this.categories.find(cat => cat.name === categoryName);
+    return category ? category.types : [];
   }
 
   private saveEspacesToLocalStorage() {
@@ -198,14 +225,17 @@ isEditingEspace: boolean = false; // Mode édition
 
 
  //  méthodes pour ajouter  les espaces
- onSubmitEspace(responsableId: string) {
+ onSubmitEspace() {
   // Liste des champs obligatoires
   const requiredFields = {
-    'ID du responsable': responsableId,
+    'ID du responsable': this.espaceFormData.responsableId,
     'Nom de l\'espace': this.espaceFormData.nom,
     'Capacité': this.espaceFormData.capacite,
-    'ID de l\'établissement': this.espaceFormData.etablissementId
+    'ID de l\'établissement': this.espaceFormData.etablissementId, 
+    'Catégorie': this.espaceFormData.categorie,
+    'Type': this.espaceFormData.type
   };
+
 
   // Vérification des champs
   for (const [fieldName, value] of Object.entries(requiredFields)) {
@@ -216,14 +246,14 @@ isEditingEspace: boolean = false; // Mode édition
   }
   
   const espaceData = {
-    nom: this.espaceFormData.nom,
-    capacite: this.espaceFormData.capacite,
+    ...this.espaceFormData,
+    capacite: Number(this.espaceFormData.capacite),
     equipement: this.espaceFormData.equipement.split(',').map((e: string) => e.trim()),
-    etablissementId: this.espaceFormData.etablissementId,
-    responsableId: responsableId
+    responsableId: this.espaceFormData.responsableId
   };
 
-  this.adminService.ajouterEspace(responsableId, espaceData).subscribe({
+
+  this.adminService.ajouterEspace(this.espaceFormData.responsableId, espaceData).subscribe({
     next: (response) => {
       // Ajout à la liste locale
       const newEspace = {
@@ -262,8 +292,10 @@ onModifierEspace() {
     nom: this.espaceFormData.nom,
     capacite: this.espaceFormData.capacite,
     equipement: this.espaceFormData.equipement.split(',').map((e: string) => e.trim()),
-    etablissementId: this.espaceFormData.etablissementId,
-    responsableId: this.currentEspace.responsableId // Conservé depuis l'original
+    etablissementId: this.espaceFormData.etablissementId, // Prendre la valeur du formulaire
+    responsableId: this.espaceFormData.responsableId, // Prendre la valeur du formulaire
+    categorie: this.espaceFormData.categorie,
+    type: this.espaceFormData.type
   };
 
   // Appel au service
@@ -328,19 +360,26 @@ onEditEspace(espace: Espace): void {
     nom: espace.nom,
     capacite: espace.capacite,
     equipement: espace.equipement,
-    etablissementId: espace.etablissementId
+    etablissementId: espace.etablissementId,
+    categorie: espace.categorie,
+    type: espace.type
   };
+  this.selectedCategory = espace.categorie; // Ajout crucial
   this.currentView = 'ajouter-espace';
   this.isEditingEspace = true;
 }
+
 private resetEspaceForm() {
   this.espaceFormData = {
     responsableId: '',
     nom: '',
     capacite: null,
     equipement: '',
-    etablissementId: ''
+    etablissementId: '', 
+     categorie: '',
+    type: ''
   };
+  this.selectedCategory = '';
 } 
 cancelEditEspace() {
   this.isEditingEspace = false;
@@ -348,6 +387,8 @@ cancelEditEspace() {
   this.currentView = 'gerer-espaces';
 }
 
-
-
+formatTypeName(type: string): string {
+  return type ? type.replace(/_/g, ' ') : '';
 }
+
+}    

@@ -222,58 +222,108 @@ toggleEquipmentSelection(equipment: string): void {
   async onSubmit(form: NgForm): Promise<void> {
     this.formSubmitted = true;
     this.errorMessage = null;
-    
-    if (!this.isFormValid(form)) {
-      this.errorMessage = 'Veuillez remplir tous les champs obligatoires correctement';
-      return;
-    }
-  
     this.isLoading = true;
-  
+
     try {
-      const currentUser = this.authService.getCurrentUser();
-      if (!currentUser?.id) {
-        this.router.navigate(['/auth/login'], {
-          queryParams: { returnUrl: this.router.url }
+        // Validate form first
+        if (!this.isFormValid(form)) {
+            throw new Error('Veuillez remplir tous les champs obligatoires correctement');
+        }
+
+        // Get current user
+        const currentUser = this.authService.getCurrentUser();
+        if (!currentUser?.userId) {
+            throw new Error('Session expirée, veuillez vous reconnecter');
+        }
+
+        // Prepare payload
+        const reservationPayload = {
+            ...this.reservation,
+            nbrParticipant: Number(this.reservation.nbrParticipant),
+            equipements: this.selectedEquipments,
+            demandeurId: currentUser.userId,
+            heureDebut: this.reservation.heureDebut,
+            heureFin: this.reservation.heureFin
+        };
+
+        console.log('Submission payload:', reservationPayload);
+
+        // Step 1: Create reservation
+        const createResponse: any = await this.reservationService.createReservation(reservationPayload)
+            .toPromise()
+            .catch(err => {
+                console.error('Creation error:', err);
+                throw new Error(`Échec de la création: ${err.message}`);
+            });
+
+        console.log('Creation response:', createResponse);
+
+        if (!createResponse?.id) {
+            throw new Error('Réponse invalide du serveur - ID manquant');
+        }
+
+        // Step 2: Send to responsible
+        console.log('Sending reservation ID:', createResponse.id);
+        await this.reservationService.sendReservation(createResponse.id)
+            .toPromise()
+            .catch(err => {
+                console.error('Sending error:', err);
+                throw new Error(`Échec de l'envoi au responsable: ${err.message}`);
+            });
+
+        // Success handling
+        this.showAlert('success', 'Réservation créée et envoyée avec succès!');
+        this.router.navigate(['/spaces'], {
+            state: {
+                reservationData: reservationPayload,
+                reservationId: createResponse.id
+            }
         });
-        return;
-      }
-  
-      const reservationPayload = {
-        ...this.reservation,
-        nbrParticipant: Number(this.reservation.nbrParticipant),
-        equipements: this.selectedEquipments,
-        demandeurId: currentUser.id,
-        heureDebut: this.reservation.heureDebut,
-        heureFin: this.reservation.heureFin
-      };
-  
-      const response = await this.reservationService.createReservation(reservationPayload).toPromise();
-      
-      this.router.navigate(['/spaces'], {
-        state: { 
-          reservationData: reservationPayload,
-          reservationId: response.id 
-        }
-      });
-      
+
     } catch (error: any) {
-      console.error('Erreur de soumission:', error);
-      this.errorMessage = error.message || 'Une erreur est survenue lors de la soumission';
-      
-      if (error instanceof HttpErrorResponse) {
-        if (error.status === 401) {
-          this.authService.logout();
-        } else if (error.status === 400) {
-          this.errorMessage = 'Données invalides. Veuillez vérifier les informations saisies.';
-        } else if (error.status === 500) {
-          this.errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
+        console.error('Full error stack:', error);
+        this.isLoading = false;
+        
+        let errorMsg = error.message;
+        
+        // Handle specific error cases
+        if (error instanceof HttpErrorResponse) {
+            console.error('HTTP Error Details:', error);
+            
+            // Try to extract backend message
+            if (error.error && typeof error.error === 'object') {
+                errorMsg = error.error.message || JSON.stringify(error.error);
+            } else if (typeof error.error === 'string') {
+                errorMsg = error.error;
+            }
+            
+            // Special case for 200 errors
+            if (error.status === 200) {
+                errorMsg = 'Format de réponse inattendu du serveur';
+            }
         }
-      }
+
+        this.showAlert('error', errorMsg);
+        this.errorMessage = errorMsg;
     } finally {
-      this.isLoading = false;
+        this.isLoading = false;
     }
+}
+  testFormSubmit() {
+    console.log('Test submit triggered');
+    alert('Le bouton submit fonctionne!');
   }
+
+showAlert(type: 'success'|'error', message: string): void {
+  // Utilisation de alert() simple pour le débogage
+  alert(`${type.toUpperCase()}: ${message}`);
+  
+  // Pour une meilleure expérience utilisateur, vous pourriez utiliser :
+  // - Un service de notifications/toast
+  // - Une div d'alerte dans votre template
+  // - Un modal personnalisé
+}
+
 
   goBack(): void {
     this.router.navigate(['/spaces']);

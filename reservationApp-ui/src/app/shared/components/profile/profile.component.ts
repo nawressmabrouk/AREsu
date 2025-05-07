@@ -104,7 +104,7 @@ export class ProfileComponent {
   // Close dropdown when clicking outside
   @HostListener('document:click', ['$event'])
   onClickOutside(event: Event): void {
-    if (!this.profileDropdown.nativeElement.contains(event.target)) {
+    if (this.profileDropdown?.nativeElement && !this.profileDropdown.nativeElement.contains(event.target)) {
       this.showDropdown = false;
     }
   }

@@ -37,16 +37,7 @@
           <p class="subtitle">Complétez ce formulaire pour réserver votre espace</p>
           <p class="description">Tous les champs sont obligatoires pour soumettre votre demande.</p>
           
-          <div class="form-actions">
-            <button type="button" class="cancel-btn" (click)="goBack()">Annuler</button>
-            <button type="submit" class="submit-btn" 
-                    [disabled]="!isFormValid(reservationForm) || isLoading" routerLink="/spaces">
-              <span *ngIf="!isLoading">Envoyer</span>
-              <span *ngIf="isLoading">
-                <i class="fa fa-spinner fa-spin"></i> Envoi en cours...
-              </span>
-            </button>
-          </div>
+         
         </div>
       </div>
       
@@ -205,7 +196,7 @@
                     (keyup.enter)="addCustomEquipment()">
               
               <div class="modal-actions">
-                <button type="button" (click)="addCustomEquipment()" [disabled]="isLoading">
+                <button type="button" (click)="addCustomEquipment()" >
                   <span *ngIf="!isLoading">Ajouter</span>
                   <span *ngIf="isLoading">
                     <i class="fa fa-spinner fa-spin"></i> Processing...
@@ -215,6 +206,16 @@
               </div>
             </div>
           </div>
+          <!-- Submit Button Section -->
+<div class="form-actions">
+  <button type="button" class="cancel-btn" (click)="goBack()">Annuler</button>
+  <button type="submit" class="submit-btn">
+    <span *ngIf="!isLoading">Envoyer</span>
+    <span *ngIf="isLoading">
+      <i class="fa fa-spinner fa-spin"></i> Envoi en cours...
+    </span>
+  </button>
+</div>
         </form>
       </div>
     </div>

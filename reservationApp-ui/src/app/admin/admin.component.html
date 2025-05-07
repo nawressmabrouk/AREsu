@@ -242,14 +242,18 @@
 <!-- Dans la partie "Ajouter Espace" du modal, remplacez les inputs par ceci : -->
 <div *ngIf="currentEspaceView === 'ajouter'" class="form-section">
   <h2>{{ isEditingEspace ? 'Modifier' : 'Ajouter' }} un espace</h2>
-  <form #espaceForm="ngForm" (submit)="isEditingEspace ? onModifierEspace() : onSubmitEspace(responsableId.value)">
+  <form #espaceForm="ngForm" (submit)="isEditingEspace ? onModifierEspace() : onSubmitEspace()">
     <div class="form-row">
-      <!-- ID du Responsable -->
-      <div class="form-group">
+      <!-- ID Responsable (visible seulement en ajout) -->
+      <div class="form-group" >
         <label for="responsableId">ID du Responsable</label>
         <div class="input-container">
           <fa-icon [icon]="faUser" class="icon"></fa-icon>
-          <input type="text" id="responsableId" #responsableId  required>
+          <input type="text" 
+          id="responsableId" 
+          [(ngModel)]="espaceFormData.responsableId" 
+          name="responsableId" 
+          required>
         </div>
       </div>
       
@@ -283,16 +287,57 @@
       </div>
     </div>
 
-    <!-- ID Établissement -->
+    <!-- Catégorie et Type -->
     <div class="form-row">
-    <div class="form-group">
-      <label for="etablissementId">ID Établissement</label>
-      <div class="input-container">
-        <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
-        <input type="text" id="etablissementId" [(ngModel)]="espaceFormData.etablissementId" name="etablissementId" required>
+      <div class="form-group">
+        <label>Catégorie</label>
+        <div class="radio-group">
+          <label *ngFor="let cat of categories" class="category-option">
+            <input type="radio" 
+                  name="categorie" 
+                  [(ngModel)]="espaceFormData.categorie"
+                  [value]="cat.name"
+                  (change)="selectedCategory = cat.name"
+                  required>
+            <span class="category-label">{{ cat.name }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="selectedCategory">
+        <label>Type</label>
+        <div class="checkbox-group">
+          <label *ngFor="let type of getTypesForCategory(selectedCategory)">
+            <input type="radio" 
+                  name="type" 
+                  [(ngModel)]="espaceFormData.type"
+                  [value]="type"
+                  required>
+                  {{ formatTypeName(type) }}
+          </label>
+        </div>
       </div>
     </div>
+
+    <!-- ID Établissement -->
+<!-- Remplacer le champ etablissementId par ceci -->
+<div class="form-row">
+  <div class="form-group">
+    <label for="etablissementId">ID Établissement</label>
+    <div class="input-container">
+      <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
+      <input type="text" 
+             id="etablissementId" 
+             [(ngModel)]="espaceFormData.etablissementId" 
+             name="etablissementId" 
+             [readonly]="isEditingEspace ? false : true"
+             required>
     </div>
+  </div>
+</div>
+
+  
+
     <button type="submit" class="btn-submit">{{ isEditingEspace ? 'Modifier' : 'Ajouter' }} l'espace</button>
     <button type="button" class="btn-cancel" (click)="cancelEditEspace()" *ngIf="isEditingEspace">Annuler</button>
   </form>
@@ -309,10 +354,12 @@
   <div class="espace-grid">
     <div *ngFor="let espace of filteredEspaces" class="espace-card">
       <h3>{{ espace.nom }}</h3>
-      <p><strong>ID Responsable:</strong> {{ espace.responsableId }}</p>
+      <p><strong>Responsable:</strong> {{ espace.responsableId }}</p>
       <p><strong>Capacité:</strong> {{ espace.capacite }} personnes</p>
+      <p><strong>Catégorie:</strong> {{ espace.categorie }}</p>
+      <p><strong>Type:</strong> {{ formatTypeName(espace.type) }}</p>
       <p><strong>Équipements:</strong> {{ espace.equipement }}</p>
-      <p><strong>ID Établissement:</strong> {{ espace.etablissementId }}</p>
+      <p><strong>Établissement:</strong> {{ espace.etablissementId }}</p>
       
       <div class="espace-actions">
         <button (click)="onEditEspace(espace)" (click)="currentEspaceView = 'ajouter'; showModal = 'espaces'">
@@ -328,4 +375,3 @@
     </div>
   </div>
 </div>
-

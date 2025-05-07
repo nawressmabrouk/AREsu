@@ -57,7 +57,10 @@ public class AdminService {
         espace.setCapacite(espaceModifie.getCapacite());
         espace.setDisponibilite(espaceModifie.isDisponibilite());
         espace.setEquipement(espaceModifie.getEquipement());
-
+        espace.setCategorie(espaceModifie.getCategorie()); 
+        espace.setType(espaceModifie.getType());
+        espace.setResponsableId(espaceModifie.getResponsableId());
+        espace.setEtablissementId(espaceModifie.getEtablissementId());
         return espaceRepository.save(espace);
     }
 
@@ -78,5 +81,4 @@ public class AdminService {
     }
 
 }
-
 
