@@ -1,6 +1,7 @@
 package tn.sousse.univ.reservation_app.services;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -64,7 +65,7 @@ public class AdminService {
         return espaceRepository.save(espace);
     }
 
-    // Supprimer un espace
+    /*Supprimer un espace
     public void supprimerEspace(String responsableId, String espaceId) {
         User responsable = userRepository.findById(responsableId)
                 .orElseThrow(() -> new RuntimeException("Responsable not found"));
@@ -78,6 +79,67 @@ public class AdminService {
         // Remove space from user's list
         responsable.getEspacesResponsables().remove(espaceId);
         userRepository.save(responsable);
+    }*/
+
+     public void supprimerEspace(String responsableId, String espaceId) {
+        // Vérification supplémentaire de cohérence
+        Espace espace = espaceRepository.findById(espaceId)
+            .orElseThrow(() -> new IllegalArgumentException("Espace introuvable"));
+        
+        if (!espace.getResponsableId().equals(responsableId)) {
+            throw new IllegalArgumentException("Incohérence responsable/espace");
+        }
+        
+        espaceRepository.delete(espace);
+    }
+
+    public List<User> getResponsablesSalle() {
+    return userRepository.findByRole(Role.RESPONSABLE_SALLE);
+}
+
+// Modification de sous admin
+public User updateAdmin(String adminId, User updatedUser) {
+    User existingUser = userRepository.findById(adminId)
+        .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+    // Vérification du rôle
+    if(!isValidRole(updatedUser.getRole())) {
+        throw new IllegalArgumentException("Rôle invalide");
+    }
+
+    existingUser.setNom(updatedUser.getNom());
+    existingUser.setPrenom(updatedUser.getPrenom());
+    existingUser.setEmail(updatedUser.getEmail());
+    existingUser.setNumTel(updatedUser.getNumTel());
+    existingUser.setRole(updatedUser.getRole());
+    existingUser.setFonction(updatedUser.getFonction());
+    existingUser.setNomEtablissement(updatedUser.getNomEtablissement());
+    
+    return userRepository.save(existingUser);
+}
+
+public void deleteAdmin(String adminId) {
+    User admin = userRepository.findById(adminId)
+        .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+    // Nettoyage des espaces associés
+    if(admin.getEspacesResponsables() != null && !admin.getEspacesResponsables().isEmpty()) {
+        espaceRepository.deleteAllById(admin.getEspacesResponsables());
+    }
+
+    userRepository.delete(admin);
+}
+
+private boolean isValidRole(Role role) {
+    return role == Role.SECRETAIRE_GENERALE || role == Role.RESPONSABLE_SALLE;
+}
+
+public List<Espace> getAllEspaces() {
+    return espaceRepository.findAll(); // Supposant que vous avez un repository pour Espace
+}
+
+    public boolean espaceExists(String espaceId) {
+        return espaceRepository.existsById(espaceId);
     }
 
 }

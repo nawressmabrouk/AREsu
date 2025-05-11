@@ -1,3 +1,4 @@
+
 package tn.sousse.univ.reservation_app.services;
 
 import java.util.List;
@@ -59,43 +60,47 @@ public class DemandeurService {
 
         
         
-         public List<ReservationResponseDTO> getReservationsByDemandeur(String demandeurId) {
-                List<Reservation> reservations = reservationRepository.findByDemandeurId(demandeurId);
+      public List<ReservationResponseDTO> getReservationsByDemandeur(String demandeurId) {
+    List<Reservation> reservations = reservationRepository.findByDemandeurId(demandeurId);
 
-                User demandeur = userRepository.findById(demandeurId)
-                                .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
+    User demandeur = userRepository.findById(demandeurId)
+            .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
+    String demandeurRole = demandeur.getRole().toString();
 
-                return reservations.stream()
-                                .map(reservation -> {
-                                        String espaceNom = espaceRepository.findById(reservation.getEspaceId())
-                                                        .map(espace -> espace.getNom())
-                                                        .orElse("Espace inconnu");
-
-                                        return ReservationMapper.toResponseDTOFull(
-                                                        reservation,
-                                                        demandeur.getEmail(),
-                                                        demandeur.getNom(),
-                                                        espaceNom);
-                                })
-                                .collect(Collectors.toList());
-        }
-
-        public ReservationResponseDTO getReservationDtoById(String reservationId) {
-                Reservation reservation = reservationRepository.findById(reservationId)
-                                .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
-
-                User demandeur = userRepository.findById(reservation.getDemandeurId())
-                                .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
-
+    return reservations.stream()
+            .map(reservation -> {
                 String espaceNom = espaceRepository.findById(reservation.getEspaceId())
-                                .map(Espace::getNom)
-                                .orElse("Espace inconnu");
+                        .map(Espace::getNom)
+                        .orElse("Espace inconnu");
 
                 return ReservationMapper.toResponseDTOFull(
-                                reservation,
-                                demandeur.getEmail(),
-                                demandeur.getNom(),
-                                espaceNom);
-        }
+                        reservation,
+                        demandeur.getEmail(),
+                        demandeur.getNom(),
+                        espaceNom,
+                        demandeurRole);
+            })
+            .collect(Collectors.toList());
+}
 
+public ReservationResponseDTO getReservationDtoById(String reservationId) {
+    Reservation reservation = reservationRepository.findById(reservationId)
+            .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
+
+    User demandeur = userRepository.findById(reservation.getDemandeurId())
+            .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
+
+    String espaceNom = espaceRepository.findById(reservation.getEspaceId())
+            .map(Espace::getNom)
+            .orElse("Espace inconnu");
+
+    String demandeurRole = demandeur.getRole().toString();
+
+    return ReservationMapper.toResponseDTOFull(
+            reservation,
+            demandeur.getEmail(),
+            demandeur.getNom(),
+            espaceNom,
+            demandeurRole);
+}
 }

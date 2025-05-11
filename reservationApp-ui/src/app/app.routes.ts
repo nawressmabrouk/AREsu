@@ -41,17 +41,20 @@ import { Routes } from '@angular/router';
 import { AdminComponent } from './admin/admin.component';
 import { AuthComponent } from './auth/auth.component';
 import { AuthGuard } from './auth/auth.guard';
-import {
-  CalendarComponent
-} from './calendar/calendar.component';
+import { ChatbotComponent } from './chatbot/chatbot.component';
 import { HomeComponent } from './home/home.component';
 import { IdOublieComponent } from './mot-de-passe-oubliée/id-oublie/id-oublie.component';
 import { ResetPasswordComponent } from './mot-de-passe-oubliée/reset-password/reset-password.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { RegisterComponent } from './register/register.component';
 import { ReservationFormComponent } from './reservation-form/reservation-form.component';
+import { ReservationsCalendarComponent } from './reservations-calendar/reservations-calendar.component';
+
 import { RoomManagerComponent } from './room-manager/room-manager.component';
 import { SecretaryComponent } from './secretary/secretary.component';
+import {
+  SelectionCalendarComponent
+} from './selection-calendar/selection-calendar.component';
 import { SpacesComponent } from './spaces/spaces.component';
 export const routes: Routes = [
   { 
@@ -82,6 +85,10 @@ export const routes: Routes = [
    
   },
   { 
+    path: 'chatbot', 
+    component: ChatbotComponent 
+  },
+  { 
     path: 'secretary',
     component: SecretaryComponent,
    
@@ -97,9 +104,14 @@ export const routes: Routes = [
     canActivate: [AuthGuard] // For all authenticated users
   },
   { 
-    path: 'calendar',
-    component: CalendarComponent,
+    path: 'selection-calendar',
+    component: SelectionCalendarComponent,
     canActivate: [AuthGuard]
   },
+  { 
+  path: 'reservations-calendar',
+  component: ReservationsCalendarComponent,
+  canActivate: [AuthGuard]
+},
   { path: '**', redirectTo: '' }
 ];

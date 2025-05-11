@@ -34,7 +34,9 @@ package tn.sousse.univ.reservation_app.models;
 public enum TypeEtablissement {
     FACULTE("Faculté"),
     ECOLE("École"),
-    INSTITUT("Institut");
+    INSTITUT("Institut"),
+    UNIVERSITE("Université");
+ 
 
     private final String label;
 

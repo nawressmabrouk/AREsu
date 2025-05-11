@@ -1,19 +1,31 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { 
-  faUser, faEnvelope, faBriefcase, faPhone, 
-  faBuilding, faLink, faLock , faHome , faArrowRight , faTasks , faPlusCircle , faUsersCog ,   
-  faUsers, 
-  faTools, 
-  faUniversity
+import {
+  faArrowRight,
+  faBriefcase,
+  faBuilding,
+  faEnvelope,
+  faHome,
+  faLink, faLock,
+  faPhone,
+  faPlusCircle,
+  faTasks,
+  faTools,
+  faUniversity,
+  faUser,
+  faUsers,
+  faUsersCog,
+  faTrash,
+  faEdit,
+  faUserTag
 } from '@fortawesome/free-solid-svg-icons';
-import { AdminRegistrationService } from '../services/admin/admin-registration.service';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ProfileComponent } from '../shared/components/profile/profile.component';
 import { NotificationComponent } from '../alert-notif/notification.component';
+import { AdminRegistrationService, AdminUser } from '../services/admin/admin-registration.service';
 import { NotificationService } from '../services/alert-notif/notification.service';
+import { ProfileComponent } from '../shared/components/profile/profile.component';
 interface Espace {
   id: string; // Optionnel car généré par MongoDB
   nom: string;
@@ -23,6 +35,11 @@ interface Espace {
   etablissementId: string;
   categorie: string;
   type: string;
+}
+export enum Role {
+  ADMIN = 'ADMIN',
+  SECRETAIRE_GENERALE = 'SECRETAIRE_GENERALE',
+  RESPONSABLE_SALLE = 'RESPONSABLE_SALLE'
 }
 @Component({
   selector: 'app-admin',
@@ -48,10 +65,13 @@ faTools = faTools;
   faPageIcon = faArrowRight ;
   faUsersCog = faUsersCog ;
   faTasks = faTasks ;
+  faEdit = faEdit;
+faTrash = faTrash;
   faPlusCircle = faPlusCircle ;
   showModal: string | null = null;
   currentEspaceView: string | null = null;
   showEspaceOptions: boolean = false;
+faUserTag = faUserTag;
   
   espace: any = {};
   espaces: Espace[] = []; // Liste des espaces
@@ -66,7 +86,22 @@ currentEspace: Espace = {
   type: ''
 };
 
+sousAdminFormData: AdminUser = {
+  nom: '',
+  prenom: '',
+  email: '',
+  numTel: '',
+  role: Role.RESPONSABLE_SALLE,
+  fonction: '',
+  nomEtablissement: '',
+  structure: '',
+  espacesResponsables: []
+};
 
+roles = [
+  { value: Role.SECRETAIRE_GENERALE, label: 'Secrétaire Générale' },
+  { value: Role.RESPONSABLE_SALLE, label: 'Responsable Salle' }
+];
 categories = [
   { 
     name: 'Espaces administratifs & académiques',
@@ -77,6 +112,13 @@ categories = [
     types: ['Espace_4C', 'Incubateur', 'FabLab', 'Coworking_space', 'Pole_etudiant_entrepreneur']
   }
 ];
+
+showSousAdminOptions: boolean = false;
+currentSousAdminView: 'ajouter' | 'gerer' = 'ajouter';
+searchSousAdmin: string = '';
+sousAdmins: AdminUser[] = [];
+currentSousAdmin: AdminUser | null = null;
+isEditingSousAdmin: boolean = false;
 
 selectedCategory: string = '';
 selectedType: string = '';
@@ -129,27 +171,48 @@ isEditingEspace: boolean = false; // Mode édition
   ) {}
 
   ngOnInit() {
-    this.loadEspacesFromLocalStorage();
+    this.loadEspacesFromDatabase();
+     this.loadSousAdminsFromDatabase();
   }
-  private loadEspacesFromLocalStorage() {
-    const savedEspaces = localStorage.getItem('espaces');
-    if (savedEspaces) {
-      this.espaces = JSON.parse(savedEspaces);
-    }
-  }
+ 
+ 
+ 
 
+
+
+private loadEspacesFromDatabase() {
+  this.adminService.getAllEspaces().subscribe({
+    next: (apiEspaces) => {
+      this.espaces = apiEspaces.map(apiEspace => ({
+        id: apiEspace.id,
+        nom: apiEspace.nom,
+        capacite: apiEspace.capacite,
+        equipement: Array.isArray(apiEspace.equipement) 
+                   ? apiEspace.equipement.join(', ') 
+                   : apiEspace.equipement,
+        responsableId: apiEspace.responsableId, // Utiliser directement le champ de l'API
+        etablissementId: apiEspace.etablissementId, // Utiliser directement le champ de l'API
+        categorie: apiEspace.categorie,
+        type: apiEspace.type
+      }));
+    },
+    error: (err) => {
+      console.error('Erreur de chargement:', err);
+      this.notificationService.showError('Échec du rafraîchissement des espaces');
+    }
+  });
+}
   getTypesForCategory(categoryName: string): string[] {
     const category = this.categories.find(cat => cat.name === categoryName);
     return category ? category.types : [];
   }
+ 
 
-  private saveEspacesToLocalStorage() {
-    localStorage.setItem('espaces', JSON.stringify(this.espaces));
-  }
-
-
-  onSubmit(
-    lastName: string,
+/*
+  onSubmitSousAdmin(
+  
+  
+  lastName: string,
     firstName: string,
     email: string,
     fonction: string,
@@ -221,8 +284,79 @@ isEditingEspace: boolean = false; // Mode édition
         this.notificationService.showError('Erreur lors de la création du compte.');
       }
     });
-  }
+  
+  }*/
 
+// Méthodes pour Sous-admins
+toggleSousAdminOptions() {
+  this.showSousAdminOptions = !this.showSousAdminOptions;
+  if (!this.showSousAdminOptions) {
+    this.showModal = null;
+  }
+}
+
+loadSousAdminsFromDatabase() {
+  this.adminService.getResponsables().subscribe({
+    next: (admins) => {
+      this.sousAdmins = admins;
+    },
+    error: (err) => {
+      console.error('Erreur de chargement:', err);
+      this.notificationService.showError('Échec du chargement des sous-admins');
+    }
+  });
+}
+onEditSousAdmin(admin: AdminUser) {
+    this.resetSousAdminForm(); // Réinitialise avant de peupler
+  this.currentSousAdmin = { ...admin };
+  this.isEditingSousAdmin = true;
+  
+  // Pré-remplir le formulaire avec la bonne propriété
+  this.sousAdminFormData = {
+    nom: admin.nom,
+    prenom: admin.prenom,
+    email: admin.email,
+    numTel: admin.numTel,
+    role: admin.role,
+    fonction: admin.fonction,
+    nomEtablissement: admin.nomEtablissement,
+    structure: admin.structure,
+    linkedInLink: admin.linkedInLink, // Corriger le nom de propriété (linkedInLink → linkedin)
+    espacesResponsables: admin.espacesResponsables
+  };
+}
+
+
+
+onSupprimerSousAdmin(adminId: string) {
+
+  if (!adminId) {
+    this.notificationService.showError('ID non valide');
+    return;
+  }
+  if (confirm('Confirmez la suppression de ce sous-admin ?')) {
+    this.adminService.deleteAdmin(adminId).subscribe({
+      next: () => {
+        this.loadSousAdminsFromDatabase();
+        this.notificationService.showSuccess('Suppression réussie');
+      },
+      error: (err) => {
+        this.notificationService.showError(err.error?.message || 'Erreur de suppression');
+      }
+    });
+  }
+}
+get filteredSousAdmins(): AdminUser[] {
+  return this.sousAdmins.filter(admin => {
+    const search = this.searchSousAdmin.toLowerCase();
+    return (
+      admin.nom.toLowerCase().includes(search) ||
+      admin.prenom.toLowerCase().includes(search) ||
+      admin.email.toLowerCase().includes(search) ||
+      admin.nomEtablissement.toLowerCase().includes(search)
+    );
+  });
+}
 
  //  méthodes pour ajouter  les espaces
  onSubmitEspace() {
@@ -255,19 +389,23 @@ isEditingEspace: boolean = false; // Mode édition
 
   this.adminService.ajouterEspace(this.espaceFormData.responsableId, espaceData).subscribe({
     next: (response) => {
-      // Ajout à la liste locale
+      // Ajout direct depuis la réponse de l'API
       const newEspace = {
-        id: response.id || Date.now().toString(), // Si l'API ne retourne pas d'ID, on en génère un
-        ...espaceData,
-        equipement: espaceData.equipement.join(', ')
+        ...response,
+        equipement: Array.isArray(response.equipement) ? 
+                   response.equipement.join(', ') : 
+                   response.equipement
       };
       
+      // Mise à jour de la liste locale
       this.espaces.push(newEspace);
-      this.saveEspacesToLocalStorage();
       
       this.notificationService.showSuccess('Espace ajouté avec succès');
       this.currentView = 'gerer-espaces';
       this.resetEspaceForm();
+
+      // Rafraîchissement optionnel depuis le serveur
+      this.loadEspacesFromDatabase();
     },
     error: (err) => {
       console.error(err);
@@ -275,6 +413,8 @@ isEditingEspace: boolean = false; // Mode édition
     }
   });
 }
+
+
 
 //  méthode pour valider le format d'email
 isValidEmail(email: string): boolean {
@@ -292,59 +432,63 @@ onModifierEspace() {
     nom: this.espaceFormData.nom,
     capacite: this.espaceFormData.capacite,
     equipement: this.espaceFormData.equipement.split(',').map((e: string) => e.trim()),
-    etablissementId: this.espaceFormData.etablissementId, // Prendre la valeur du formulaire
-    responsableId: this.espaceFormData.responsableId, // Prendre la valeur du formulaire
+    etablissementId: this.espaceFormData.etablissementId,
+    responsableId: this.espaceFormData.responsableId,
     categorie: this.espaceFormData.categorie,
     type: this.espaceFormData.type
   };
 
-  // Appel au service
+
   this.adminService.modifierEspace(this.currentEspace.id, espaceData).subscribe({
     next: (updatedEspace) => {
-      // Met à jour le localStorage ET l'interface
       const index = this.espaces.findIndex(e => e.id === this.currentEspace.id);
       
       if (index !== -1) {
-        // Fusionne les nouvelles données avec l'ID existant
+        // Mise à jour directe avec les données de l'API
         this.espaces[index] = { 
-          ...this.espaces[index],
           ...updatedEspace,
-          equipement: updatedEspace.equipement.join(', ') // Adaptation pour l'affichage
+          equipement: Array.isArray(updatedEspace.equipement) 
+                     ? updatedEspace.equipement.join(', ') 
+                     : updatedEspace.equipement
         };
         
-        this.saveEspacesToLocalStorage();
         this.notificationService.showSuccess('Modification réussie !');
-        
-        // Retour à la liste
         this.currentView = 'gerer-espaces';
         this.resetEspaceForm();
         this.isEditingEspace = false;
+
+        // Optionnel : Rafraîchir depuis le serveur pour synchronisation
+        this.loadEspacesFromDatabase();
       }
     },
     error: (err) => {
       console.error('Échec de la modification', err);
-      this.notificationService.showError(`Erreur: ${err.error?.message || 'Modification échouée'}`);
+      this.notificationService.showError(
+        `Erreur: ${err.error?.message || 'Modification échouée'}`
+      );
     }
   });
 }
 
-// In your AdminComponent
+
 onSupprimerEspace(responsableId: string, espaceId: string) {
-  if (confirm('Confirmez la suppression de cette espace  ?')) {
+  if (confirm('Confirmez la suppression de cet espace ?')) {
     this.adminService.supprimerEspace(responsableId, espaceId).subscribe({
-      next: (response) => {
-        // Remove from local array
-        this.espaces = this.espaces.filter(e => e.id !== espaceId);
-        this.saveEspacesToLocalStorage(); // Mise à jour du localStorage
-        this.notificationService.showSuccess('Supprimé avec succès');
+      next: () => {
+        // Rafraîchissement forcé
+        this.loadEspacesFromDatabase();
+        this.notificationService.showSuccess('Suppression réussie');
       },
       error: (err) => {
-        console.error('Erreur de suppression:', err);
-        this.notificationService.showError(`Erreur: ${err.status} ${err.statusText}`);
+        console.error('Détails erreur:', err);
+        this.notificationService.showError(
+          err.error?.message || 'Erreur lors de la suppression'
+        );
       }
     });
   }
 }
+
 // Pour filtrer les espaces
 get filteredEspaces(): Espace[] {
   return this.espaces.filter(e =>
@@ -381,6 +525,27 @@ private resetEspaceForm() {
   };
   this.selectedCategory = '';
 } 
+
+private resetSousAdminForm() {
+  this.sousAdminFormData = {
+    nom: '',
+    prenom: '',
+    email: '',
+    numTel: '',
+    role: Role.RESPONSABLE_SALLE,
+    fonction: '',
+    nomEtablissement: '',
+    structure: '',
+    espacesResponsables: []
+  };
+}
+
+cancelEditSousAdmin() {
+  this.isEditingSousAdmin = false;
+  this.resetSousAdminForm();
+  this.showModal = null; // Ferme le modal si nécessaire
+}
+
 cancelEditEspace() {
   this.isEditingEspace = false;
   this.resetEspaceForm();
@@ -389,6 +554,52 @@ cancelEditEspace() {
 
 formatTypeName(type: string): string {
   return type ? type.replace(/_/g, ' ') : '';
+}
+
+//Modification des méthodes dans le TypeScript
+onSubmitSousAdmin() {
+  // Utilisation directe de sousAdminFormData
+  const requiredFields = {
+    'Prénom': this.sousAdminFormData.prenom,
+    'Nom': this.sousAdminFormData.nom,
+    'Email': this.sousAdminFormData.email,
+    'Rôle': this.sousAdminFormData.role,
+    'Établissement': this.sousAdminFormData.nomEtablissement
+  };
+
+  for (const [field, value] of Object.entries(requiredFields)) {
+    if (!value) {
+      this.notificationService.showError(`${field} est requis`);
+      return;
+    }
+  }
+
+  this.adminService.registerAdmin(this.sousAdminFormData).subscribe({
+    next: (res) => {
+      this.notificationService.showSuccess('Sous-admin créé !');
+      this.loadSousAdminsFromDatabase();
+      this.resetSousAdminForm();
+    },
+    error: (err) => {
+      this.notificationService.showError(err.error?.message || 'Erreur');
+    }
+  });
+}
+
+onModifierSousAdmin() {
+  if (!this.currentSousAdmin?.id) return;
+
+  this.adminService.updateAdmin(this.currentSousAdmin.id, this.sousAdminFormData)
+    .subscribe({
+      next: () => {
+        this.notificationService.showSuccess('Modifications sauvegardées');
+        this.loadSousAdminsFromDatabase();
+        this.cancelEditSousAdmin();
+      },
+      error: (err) => {
+        this.notificationService.showError(err.error?.message || 'Erreur');
+      }
+    });
 }
 
 }    

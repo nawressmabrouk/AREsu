@@ -161,7 +161,12 @@ public class JwtFilter extends OncePerRequestFilter {
         
         chain.doFilter(request, response);
     }
-
+    
+// In your JwtFilter class
+@Override
+protected boolean shouldNotFilter(HttpServletRequest request) {
+    return request.getRequestURI().startsWith("/api/chat");
+}
 
 
 

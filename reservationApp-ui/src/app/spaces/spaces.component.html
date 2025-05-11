@@ -8,7 +8,7 @@
       </div>
 
       <div class="header-title">
-        <h1 class="page-title">Espaces Disponibles</h1>
+        <h1 class="page-title">Etablissement Disponibles</h1>
         <p class="page-subtitle" *ngIf="!selectedEtablissement">
           Sélectionnez un établissement et réservez l'espace qui vous convient
         </p>
@@ -53,45 +53,6 @@
   </section>
 
 
-
-
-
-
-
-
-
-
-
-
-<!--hedha EKHER WEHED KHDEMLIII
-  <div class="spaces-container">
-    <!-- Establishments List
-    <section *ngIf="!selectedEtablissement && !loading" class="etablissements-grid">
-      <article 
-      *ngFor="let etab of etablissements; trackBy: trackByEtabId" 
-      class="etablissement-card" 
-      (click)="selectEtablissement(etab)">  
-            <div class="card-logo" *ngIf="etab.logo">
-          <img [src]="etab.logo" alt="Logo" class="etablissement-logo"/>
-        </div>
-        <div class="card-content">
-          <header class="card-header">
-            <h3 class="card-title">{{ etab.nom }}</h3>
-            <span class="card-badge">{{ getTypeLabel(etab.type) }}</span>
-          </header>
-          <div class="card-details">
-            <p class="detail-item">
-              <fa-icon [icon]="faBuilding"></fa-icon> {{ getZoneLabel(etab.zone) }}
-            </p>
-            <p class="detail-item">
-              <fa-icon [icon]="faLocationDot"></fa-icon> {{ etab.adresse }}
-            </p>
-          </div>
-        </div>
-      </article>
-    </section> 
-  -->
-
   <div class="filter-section">
     <!-- Zone Filter Dropdown -->
     <select [(ngModel)]="currentFilters.zone" (change)="applyFilters()">
@@ -126,6 +87,8 @@
         </div>
       </article>
     </section>
+
+    <!--app-chatbot></app-chatbot-->
   </div>
 
 
@@ -157,7 +120,7 @@
       </div>
     
       <div class="espaces-grid" *ngIf="filteredEspaces.length > 0; else noEspaces">
-        <article *ngFor="let espace of filteredEspaces" class="espace-card" (click)="navigateToCalendar(espace)">
+        <article *ngFor="let espace of filteredEspaces" class="espace-card" (click)="navigateToSelectionCalendar(espace)">
           <header class="card-header">
             <h3 class="card-title">{{ espace.nom || 'Espace sans nom' }}</h3>
             <span class="card-badge">{{ espace.type || 'Type non spécifié' }}</span>
@@ -186,75 +149,65 @@
       </ng-template>
     </section>
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   </div>
-  <!-- Spaces List -
-  <section *ngIf="selectedEtablissement && !loading" class="spaces-section">
-    <button class="btn back-btn" (click)="goBackToEtablissements()">
-      <fa-icon [icon]="faArrowLeft"></fa-icon> Retour aux établissements
-    </button>
-    
-    <div class="space-filters">
-      <div class="filter-group">
-        <label class="filter-label">Catégorie :</label>
-        <select class="filter-select" [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
-          <option [ngValue]="null">Toutes les catégories</option>
-          <option *ngFor="let category of categories" [ngValue]="category">
-            {{category.label}}
-          </option>
-        </select>
-      </div>
-    
-      <div class="filter-group" *ngIf="selectedCategory">
-        <label class="filter-label">Type d'espace :</label>
-        <select class="filter-select" [(ngModel)]="selectedSubcategory" (change)="filterSpaces()">
-          <option [ngValue]="null">Tous les types</option>
-          <option *ngFor="let type of selectedCategory.types" [value]="type">
-            {{type}}
-          </option>
-        </select>
-      </div>
-    </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
-    <div class="espaces-grid" *ngIf="filteredEspaces.length > 0; else noEspaces">
-      <article *ngFor="let espace of filteredEspaces" class="espace-card" (click)="reserveSpace(espace)">
-        <header class="card-header">
-          <h3 class="card-title">{{ espace.nom }}</h3>
-          <span class="card-badge">{{ espace.type }}</span>
-        </header>
+  
 
-        <div class="card-details">
-          <p class="detail-item">
-            <fa-icon [icon]="faUsers"></fa-icon>
-            Capacité : {{ espace.capacite }} personnes
-          </p>
+  
+  
+  
+  
 
-          <p *ngIf="espace.equipement && espace.equipement.length > 0" class="detail-item">
-            <fa-icon [icon]="faMicrochip"></fa-icon>
-            Équipements : {{ espace.equipement.join(', ') }}
-          </p>
-        </div>
-      </article>
-    </div>
+  
+  
+  
+  
+  
 
-    <ng-template #noEspaces>
-      <p class="no-results">Aucun espace ne correspond à ce filtre.</p>
-    </ng-template>
-  </section --> 
+  
+  
+  
+  
+  
+  
+  
 
-   <!--Loading Indicator 
-  <div *ngIf="loading" cl="loading-overlay">
-    <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
-  </div> -->
+  
+  
+  
+  
+
+  
+  
+  
+  
 
 
 

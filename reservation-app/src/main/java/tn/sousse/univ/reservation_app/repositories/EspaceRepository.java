@@ -26,6 +26,8 @@ public interface EspaceRepository extends MongoRepository<Espace, String> {
 
     List<Espace> findByEtablissementIdAndCategorie(String etablissementId, SpaceCategory categorie);
 
+      List<Espace> findByResponsableId(String responsableId);
+
     List<Espace> findByEtablissementIdAndType(String etablissementId, String type);
 
     List<Espace> findByCategorieAndType(SpaceCategory categorie, String type);

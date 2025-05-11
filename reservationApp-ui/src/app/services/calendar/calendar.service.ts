@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { CalendarSlotDTO } from '../../shared/interfaces/calendar-slot.dto';
 import { AuthService } from '../auth/auth.service';
 
@@ -91,65 +91,32 @@ export class CalendarService {
     // Remove trailing underscores and any other unwanted characters
     return id.replace(/_+$/, '').trim();
   }
-
-  getUnavailableSlotsForSpace(espaceId: string, date: string): Observable<string[]> {
-    const cleanEspaceId = this.cleanId(espaceId);
-    if (!cleanEspaceId || !date) {
-      return of([]);
-    }
-
-    const params = new HttpParams()
-      .set('espaceId', cleanEspaceId)
-      .set('date', date);
-
-    return this.http.get<string[]>(
-      `${this.apiUrl}/unavailableSlots/space`,
-      { 
-        headers: this.getHeaders(),
-        params: params
-      }
-    ).pipe(
-      catchError(error => {
-        console.error('Error fetching unavailable slots:', error);
-        return of([]);
-      })
-    );
-  }
+ 
+getTimeSlots(date: string): Observable<CalendarSlotDTO[]> {
+  // Change from '/slots' to '/view'
+  return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/view`, { 
+    params: new HttpParams().set('date', date),
+    headers: this.getHeaders()  // Add authorization headers
+  }).pipe(
+    map(slots => slots.map(slot => ({
+      ...slot,
+      heureDebut: new Date(slot.heureDebut),
+      heureFin: new Date(slot.heureFin)
+    }))),
+    catchError(this.handleError)  // Add error handling
+  );
 }
-/*
-  getCalendarView(
-    etablissementId: string,
-    espaceId: string,
-    date: string,
-    userId: string,
-    userRole: string
-  ): Observable<CalendarSlotDTO[]> {
-    // Validate parameters
-    if (!etablissementId || !espaceId || !date || !userId || !userRole) {
-      console.error('Missing required parameters');
-      return of([]);
-    }
 
-    // Construct URL with proper encoding
-    const url = `${this.apiUrl}/view?` + 
-      `etablissementId=${encodeURIComponent(etablissementId)}` +
-      `&espaceId=${encodeURIComponent(espaceId)}` +
-      `&date=${encodeURIComponent(date)}`;
+getUnavailableDates(): Observable<string[]> {
+  return this.http.get<string[]>(`${this.apiUrl}/reservations/dates`);
+}
 
-    return this.http.get<CalendarSlotDTO[]>(url, {
-      headers: this.getHeaders()
-        .set('X-User-Id', userId)
-        .set('X-User-Role', userRole)
-    }).pipe(
-      catchError(error => {
-        console.error('Error loading calendar view:', error);
-        if (error.status === 403) {
-          // Handle forbidden error specifically
-          console.error('Access denied - insufficient permissions');
-          // You might want to redirect or show a message to the user
-        }
-        return of([]);
-      })
-    );
-  }*/
-  
+
+getConfirmedEvents(): Observable<CalendarSlotDTO[]> {
+  return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/reservations/confirmed`);
+}
+
+getUnconfirmedEvents(): Observable<CalendarSlotDTO[]> {
+  return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/reservations/pending`);
+}
+}

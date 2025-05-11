@@ -30,6 +30,7 @@ public class ReservationResponseDTO {
     private String DecideePar;
     private String espaceNom;
     private List<String> equipements;
+    private String demandeurRole ;
 
 
 }

@@ -15,9 +15,10 @@ import {
   faSignOutAlt, faSpinner, faSyncAlt, faUniversity, faUser,
   faUserGraduate, faUsers, faUserTag, faUserTie
 } from '@fortawesome/free-solid-svg-icons';
-import { UserService } from '../services/user/user.service';
 import { Espace, Etablissement, EtablissementService } from '../services/etablissement/etablissement.service';
+import { UserService } from '../services/user/user.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
+//import { ChatbotComponent } from '../chatbot/chatbot.component';
 interface SpaceCategory {
   label: string;
   types: string[];
@@ -27,7 +28,7 @@ interface SpaceCategory {
 @Component({
   selector: 'app-spaces',
   standalone: true,
-  imports: [FontAwesomeModule, CommonModule, FormsModule , ProfileComponent],
+  imports: [FontAwesomeModule, CommonModule, FormsModule , ProfileComponent, /*ChatbotComponent*/],
   templateUrl: './spaces.component.html',
   styleUrls: ['./spaces.component.scss']
 })
@@ -79,7 +80,7 @@ export class SpacesComponent implements OnInit {
   loading = false;
 
   // Filters
-  establishmentTypes = ['FACULTE', 'INSTITUT', 'ECOLE'];
+  establishmentTypes = ['FACULTE', 'INSTITUT', 'ECOLE', 'UNIVERSITE'];
   zones = ['CENTRE_VILLE_CITE_RIADH', 'SAHLOUL_HAMMAM_SOUSSE', 'CHOTT_MERIEM'];
    // User data
  currentUser : any ; 
@@ -114,21 +115,13 @@ export class SpacesComponent implements OnInit {
     this.loadEtablissements();
     this.loadUserProfile();
   }
- 
- 
- 
- 
- 
- 
- 
- 
- 
 
   getTypeLabel(type: string): string {
     const labels: Record<string, string> = {
       'FACULTE': 'Faculté',
       'INSTITUT': 'Institut',
-      'ECOLE': 'École'
+      'ECOLE': 'École',
+      'UNIVERSITE': "Université"
     };
     return labels[type] || type;
   }
@@ -244,10 +237,10 @@ trackByEtabId(index: number, etab: Etablissement): string {
 
 // When clicking a space card
 
-navigateToCalendar(espace: Espace): void {
+navigateToSelectionCalendar(espace: Espace): void {
   if (!this.selectedEtablissement || !espace.id) return;
   
-  this.router.navigate(['/calendar'], {
+  this.router.navigate(['/selection-calendar'], {
     queryParams: {
       etablissementId: this.selectedEtablissement.id,
       espaceId: espace.id

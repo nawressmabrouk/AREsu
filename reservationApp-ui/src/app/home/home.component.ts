@@ -7,11 +7,12 @@ import {
   faHome,  
   faArrowRight    // Fichier avec stylo
 } from '@fortawesome/free-solid-svg-icons';
+import { ChatbotComponent } from '../chatbot/chatbot.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, FontAwesomeModule],
+  imports: [RouterLink, FontAwesomeModule, ChatbotComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })

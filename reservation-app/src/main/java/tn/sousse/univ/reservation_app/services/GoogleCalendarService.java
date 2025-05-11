@@ -1,4 +1,4 @@
-package tn.sousse.univ.reservation_app.services;
+/*package tn.sousse.univ.reservation_app.services;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -343,4 +343,457 @@ public class GoogleCalendarService {
                 Reservation.class);
     }
 
+}*/
+
+package tn.sousse.univ.reservation_app.services;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.stereotype.Service;
+
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.util.DateTime;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.Events;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
+
+import tn.sousse.univ.reservation_app.config.GoogleCalendarConfig;
+import tn.sousse.univ.reservation_app.dto.CalendarSlotDTO;
+import tn.sousse.univ.reservation_app.models.Reservation;
+import tn.sousse.univ.reservation_app.models.StatusReservation;
+import tn.sousse.univ.reservation_app.repositories.ReservationRepository;
+
+@Service
+public class GoogleCalendarService {
+    private static final Logger logger = LoggerFactory.getLogger(GoogleCalendarService.class);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final List<String> SCOPES = Collections.singletonList("https://www.googleapis.com/auth/calendar");
+    private static final String[] TUNISIAN_HOLIDAY_CALENDAR_IDS = {
+            "en.tunisia#holiday@group.v.calendar.google.com",
+            "tunisian.official#holiday@group.v.calendar.google.com",
+            "ar.tn#holiday@group.v.calendar.google.com",
+            "en.tn#holiday@group.v.calendar.google.com"
+    };
+
+    private final GoogleCalendarConfig calendarProperties;
+    private final ReservationRepository reservationRepository;
+    private final GoogleCredentials credentials;
+    private static final ZoneId TUNIS_ZONE = ZoneId.of("Africa/Tunis");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+private MongoTemplate mongoTemplate;
+
+    public GoogleCalendarService(
+            GoogleCalendarConfig calendarProperties,
+            ReservationRepository reservationRepository) throws IOException {
+
+        this.calendarProperties = calendarProperties;
+        this.reservationRepository = reservationRepository;
+
+        try {
+            // Get the resource from configuration properties
+            this.credentials = GoogleCredentials.fromStream(
+                    calendarProperties.getServiceAccountKey().getInputStream())
+                    .createScoped(SCOPES);
+        } catch (IOException e) {
+            logger.error("Failed to initialize Google Calendar credentials", e);
+            throw new RuntimeException("Failed to initialize Google Calendar credentials", e);
+        }
+    }
+    
+  public List<String> getReservedDates() {
+    Query query = new Query();
+    query.addCriteria(Criteria.where("statut").is("ACCEPTEE")); // Filter by status
+    
+    List<Reservation> reservations = mongoTemplate.find(query, Reservation.class, "reservations");
+    
+    List<String> dates = new ArrayList<>();
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    
+    for (Reservation reservation : reservations) {
+        try {
+            // Extract start and end dates from the reservation
+            Date startDateTime = reservation.getHeureDebut();
+            Date endDateTime = reservation.getHeureFin();
+            
+            // Convert to LocalDate to handle date ranges
+            LocalDate startDate = startDateTime.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+            LocalDate endDate = endDateTime.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+            
+            // Add all dates in the range (start to end, inclusive)
+            for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                dates.add(date.format(DateTimeFormatter.ISO_DATE)); // Format as "yyyy-MM-dd"
+            }
+        } catch (Exception e) {
+            // Handle date parsing errors
+            e.printStackTrace();
+        }
+    }
+    
+    return dates;
+}
+  
+  
+  
+  
+  
+
+    private List<String> getReservationsFromCalendar(Calendar service, String calendarId) throws IOException {
+        List<String> dates = new ArrayList<>();
+        Events events = service.events().list(calendarId)
+                .setTimeMin(new DateTime(System.currentTimeMillis()))
+                .setSingleEvents(true)
+                .setOrderBy("startTime")
+                .execute();
+
+        for (Event event : events.getItems()) {
+            DateTime start = event.getStart().getDateTime();
+            if (start == null) {
+                start = event.getStart().getDate();
+            }
+            if (start != null) {
+                // Convert to local date string
+                dates.add(new java.util.Date(start.getValue()).toString().substring(0, 10));
+            }
+        }
+        return dates;
+    }
+
+    public Reservation confirmReservation(ObjectId reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        try {
+            Event calendarEvent = createCalendarEvent(reservation);
+            Event createdEvent = getCalendarService().events()
+                    .insert(calendarProperties.getCalendarId(), calendarEvent)
+                    .execute();
+
+            reservation.setGoogleCalendarEventId(createdEvent.getId());
+            return reservationRepository.save(reservation);
+
+        } catch (Exception e) {
+            logger.error("Reservation confirmation failed", e);
+            throw new RuntimeException("Reservation confirmation error", e);
+        }
+    }
+
+    private Event createCalendarEvent(Reservation reservation) {
+        return new Event()
+                .setSummary(reservation.getIntituleAction())
+                .setDescription(reservation.getDescription())
+                .setStart(new EventDateTime().setDateTime(new DateTime(reservation.getHeureDebut())))
+                .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin())));
+    }
+
+    public void cancelReservation(ObjectId reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        try {
+            if (reservation.getGoogleCalendarEventId() != null) {
+                getCalendarService().events()
+                        .delete(calendarProperties.getCalendarId(), reservation.getGoogleCalendarEventId())
+                        .execute();
+            }
+            reservationRepository.delete(reservation);
+        } catch (IOException | GeneralSecurityException e) {
+            logger.error("Reservation cancellation failed", e);
+            throw new RuntimeException("Cancellation error", e);
+        }
+    }
+
+    private Calendar getCalendarService() throws GeneralSecurityException, IOException {
+        NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        return new Calendar.Builder(
+                httpTransport,
+                GsonFactory.getDefaultInstance(),
+                new HttpCredentialsAdapter(credentials))
+                .setApplicationName("Reservation System")
+                .build();
+    }
+
+    public List<Reservation> getUnconfirmedReservations() {
+        return reservationRepository.findByGoogleCalendarEventIdNull();
+    }
+
+    public List<Reservation> getConfirmedReservations() {
+        return reservationRepository.findByGoogleCalendarEventIdNotNull();
+    }
+
+    public List<Reservation> getPendingReservations() {
+        return reservationRepository.findByStatut(StatusReservation.EN_ATTENTE);
+    }
+
+    public List<Reservation> getAcceptedReservations() {
+        return reservationRepository.findByStatut(StatusReservation.ACCEPTÉE);
+    }
+
+    public Reservation confirmReservation(String reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        if (reservation.getStatut() != StatusReservation.EN_ATTENTE) {
+            throw new IllegalStateException("Reservation is not in pending state");
+        }
+
+        try {
+            // Create Google Calendar Event
+            Event calendarEvent = new Event()
+                    .setSummary(reservation.getIntituleAction())
+                    .setDescription(reservation.getDescription())
+                    .setStart(new EventDateTime().setDateTime(new DateTime(reservation.getHeureDebut())))
+                    .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin())));
+
+            Event createdEvent = getCalendarService().events()
+                    .insert(calendarProperties.getCalendarId(), calendarEvent)
+                    .execute();
+
+            // Update reservation status and Google Event ID
+            reservation.setStatut(StatusReservation.ACCEPTÉE);
+            reservation.setGoogleCalendarEventId(createdEvent.getId());
+
+            return reservationRepository.save(reservation);
+
+        } catch (Exception e) {
+            logger.error("Reservation confirmation failed", e);
+            throw new RuntimeException("Reservation confirmation error", e);
+        }
+    }
+
+    public void cancelReservation(String reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        try {
+            if (reservation.getGoogleCalendarEventId() != null) {
+                getCalendarService().events()
+                        .delete(calendarProperties.getCalendarId(), reservation.getGoogleCalendarEventId())
+                        .execute();
+            }
+            reservation.setStatut(StatusReservation.ANNULÉE);
+            reservationRepository.save(reservation);
+
+        } catch (IOException | GeneralSecurityException e) {
+            logger.error("Reservation cancellation failed", e);
+            throw new RuntimeException("Cancellation error", e);
+        }
+    }
+
+    // Generate time slots with Date types but Tunis time zone awareness
+    private List<CalendarSlotDTO> generateTimeSlots(Date date) {
+        List<CalendarSlotDTO> slots = new ArrayList<>();
+        ZonedDateTime zonedDate = date.toInstant().atZone(TUNIS_ZONE);
+        LocalDate localDate = zonedDate.toLocalDate();
+
+        LocalTime startTime = LocalTime.of(8, 0);
+        LocalTime endTime = LocalTime.of(18, 0);
+
+        while (startTime.isBefore(endTime)) {
+            CalendarSlotDTO slot = new CalendarSlotDTO();
+
+            // Convert to Tunis time zone Dates
+            ZonedDateTime startZdt = ZonedDateTime.of(localDate, startTime, TUNIS_ZONE);
+            ZonedDateTime endZdt = startZdt.plusMinutes(30);
+
+            slot.setHeureDebut(Date.from(startZdt.toInstant()));
+            slot.setHeureFin(Date.from(endZdt.toInstant()));
+
+            // Default values for unused fields
+            slot.setReserved(false);
+            slot.setSelectable(true);
+            slot.setUsersReservation(false);
+            slot.setEtablissementReserved(false);
+
+            slots.add(slot);
+            startTime = startTime.plusMinutes(30);
+        }
+        return slots;
+    }
+
+    // Simplified calendar view that only returns time slots
+    public List<CalendarSlotDTO> getCalendarView(String dateString) {
+        try {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+            Date date = format.parse(dateString);
+            return generateTimeSlots(date);
+        } catch (ParseException e) {
+            logger.error("Invalid date format: {}", dateString, e);
+            return Collections.emptyList();
+        }
+    }
+    
+public boolean isEspaceDisponible(ObjectId espaceId, Date startDate, Date endDate) throws IOException {
+    try {
+        String calendarId = espaceId.toString();
+        Calendar service = getCalendarService();
+        Events events = service.events().list(calendarId)
+                .setTimeMin(new DateTime(startDate))
+                .setTimeMax(new DateTime(endDate))
+                .setSingleEvents(true)
+                .setOrderBy("startTime")
+                .execute();
+
+        return events.getItems().isEmpty();
+    } catch (GeneralSecurityException e) {
+        logger.error("Security exception while checking space availability", e);
+        throw new IOException("Failed to check space availability", e);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 }

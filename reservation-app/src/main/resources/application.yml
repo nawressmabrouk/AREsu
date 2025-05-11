@@ -11,6 +11,11 @@ spring:
     user:
       name: admin
       password: REDACTED
+      
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      model: mistral
 
   jwt:
     secret-key: REDACTED_JWT_SECRET
@@ -33,8 +38,22 @@ spring:
 
   jackson:
     time-zone: Africa/Tunis
+    
+  mvc:
+    format:
+      date: yyyy-MM-dd
+      date-time: yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+  
 
-  google:
-    calendar:
-      api-key: REDACTED_GOOGLE_API_KEY
-      holiday-calendar-id: en.usa#holiday@group.v.calendar.google.com
+  main:
+    allow-bean-definition-overriding: true
+  autoconfigure:
+    exclude: org.springframework.cloud.function.context.config.ContextFunctionCatalogAutoConfiguration
+    
+google:
+  calendar:
+    api-key: REDACTED_GOOGLE_API_KEY
+    service-account-key: classpath:service-account.json
+    api-base-url: https://www.googleapis.com/calendar/v3
+    calendar-id: REDACTED_OLD_APP_EMAIL
+  

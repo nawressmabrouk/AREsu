@@ -1,5 +1,4 @@
 package tn.sousse.univ.reservation_app.mappers;
-
 import tn.sousse.univ.reservation_app.dto.ReservationRequestDTO;
 import tn.sousse.univ.reservation_app.dto.ReservationResponseDTO;
 import tn.sousse.univ.reservation_app.models.Reservation;
@@ -53,14 +52,16 @@ public class ReservationMapper {
         return dto;
     }
 
-    public static ReservationResponseDTO toResponseDTOFull(
-            Reservation entity,
-            String demandeurEmail,
-            String demandeurNom,
-            String espaceNom) {
-        ReservationResponseDTO dto = toResponseDTO(entity, demandeurEmail, demandeurNom);
-        dto.setEspaceNom(espaceNom);
-        return dto;
-    }
+public static ReservationResponseDTO toResponseDTOFull(
+        Reservation entity,
+        String demandeurEmail,
+        String demandeurNom,
+        String espaceNom,
+        String demandeurRole) { // Add demandeurRole parameter
+    ReservationResponseDTO dto = toResponseDTO(entity, demandeurEmail, demandeurNom);
+    dto.setEspaceNom(espaceNom);
+    dto.setDemandeurRole(demandeurRole); // Set demandeur role
+    return dto;
+}
 
 }

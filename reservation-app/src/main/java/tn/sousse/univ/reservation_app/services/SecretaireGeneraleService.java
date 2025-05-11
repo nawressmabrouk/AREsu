@@ -1,9 +1,11 @@
+
 package tn.sousse.univ.reservation_app.services;
 
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,10 +21,7 @@ public class SecretaireGeneraleService {
     @Autowired
     private ReservationRepository reservationRepository;
 
-    /*
-     * @Autowired
-     * private UserRepository userRepository;
-     */
+   
 
     @Autowired
     private NotificationService notificationService;
@@ -33,47 +32,12 @@ public class SecretaireGeneraleService {
     @Autowired
     private EspaceRepository espaceRepository;
 
-    /*
-     * public void rejeterReservation(String reservationId) {
-     * Reservation reservation = reservationRepository.findById(reservationId)
-     * .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
-     * 
-     * reservation.setStatut(StatusReservation.REFUSÉE);
-     * reservationRepository.save(reservation);
-     * 
-     * Optional<User> demandeur =
-     * userRepository.findById(reservation.getDemandeurId());
-     * String demandeurEmail =
-     * demandeur.map(User::getEmail).orElse("Email inconnu");
-     * 
-     * notificationService.sendNotification(demandeurEmail,
-     * "Réservation rejetée",
-     * "Votre réservation a été rejetée car l'espace n'est pas disponible.");
-     * }
-     * 
-     * public void approuverReservation(String reservationId) {
-     * Reservation reservation = reservationRepository.findById(reservationId)
-     * .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
-     * 
-     * reservation.setStatut(StatusReservation.ACCEPTÉE);
-     * reservationRepository.save(reservation);
-     * 
-     * Optional<User> demandeur =
-     * userRepository.findById(reservation.getDemandeurId());
-     * String demandeurEmail =
-     * demandeur.map(User::getEmail).orElse("Email inconnu");
-     * 
-     * notificationService.sendNotification(demandeurEmail,
-     * "Réservation approuvée",
-     * "Votre réservation a été approuvée par le Secrétaire Général.");
-     * }
-     */
-
-     
+   
+      private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleService.class);
      public List<Reservation> getReservationsViewedBySG() {
         return reservationRepository.findAll().stream()
                 .filter(reservation -> hasResponsable(reservation.getEspaceId()) &&
-                        reservation.getStatut().equals(StatusReservation.ATTRIBUÉE) &&
+
                         Boolean.TRUE.equals(reservation.getVueParSecretaire()))
                 .toList();
     }
@@ -81,7 +45,7 @@ public class SecretaireGeneraleService {
     public List<Reservation> getReservationsToViewBySG() {
         return reservationRepository.findAll().stream()
                 .filter(reservation -> hasResponsable(reservation.getEspaceId()) &&
-                        reservation.getStatut().equals(StatusReservation.ATTRIBUÉE) &&
+
                         Boolean.FALSE.equals(reservation.getVueParSecretaire()))
                 .toList();
     }
@@ -105,7 +69,6 @@ public class SecretaireGeneraleService {
     public List<Reservation> suivreReservationsParStatut(String statut) {
         return reservationRepository.findByStatut(statut);
     }
-
     public List<Reservation> suivreReservations() {
         return reservationRepository.findAll();
     }
@@ -121,6 +84,7 @@ public class SecretaireGeneraleService {
     reservationRepository.save(reservation);
     System.out.println("Visa effectué pour la réservation ID : " + reservation.getId());
 }
+
     public void handleReservation(Reservation reservation) {
         // logique de décision du SG (ex. manuellement ou automatiquement)
         boolean accepted = true; // ou false selon le contexte
@@ -156,4 +120,63 @@ public class SecretaireGeneraleService {
                 .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
     }
 
+public List<Reservation> getReservationsAcceptedBySG() {
+    return reservationRepository.findByStatut(StatusReservation.ACCEPTÉE.name())
+            .stream()
+            .filter(reservation -> 
+                "SecretaireGenerale".equals(reservation.getDecideePar()) &&
+                !hasResponsable(reservation.getEspaceId())
+            )
+            .toList();
 }
+
+public List<Reservation> getReservationsRefusedBySG() {
+    return reservationRepository.findByStatut(StatusReservation.REFUSÉE.name())
+            .stream()
+            .filter(reservation -> 
+                "SecretaireGenerale".equals(reservation.getDecideePar()) &&
+                !hasResponsable(reservation.getEspaceId())
+            )
+            .toList();
+}
+
+
+public void annulerReservation(String reservationId, String reason) {
+    Reservation reservation = findReservationById(reservationId);
+    
+    if(reservation.getStatut() != StatusReservation.ACCEPTÉE) {
+        throw new IllegalStateException("Seules les réservations acceptées peuvent être annulées");
+    }
+    
+    if(new Date().after(reservation.getHeureDebut())) {
+        throw new IllegalStateException("Impossible d'annuler après la date de début");
+    }
+    
+    reservation.setStatut(StatusReservation.ANNULÉE);
+    reservation.setAnnulationReason(reason);
+    reservation.setDecideePar("SecretaireGenerale");
+    
+   
+   
+   
+   
+   
+   
+   
+   
+    
+    reservationRepository.save(reservation);
+    notificationService.sendNotification(
+        reservation.getDemandeurId(),
+        "Annulation de réservation",
+        "Votre réservation a été annulée par le secrétaire général. Raison : " + reason
+    );
+}
+
+public boolean canCancelReservation(Reservation reservation) {
+    return reservation.getStatut() == StatusReservation.ACCEPTÉE 
+           && new Date().before(reservation.getHeureDebut());
+}
+
+}
+

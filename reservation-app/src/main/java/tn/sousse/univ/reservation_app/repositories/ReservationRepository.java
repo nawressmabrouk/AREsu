@@ -1,6 +1,7 @@
 package tn.sousse.univ.reservation_app.repositories;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -22,5 +23,20 @@ public interface ReservationRepository extends MongoRepository<Reservation, Stri
     List<Reservation> findByEspaceIdAndStatut(ObjectId espaceId, StatusReservation statut);
 
     List<Reservation> findByEspaceIdAndDemandeurId(ObjectId espaceId, String demandeurId);
+
+    Optional<Reservation> findById(ObjectId reservationId);
+
+    List<Reservation> findByGoogleCalendarEventIdNull();
+
+    List<Reservation> findByGoogleCalendarEventIdNotNull();
+
+    List<Reservation> findByStatut(StatusReservation acceptée);
+
+
+        List<Reservation> findByEspaceIdIn(List<String> espaceIds);
+    List<Reservation> findByEspaceIdInAndStatut(List<String> espaceIds, StatusReservation statut);
+    
+    List<Reservation> findByStatutAndDecideePar(String statut, String decideePar);
+
 
 }

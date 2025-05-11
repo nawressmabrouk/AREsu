@@ -1,0 +1,281 @@
+.calendar-wrapper {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  gap: 20px;
+}
+
+.calendar-container {
+  flex: 0 0 60%;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  height: 100%;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.month-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.month-navigation {
+  display: flex;
+  gap: 5px;
+}
+
+.btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #f0f0f0;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn:hover {
+  background: #e0e0e0;
+}
+
+.today-btn {
+  background: #4a6bdf;
+  color: white;
+}
+
+.today-btn:hover {
+  background: #3a5bcf;
+}
+
+.nav-btn {
+  width: 32px;
+  height: 32px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.day-header {
+  text-align: center;
+  font-weight: 600;
+  color: #666;
+  padding: 8px 0;
+}
+
+.week {
+  display: contents;
+}
+
+.day {
+  min-height: 100px;
+  border: 1px solid #eaeaea;
+  border-radius: 6px;
+  padding: 8px;
+  background: white;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.day:hover {
+  background: #f9f9f9;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.not-current-month {
+  background: #f8f8f8;
+  color: #aaa;
+}
+
+.today {
+  border: 2px solid #4a6bdf;
+}
+
+.selected {
+  background: #e6edff;
+  border-color: #4a6bdf;
+}
+
+.day-number {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.event {
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-left: 3px solid;
+}
+
+.event-title {
+  font-weight: 500;
+}
+
+.event.confirmed {
+  background: #e8f5e9;
+  border-left-color: #4caf50;
+}
+
+.event.unconfirmed {
+  background: #fff8e1;
+  border-left-color: #ffc107;
+}
+
+.more-events {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.more-events:hover {
+  text-decoration: underline;
+}
+
+.event-details {
+  flex: 1;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.event-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.event-details-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  color: #666;
+  font-size: 1.2rem;
+}
+
+.event-details-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.event-detail-card {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.event-detail-card h4 {
+  margin-top: 0;
+  color: #222;
+}
+
+.event-status {
+  margin-top: 10px;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.badge-success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-warning {
+  background: #fff8e1;
+  color: #ff8f00;
+}
+
+.day-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.event-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.event-list-item:hover {
+  background: #f0f0f0;
+}
+
+.event-list-item-title {
+  font-weight: 500;
+}
+
+.event-list-item-status {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.event-list-item-status.confirmed {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.event-list-item-status.unconfirmed {
+  background: #fff8e1;
+  color: #ff8f00;
+}
+
+.no-events {
+  color: #888;
+  text-align: center;
+  padding: 20px;
+}

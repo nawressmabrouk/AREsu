@@ -1,0 +1,86 @@
+<!--<div class="calendar-wrapper">
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <div class="header-left">
+        <button class="btn today-btn" (click)="goToToday()">Today</button>
+        <div class="month-navigation">
+          <button class="btn nav-btn" (click)="prevMonth()">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button class="btn nav-btn" (click)="nextMonth()">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+        <h2 class="month-title">{{ currentDate | date:'MMMM yyyy' }}</h2>
+      </div>
+    </div>
+
+    <div class="calendar-grid">
+      <div class="day-header" *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']">
+        {{ day }}
+      </div>
+
+      <div *ngFor="let week of weeks" class="week">
+        <div *ngFor="let day of week" 
+             class="day" 
+             [class.not-current-month]="!isSameMonth(day)"
+             [class.today]="isToday(day)"
+             [class.selected]="isSelected(day)"
+             (click)="selectDay(day)">
+          <div class="day-number">{{ day | date:'d' }}</div>
+          
+          <div class="slots">
+            <div *ngFor="let slot of getSlotsForDay(day).slice(0, 2)" 
+                 class="slot"
+                 [class.confirmed]="slot.statut === 'confirmed'"
+                 [class.unconfirmed]="slot.statut !== 'confirmed'"
+                 (click)="selectSlot(slot); $event.stopPropagation()">
+              <div class="slot-time">{{ getSlotTime(slot) }}</div>
+            </div>
+          </div> 
+          <div *ngIf="getSlotsForDay(day).length > 2" class="more-slots" 
+               (click)="selectDay(day); $event.stopPropagation()">
+            +{{ getSlotsForDay(day).length - 2 }} more 
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slot-details" *ngIf="selectedSlot || selectedDaySlots.length > 0">
+    <div class="slot-details-header">
+      <h3>
+        <span *ngIf="selectedSlot">{{ selectedDate | date:'fullDate' }}</span>
+        <span *ngIf="!selectedSlot && selectedDay">{{ selectedDay | date:'fullDate' }}</span>
+      </h3>
+      <button class="btn close-btn" (click)="clearSelection()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="slot-details-content">
+      <div *ngIf="selectedSlot" class="slot-detail-card">
+        <h4>Slot Details</h4>
+        <div class="slot-time">{{ getSlotTime(selectedSlot) }}</div>
+        <div class="slot-status">
+          <span class="badge" [class.badge-success]="selectedSlot.statut === 'confirmed'" 
+                [class.badge-warning]="selectedSlot.statut !== 'confirmed'">
+            {{ selectedSlot.statut === 'confirmed' ? 'Confirmed' : 'Pending' }}
+          </span>
+        </div>
+      </div>
+
+      <div *ngIf="!selectedSlot && selectedDaySlots.length > 0" class="day-slots-list">
+        <h4>{{ selectedDaySlots.length }} slot(s) on this day</h4>
+        <div *ngFor="let slot of selectedDaySlots" class="slot-list-item" (click)="selectSlot(slot)">
+          <div class="slot-list-item-time">{{ getSlotTime(slot) }}</div>
+          <div class="slot-list-item-status" 
+               [class.confirmed]="slot.statut === 'confirmed'" 
+               [class.unconfirmed]="slot.statut !== 'confirmed'">
+            {{ slot.statut === 'confirmed' ? '✓' : '?' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> -->

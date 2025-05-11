@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HolidayService } from './holiday.service';
+import { DateConverterService } from './date-converter.service';
 
-describe('HolidayService', () => {
-  let service: HolidayService;
+describe('DateConverterService', () => {
+  let service: DateConverterService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(HolidayService);
+    service = TestBed.inject(DateConverterService);
   });
 
   it('should be created', () => {

@@ -6,6 +6,58 @@
   position: relative;
 }
 
+.equipment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.equipment-badge {
+  background: #e0e0e0;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.8em;
+}
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.stat-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.stat-card.active {
+  transform: scale(1.02);
+  border: 2px solid #3f51b5;
+}
+
+.stat-value {
+  font-size: 2rem;
+  color: #3f51b5;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  
+  &.status-en_attente { background: #fff3e0; color: #ef6c00; }
+  &.status-acceptee { background: #e8f5e9; color: #2e7d32; }
+  &.status-refusee { background: #ffebee; color: #c62828; }
+}
+
+
+
 /* Sidebar - cachée par défaut */
 .sidebar-vertical {
   width: 0 ;
@@ -2190,3 +2242,24 @@ to { opacity: 1; transform: translateY(0); }
   }
 }
   
+
+.cancel-btn {
+  background-color: #cd665e;
+  color: rgb(14, 14, 14);
+  border: 1px solid black;
+  padding: 10px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  
+  &:hover {
+    background-color: #d32f2f;
+    top: 20px;
+  }
+}
+
+.cancel-disabled {
+  color: #999;
+  font-style: italic;
+  font-size: 0.9em;
+}
