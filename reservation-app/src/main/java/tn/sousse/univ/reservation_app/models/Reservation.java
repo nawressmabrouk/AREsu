@@ -39,7 +39,7 @@ public class Reservation {
     private Boolean vueParSecretaire = false;
     private String DecideePar;
     private List<String> equipements;
-
+    private List<String> approvedEquipements; // Approved equipment //
     private String espaceNom;       
     private String demandeurRole;
 

@@ -1,13 +1,13 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, Injectable } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatDatepickerInputEvent, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { setDefaultOptions } from 'date-fns';
+import { isSameDay, parse, setDefaultOptions } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { AuthService } from '../services/auth/auth.service';
 import { CalendarService } from '../services/calendar/calendar.service';
@@ -16,15 +16,16 @@ import { CalendarService } from '../services/calendar/calendar.service';
 export class CustomDateFnsAdapter extends DateFnsAdapter {
   constructor() {
     super();
-    // Set locale globally for date-fns
     setDefaultOptions({ locale: enUS });
   }
 }
+
 @Component({
   standalone: true,
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     RouterModule,
     MatDatepickerModule,
     MatInputModule,
@@ -33,9 +34,8 @@ export class CustomDateFnsAdapter extends DateFnsAdapter {
   selector: 'app-selection-calendar',
   templateUrl: './selection-calendar.component.html',
   styleUrls: ['./selection-calendar.component.scss'],
- providers: [
+  providers: [
     DatePipe,
-    // 2. Provide the custom adapter
     { provide: DateAdapter, useClass: CustomDateFnsAdapter },
     {
       provide: MAT_DATE_FORMATS,
@@ -54,8 +54,6 @@ export class CustomDateFnsAdapter extends DateFnsAdapter {
     },
     { provide: MAT_DATE_LOCALE, useValue: enUS }
   ]
-   
-  
 })
 export class SelectionCalendarComponent {
   currentDate = new Date();
@@ -67,6 +65,8 @@ export class SelectionCalendarComponent {
   selectionState: 'idle' | 'start-selected' | 'end-selected' = 'idle';
   selectedDate: Date = new Date();
   reservedDates: Date[] = [];
+  dateControl = new FormControl(new Date());
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -79,29 +79,58 @@ export class SelectionCalendarComponent {
     this.loadReservedDates();
   }
 
- dateFilter = (date: Date | null): boolean => {
-  if (!date) return false;
-  
-  // Disable weekends
-  if (date.getDay() === 0 || date.getDay() === 6) return false;
+  // Date filter function that disables weekends and reserved dates
+  dateFilter = (date: Date | null): boolean => {
+    if (!date) return false;
+    
+    // Disable weekends (0 = Sunday, 6 = Saturday)
+    if (date.getDay() === 0 || date.getDay() === 6) return false;
+    
+    // Disable dates before today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) return false;
+    
+    // Disable reserved dates
+    return !this.isDateReserved(date);
+  }
 
-  // Disable reserved dates using ISO string comparison
-  const dateISO = date.toISOString().split('T')[0];
-  return !this.reservedDates.some(d => 
-    d.toISOString().split('T')[0] === dateISO
-  );
-}
+  // Check if a date is in the reserved dates list
+  isDateReserved(date: Date): boolean {
+    return this.reservedDates.some(reservedDate => 
+      isSameDay(date, reservedDate)
+    );
+  }
 
-  isSlotSelectedStart(time: string): boolean {
-    return this.selectedStartTime === time;
+  // Parse backend date strings ("Sat Mar 21") into Date objects
+  private parseBackendDate(dateStr: string): Date | null {
+    if (!dateStr || dateStr.trim() === '') return null;
+    
+    try {
+      // Add current year since it's missing in the backend format
+      const currentYear = new Date().getFullYear();
+      const fullDateStr = `${dateStr} ${currentYear}`;
+      
+      // Parse using date-fns with the correct format
+      return parse(fullDateStr, 'EEE MMM dd yyyy', new Date());
+    } catch (e) {
+      console.error('Error parsing date:', dateStr, e);
+      return null;
+    }
   }
 
   loadReservedDates(): void {
     this.isLoading = true;
     this.calendarService.getUnavailableDates().subscribe({
       next: (dateStrings: string[]) => {
-        this.reservedDates = dateStrings.map(dateStr => new Date(dateStr));
+        // Parse all valid dates and filter out empty/null values
+        this.reservedDates = dateStrings
+          .map(dateStr => this.parseBackendDate(dateStr))
+          .filter((date): date is Date => date !== null);
+        
         this.isLoading = false;
+        // Force date control to revalidate with new reserved dates
+        this.dateControl.updateValueAndValidity();
       },
       error: (err) => {
         console.error('Error loading reserved dates:', err);
@@ -111,48 +140,40 @@ export class SelectionCalendarComponent {
     });
   }
 
+  // ... rest of your component methods remain unchanged ...
+  isUnavailable(time: string): boolean {
+    const hour = parseInt(time.split(':')[0], 10);
+    const dateToCheck = new Date(this.selectedDate);
+    dateToCheck.setHours(hour);
+    return this.isDateReserved(dateToCheck);
+  }
+
   selectToday(): void {
     this.selectedDate = new Date();
+    this.dateControl.setValue(this.selectedDate);
     this.loadReservedDates();
   }
 
-  isTimeInRange(time: string): boolean {
-    if (!this.selectedStartTime || !this.selectedEndTime) return false;
-    const currentHour = parseInt(time.split(':')[0], 10);
-    const startHour = parseInt(this.selectedStartTime.split(':')[0], 10);
-    const endHour = parseInt(this.selectedEndTime.split(':')[0], 10);
-    return currentHour > startHour && currentHour < endHour;
-  }
+  handleSlotClick(time: string): void {
+    if (this.isUnavailable(time)) {
+      this.handleInvalidSelection(time);
+      return;
+    }
 
-  getCurrentTimeLinePosition(): string {
-    const now = new Date();
-    const minutes = now.getHours() * 60 + now.getMinutes();
-    const pxPerMinute = 50 / 60;
-    return `${minutes * pxPerMinute}px`;
+    switch (this.selectionState) {
+      case 'idle':
+        this.startSelection(time);
+        break;
+      case 'start-selected':
+        if (time !== this.selectedStartTime) {
+          this.completeSelection(time);
+        }
+        break;
+      case 'end-selected':
+        this.resetAndStartNewSelection(time);
+        break;
+    }
   }
- 
-handleSlotClick(time: string): void {
-  if (this.isUnavailable(time)) {
-    this.handleInvalidSelection(time);
-    return;
-  }
-
-  switch (this.selectionState) {
-    case 'idle':
-      this.startSelection(time);
-      break;
-    case 'start-selected':
-      // Only update end time if it's different from start
-      if (time !== this.selectedStartTime) {
-        this.completeSelection(time);
-      }
-      break;
-    case 'end-selected':
-      this.resetAndStartNewSelection(time);
-      break;
-  }
-}
-
 
   private handleInvalidSelection(time: string): void {
     const now = new Date();
@@ -173,19 +194,18 @@ handleSlotClick(time: string): void {
     this.selectionState = 'start-selected';
     this.errorMessage = '';
   }
- 
-private completeSelection(time: string): void {
-  this.selectedEndTime = time;
-  
-  if (this.validateTimeSelection()) {
-    this.selectionState = 'end-selected';
-    // Removed automatic navigation here
-  } else {
-    this.errorMessage = 'End time must be after start time';
-    // Don't reset the entire selection, just clear the invalid end time
-    this.selectedEndTime = null;
+
+  private completeSelection(time: string): void {
+    this.selectedEndTime = time;
+    
+    if (this.validateTimeSelection()) {
+      this.selectionState = 'end-selected';
+    } else {
+      this.errorMessage = 'End time must be after start time';
+      this.selectedEndTime = null;
+    }
   }
-}
+
   private resetAndStartNewSelection(time: string): void {
     this.resetSelection();
     this.startSelection(time);
@@ -203,18 +223,13 @@ private completeSelection(time: string): void {
       return;
     }
 
-    // Format the date using DatePipe
-  const formattedDate = this.datePipe.transform(this.selectedDate, 'yyyy-MM-dd');
-    
-     const queryParams = {
-    ...this.route.snapshot.queryParams,
-    date: formattedDate,  // Add formatted date
-    startTime: this.selectedStartTime,
-    endTime: this.selectedEndTime
-  };
-    
-    
-    
+    const formattedDate = this.datePipe.transform(this.selectedDate, 'yyyy-MM-dd');
+    const queryParams = {
+      ...this.route.snapshot.queryParams,
+      date: formattedDate,
+      startTime: this.selectedStartTime,
+      endTime: this.selectedEndTime
+    };
 
     this.router.navigate(['/reservation-form'], { 
       queryParams,
@@ -232,26 +247,28 @@ private completeSelection(time: string): void {
     this.selectionState = 'idle';
   }
 
+  isSlotSelectedStart(time: string): boolean {
+    return this.selectedStartTime === time;
+  }
+
   isSlotSelectedEnd(time: string): boolean {
     return this.selectedEndTime === time;
+  }
+
+  isTimeInRange(time: string): boolean {
+    if (!this.selectedStartTime || !this.selectedEndTime) return false;
+    const currentHour = parseInt(time.split(':')[0], 10);
+    const startHour = parseInt(this.selectedStartTime.split(':')[0], 10);
+    const endHour = parseInt(this.selectedEndTime.split(':')[0], 10);
+    return currentHour > startHour && currentHour < endHour;
   }
 
   onDateChange(event: MatDatepickerInputEvent<Date>) {
     if (event.value) {
       this.selectedDate = event.value;
+      this.dateControl.setValue(event.value);
     }
   }
-
-isUnavailable(time: string): boolean {
-  const hour = parseInt(time.split(':')[0], 10);
-  const selectedDateISO = this.selectedDate.toISOString().split('T')[0];
-  
-  return this.reservedDates.some(d => {
-    const reservedDateISO = d.toISOString().split('T')[0];
-    return reservedDateISO === selectedDateISO && d.getHours() === hour;
-  });
-}
-
 
   getCurrentTimePosition(): string {
     const now = new Date();
@@ -261,6 +278,3 @@ isUnavailable(time: string): boolean {
     return `${position}px`;
   }
 }
-
-
-

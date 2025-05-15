@@ -1,36 +1,25 @@
-package tn.sousse.univ.reservation_app.config;
+/*package tn.sousse.univ.reservation_app.config;
 
-import org.springframework.ai.ollama.OllamaChatClient;
-import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import tn.sousse.univ.reservation_app.repositories.ChatMessageRepository;
-import tn.sousse.univ.reservation_app.services.ChatService;
 @Configuration
 public class ChatConfig {
 
-    @Value("${spring.ai.ollama.base-url}")
+    @Value("${ai.openrouter.base-url}")
     private String baseUrl;
 
-    @Value("${spring.ai.ollama.model}")
-    private String model;
+    @Value("${ai.openrouter.api-key}")
+    private String apiKey;
 
     @Bean
-    public OllamaApi ollamaApi() {
-        return new OllamaApi(baseUrl);
+    public WebClient openRouterWebClient() {
+        return WebClient.builder()
+                .baseUrl(baseUrl)
+                .defaultHeader("Authorization", "Bearer " + apiKey)
+                .defaultHeader("Content-Type", "application/json")
+                .build();
     }
-
-    @Bean
-    public OllamaChatClient chatClient(OllamaApi ollamaApi) {
-        return new OllamaChatClient(ollamaApi)
-                .withModel(model);
-    }
-
-    @Bean
-    public ChatService chatService(OllamaChatClient chatClient,
-                                  ChatMessageRepository messageRepository) {
-        return new ChatService(chatClient, messageRepository);
-    }
-}
+}*/

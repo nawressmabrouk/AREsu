@@ -1,79 +1,94 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <div class="calendar-container">
   <div class="sidebar">
-    <div class="date-picker-container">
-      
-      <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Select Date</mat-label>
-        <input 
-          matInput 
-          [matDatepicker]="picker" 
-          [(ngModel)]="selectedDate"
-          (dateChange)="onDateChange($event)"
-          [min]="currentDate"
-          [matDatepickerFilter]="dateFilter"
-        >
-        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker></mat-datepicker>
-        <mat-hint>Weekends and reserved dates are disabled</mat-hint>
-      </mat-form-field>
-    </div>
-
+    <div class="mb-3">
+  <mat-form-field appearance="outline" class="w-100">
+    <mat-label>Event Date</mat-label>
+    <input 
+      matInput 
+      [matDatepicker]="picker" 
+      [formControl]="dateControl" 
+      (dateChange)="onDateChange($event)"  
+      [min]="currentDate"  
+      [matDatepickerFilter]="dateFilter"
+      class="custom-datepicker-input"  
+    >
+    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+    <mat-datepicker #picker></mat-datepicker>
+   
+   
+   
+    <mat-hint>Weekends and reserved dates are disabled</mat-hint>
+  </mat-form-field>
+</div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
   </div>
  
- <div class="day-view">
+  <div class="day-view">
     <div class="date-header">
       <h2>{{ selectedDate | date:'fullDate' }}</h2>
       <div class="date-actions">
-        <button class="btn-today" (click)="selectToday()">
-          Today
+        <button mat-stroked-button (click)="selectToday()">
+           Today
         </button>
       </div>
     </div>
 
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
     <div class="time-slots-container">
       <div class="time-range-selection" *ngIf="selectionState !== 'idle'">
-  <p>
-    Selected time range: 
-    <strong>{{ selectedStartTime }}</strong>
-    <span *ngIf="selectedEndTime"> to <strong>{{ selectedEndTime }}</strong></span>
-    <span *ngIf="!selectedEndTime"> (select end time)</span>
-  </p>
-  <button class="btn-cancel" (click)="resetSelection()">Cancel</button>
-  <button 
-    class="btn-confirm" 
-    *ngIf="selectionState === 'end-selected'"
-    (click)="navigateToReservation()"
-  >
-    Confirm
-  </button>
-</div>
-
+        <p>
+          Selected time range: 
+          <strong>{{ selectedStartTime }}</strong>
+          <span *ngIf="selectedEndTime"> to <strong>{{ selectedEndTime }}</strong></span>
+          <span *ngIf="!selectedEndTime"> (select end time)</span>
+        </p>
+        <button mat-button color="warn" (click)="resetSelection()">Cancel</button>
+        <button 
+          mat-raised-button 
+          color="primary"
+          *ngIf="selectionState === 'end-selected'"
+          (click)="navigateToReservation()"
+        >
+          Confirm
+        </button>
+      </div>
       
       <div class="time-slots">
-  
-  <div
-  class="slot"
-  *ngFor="let time of timeSlots"
-  [class.unavailable]="isUnavailable(time)"
-  [class.available]="!isUnavailable(time)"
-  [class.selected-start]="isSlotSelectedStart(time)"
-  [class.selected-end]="isSlotSelectedEnd(time)"
-  [class.in-range]="isTimeInRange(time)"
-  (click)="handleSlotClick(time)"
->
-  <span class="time-label">{{ time }}</span>
-
-    <!--<span class="slot-status">
-      <span *ngIf="isUnavailable(time)" class="badge unavailable-badge">
-        <i class="fas fa-ban"></i> Booked
-      </span>
-      <span *ngIf="!isUnavailable(time)" class="badge available-badge">
-        <i class="fas fa-check"></i> Available
-      </span>
-    </span> -->
+        <div
+          class="slot"
+          *ngFor="let time of timeSlots"
+          [class.unavailable]="isUnavailable(time)"
+          [class.available]="!isUnavailable(time)"
+          [class.selected-start]="isSlotSelectedStart(time)"
+          [class.selected-end]="isSlotSelectedEnd(time)"
+          [class.in-range]="isTimeInRange(time)"
+          (click)="handleSlotClick(time)"
+        >
+          <span class="time-label">{{ time }}</span>
+          <span class="time-status" *ngIf="isUnavailable(time)">
+            
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
-      
-
 </div>

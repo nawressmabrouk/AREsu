@@ -16,9 +16,10 @@ export interface CalendarSlotDTO {
   espaceId: string;
   etablissementId: string;
   reserved: boolean;
-  statut: 'confirmed' | 'pending';
+  statut: 'ACCEPTÉE' | 'EN_ATTENTE' | 'ANNULÉE';
+  intituleAction?: string;
+  description?: string;
 
-  // ... other properties
 }
 
 

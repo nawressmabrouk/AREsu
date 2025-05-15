@@ -21,5 +21,5 @@ public interface UserRepository extends MongoRepository<User, String> {
     
     @Query("{ 'espacesResponsables': ?0, 'role': ?1 }")
     List<User> findByEspacesResponsablesContainsAndRole(ObjectId espaceId, Role role);
-
+    User findByNomEtablissementAndRole(String nomEtablissement, Role role);
 }

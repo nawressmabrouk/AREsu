@@ -1,15 +1,5 @@
-package tn.sousse.univ.reservation_app.services;
 
-import java.time.LocalDateTime;
 
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.ollama.OllamaChatClient;
-import org.springframework.ai.ollama.api.OllamaApi;
-import org.springframework.stereotype.Service;
-
-import reactor.core.publisher.Flux;
-import tn.sousse.univ.reservation_app.models.ChatMessage;
-import tn.sousse.univ.reservation_app.repositories.ChatMessageRepository;
 /* 
 @Service
 public class ChatService {
@@ -43,32 +33,74 @@ public class ChatService {
         return messageRepository.findByUserIdOrderByTimestampAsc(userId);
     }
 }*/
+
+/*package tn.sousse.univ.reservation_app.services;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import tn.sousse.univ.reservation_app.models.ChatMessage;
+import tn.sousse.univ.reservation_app.repositories.ChatMessageRepository;
+
 @Service
 public class ChatService {
-    private final OllamaChatClient chatClient;
+
+    private final WebClient openRouterClient;
     private final ChatMessageRepository messageRepository;
 
-    public ChatService(OllamaChatClient chatClient, 
-                      ChatMessageRepository messageRepository) {
-        this.chatClient = chatClient;
+    public ChatService(WebClient openRouterWebClient,
+                       ChatMessageRepository messageRepository) {
+        this.openRouterClient = openRouterWebClient;
         this.messageRepository = messageRepository;
     }
 
     public Flux<String> streamResponse(String userId, String userInput) {
-        System.out.println("Sending request to Ollama...");
-        // Save user message reactively
         ChatMessage userMessage = new ChatMessage(null, userId, "user", userInput, LocalDateTime.now());
-        
+
         return messageRepository.save(userMessage)
-            .thenMany(chatClient.stream(new Prompt(userInput)))
-            .map(response -> response.getResult().getOutput().getContent())
-            .flatMap(botChunk -> 
-                messageRepository.save(new ChatMessage(null, userId, "bot", botChunk, LocalDateTime.now())))
-            .map(savedMessage -> savedMessage.getContent());
-            
+                .thenMany(
+                        openRouterClient.post()
+                                .bodyValue(Map.of(
+                                        "model", "mistralai/mistral-7b-instruct",
+                                        "messages", new Object[]{
+                                            Map.of("role", "user", "content", userInput)
+                                        }
+                                ))
+                                .retrieve()
+                                .bodyToMono(Map.class)
+                                .flatMapMany(json -> {
+                                    String content = ((Map<String, Object>) ((Map<String, Object>) ((java.util.List<?>) json.get("choices")).get(0)).get("message")).get("content").toString();
+                                    ChatMessage botMessage = new ChatMessage(null, userId, "bot", content, LocalDateTime.now());
+                                    return messageRepository.save(botMessage).thenMany(Flux.just(content));
+                                })
+                );
     }
 
     public Flux<ChatMessage> getChatHistory(String userId) {
         return messageRepository.findByUserIdOrderByTimestampAsc(userId);
     }
-}
+}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   addMonths,
   eachDayOfInterval,
@@ -20,9 +21,12 @@ import { CalendarService } from '../services/calendar/calendar.service';
 @Component({
   selector: 'app-reservations-calendar',
   templateUrl: './reservations-calendar.component.html',
-  styleUrls: ['./reservations-calendar.component.scss']
+  styleUrls: ['./reservations-calendar.component.scss'],
+  standalone: true,
+  imports: [CommonModule]
 })
 export class ReservationsCalendarComponent {
+  // Calendar configuration
   currentDate = new Date();
   weeks: Date[][] = [];
   slots: CalendarSlotDTO[] = [];
@@ -30,7 +34,7 @@ export class ReservationsCalendarComponent {
   
   // Selection state
   selectedDay: Date | null = null;
-public selectedSlot: CalendarSlotDTO | null = null;
+  public selectedSlot: CalendarSlotDTO | null = null;
   selectedDate: Date | null = null;
 
   constructor(private calendarService: CalendarService) { }
@@ -42,7 +46,6 @@ public selectedSlot: CalendarSlotDTO | null = null;
 
   private loadSlots(): void {
     this.loading = true;
-    const dateString = format(this.currentDate, 'yyyy-MM-dd');
     
     forkJoin([
       this.calendarService.getConfirmedEvents(),
@@ -52,13 +55,12 @@ public selectedSlot: CalendarSlotDTO | null = null;
         this.slots = [...confirmedSlots, ...unconfirmedSlots]
           .map(slot => ({
             ...slot,
-            heureDebut: parseISO(slot.heureDebut.toString()),
-            heureFin: parseISO(slot.heureFin.toString())
+            heureDebut: typeof slot.heureDebut === 'string' ? parseISO(slot.heureDebut) : new Date(slot.heureDebut),
+            heureFin: typeof slot.heureFin === 'string' ? parseISO(slot.heureFin) : new Date(slot.heureFin)
           }));
         
         this.loading = false;
         
-        // Auto-select today if it has slots
         const todaySlots = this.getSlotsForDay(new Date());
         if (todaySlots.length > 0) {
           this.selectDay(new Date());
@@ -76,75 +78,13 @@ public selectedSlot: CalendarSlotDTO | null = null;
     const lastDay = endOfWeek(endOfMonth(this.currentDate));
     const days = eachDayOfInterval({ start: firstDay, end: lastDay });
     
-    // Split into weeks
     this.weeks = [];
     for (let i = 0; i < days.length; i += 7) {
       this.weeks.push(days.slice(i, i + 7));
     }
   }
-  
-getSlotsForDay(day: Date): CalendarSlotDTO[] {
-  return this.slots.filter(slot => 
-    isSameDay(slot.heureDebut, day)
-  );
-}
-  isSameMonth(day: Date): boolean {
-    return isSameMonth(day, this.currentDate);
-  }
 
-  isToday(day: Date): boolean {
-    return isToday(day);
-  }
-
-  isSelected(day: Date): boolean {
-    if (!this.selectedDay) return false;
-    return isSameDay(day, this.selectedDay);
-  }
-
-  selectDay(day: Date): void {
-    this.selectedDay = day;
-    this.selectedSlot = null;
-    this.selectedDate = day;
-  }
-
- selectSlot(slot: CalendarSlotDTO): void {
-  this.selectedSlot = slot;
-  this.selectedDate = slot.heureDebut;
-  this.selectedDay = slot.heureDebut;
-}
-  // Additional service integration methods
-  getTimeSlots(): void {
-    if (!this.selectedDate) return;
-    
-    const dateString = format(this.selectedDate, 'yyyy-MM-dd');
-    this.calendarService.getTimeSlots(dateString).subscribe({
-      next: (slots) => {
-        this.slots = slots;
-      },
-      error: (err) => {
-        console.error('Failed to load time slots:', err);
-      }
-    });
-  }
-/*
-  confirmSelectedSlot(): void {
-    if (this.selectedSlot && this.selectedSlot.id) {
-      this.calendarService.confirmEvent(this.selectedSlot.id).subscribe({
-        next: (confirmedSlot) => {
-          const index = this.slots.findIndex(s => s.id === confirmedSlot.id);
-          if (index !== -1) {
-            this.slots[index] = confirmedSlot;
-          }
-          this.selectedSlot = confirmedSlot;
-        },
-        error: (err) => {
-          console.error('Failed to confirm slot:', err);
-        }
-      });
-    }
-*/
-
-  // Navigation methods
+  // Calendar Navigation
   goToToday(): void {
     this.currentDate = new Date();
     this.generateCalendar();
@@ -166,17 +106,82 @@ getSlotsForDay(day: Date): CalendarSlotDTO[] {
     this.clearSelection();
   }
 
+  // Slot Handling
+  getSlotsForDay(day: Date): CalendarSlotDTO[] {
+    return this.slots.filter(slot => 
+      slot.heureDebut && isSameDay(slot.heureDebut, day)
+    );
+  }
+
+  confirmSelectedSlot(): void {
+    if (this.selectedSlot && this.selectedSlot.id) {
+      this.calendarService.confirmEvent(this.selectedSlot.id).subscribe({
+        next: (confirmedSlot) => {
+          const index = this.slots.findIndex(s => s.id === confirmedSlot.id);
+          if (index !== -1) {
+            this.slots[index] = {
+              ...confirmedSlot,
+              heureDebut: new Date(confirmedSlot.heureDebut),
+              heureFin: new Date(confirmedSlot.heureFin)
+            };
+          }
+          this.selectedSlot = this.slots[index];
+        },
+        error: (err) => {
+          console.error('Failed to confirm slot:', err);
+        }
+      });
+    }
+  }
+
+  // Date Helpers
+  isSameMonth(day: Date): boolean {
+    return isSameMonth(day, this.currentDate);
+  }
+
+  isToday(day: Date): boolean {
+    return isToday(day);
+  }
+
+  isSelected(day: Date): boolean {
+    return !!this.selectedDay && isSameDay(day, this.selectedDay);
+  }
+
+  // Selection Handling
+  selectDay(day: Date): void {
+    this.selectedDay = day;
+    this.selectedSlot = null;
+    this.selectedDate = day;
+  }
+
+  selectSlot(slot: CalendarSlotDTO): void {
+    this.selectedSlot = slot;
+    this.selectedDate = slot.heureDebut;
+    this.selectedDay = slot.heureDebut;
+  }
+
   clearSelection(): void {
     this.selectedDay = null;
     this.selectedSlot = null;
     this.selectedDate = null;
   }
+
   get selectedDaySlots(): CalendarSlotDTO[] {
-  if (!this.selectedDay) return [];
-  return this.getSlotsForDay(this.selectedDay);
+    return this.selectedDay ? this.getSlotsForDay(this.selectedDay) : [];
+  }
+
+  // Display Formatting
+  getSlotTime(slot: CalendarSlotDTO): string {
+    return slot.heureDebut ? format(slot.heureDebut, 'HH:mm') : '';
+  }
+
+  getFormattedTime(date: Date): string {
+  return date ? format(date, 'HH:mm') : '';
 }
 
- getSlotTime(slot: CalendarSlotDTO): string {
-   return format(slot.heureDebut, 'HH:mm');
- }
+getFormattedTimeRange(start: Date, end: Date): string {
+  if (!start || !end) return '';
+  return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
+}
+
 }

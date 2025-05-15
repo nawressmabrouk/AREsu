@@ -11,11 +11,6 @@ spring:
     user:
       name: admin
       password: REDACTED
-      
-  ai:
-    ollama:
-      base-url: http://localhost:11434
-      model: mistral
 
   jwt:
     secret-key: REDACTED_JWT_SECRET
@@ -56,4 +51,4 @@ google:
     service-account-key: classpath:service-account.json
     api-base-url: https://www.googleapis.com/calendar/v3
     calendar-id: REDACTED_OLD_APP_EMAIL
-  
+    timezone: Africa/Tunis

@@ -13,14 +13,15 @@ import {
   faEyeSlash,
   faHome,
   faKey,
-  faSearch, faSpinner, 
+  faSearch, faSpinner,
   faTimesCircle
 } from '@fortawesome/free-solid-svg-icons';
+import { finalize, forkJoin } from 'rxjs';
+import { Reservation, StatusReservation } from '../models/reservation.model';
+import { ReservationsCalendarComponent } from '../reservations-calendar/reservations-calendar.component';
 import { AuthService } from '../services/auth/auth.service';
 import { SecretaryService } from '../services/secretary/secretary.service';
-import { Reservation, StatusReservation } from '../models/reservation.model';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
-import { finalize, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-secretary',
@@ -29,7 +30,8 @@ import { finalize, forkJoin } from 'rxjs';
     CommonModule, 
     FormsModule, 
     FontAwesomeModule,
-    ProfileComponent
+    ProfileComponent,
+    ReservationsCalendarComponent
   ],
   templateUrl: './secretary.component.html',
   styleUrls: ['./secretary.component.scss']

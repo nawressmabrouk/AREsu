@@ -3,11 +3,12 @@ package tn.sousse.univ.reservation_app.controllers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Collections;
 
-import org.apache.http.HttpStatus;
+
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +17,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.RequestBody;
 import tn.sousse.univ.reservation_app.models.Reservation;
 import tn.sousse.univ.reservation_app.services.SecretaireGeneraleService;
+import tn.sousse.univ.reservation_app.dto.DecisionDTO;
+
 
 @RestController
 @RequestMapping("/api/secretaire")
@@ -64,20 +67,36 @@ public class SecretaireGeneraleController {
     }
 
     //kif yenzel aal 3in 
-
-   
-
     @PostMapping("/reservations/view/{reservationId}")
     public ResponseEntity<Map<String, String>> visaReservation(@PathVariable String reservationId) {
         Reservation reservation = secretaireGeneraleService.findReservationById(reservationId);
         secretaireGeneraleService.viewReservation(reservation);
         return ResponseEntity.ok(Collections.singletonMap("message", "Vu par le Secrétaire Général."));
     }
+   
+   
+   
+   
+
+   
+   
+
+   
+   
+   
+   
+   
+   
+
+   
+   
+    /*endpoint decision nawress 
     @PostMapping("/decision/{id}")
     public ResponseEntity<Map<String, String>> secretaireDecision(
-            @PathVariable String id,
-            @RequestParam boolean accepted) {
-
+        @PathVariable String id,
+        @RequestParam boolean accepted) {
+    
+    try {
         Reservation reservation = secretaireGeneraleService.findReservationById(id);
         boolean hadResponsable = secretaireGeneraleService.hasResponsable(reservation.getEspaceId());
 
@@ -89,7 +108,85 @@ public class SecretaireGeneraleController {
         }
 
         return ResponseEntity.ok(Collections.singletonMap("message", "Décision enregistrée avec succès"));
+        
+    } catch (NoSuchElementException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap("erreur", "Réservation introuvable"));
+                
+    } catch (IllegalStateException | IllegalArgumentException e) {
+        return ResponseEntity.badRequest()
+                .body(Collections.singletonMap("erreur", e.getMessage()));
+                
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("erreur", "Erreur interne du serveur"));
     }
+}*/
+
+
+
+
+// endpoint decision nourhen 
+
+@PostMapping("/decision/{id}")
+public ResponseEntity<Map<String, String>> secretaireDecision(
+        @PathVariable String id,
+        @RequestParam(required = false) Boolean accepted,
+        @RequestBody(required = false) DecisionDTO decisionDTO) {
+
+    try {
+        Reservation reservation = secretaireGeneraleService.findReservationById(id);
+        boolean hadResponsable = secretaireGeneraleService.hasResponsable(reservation.getEspaceId());
+
+        // Nouvelle logique avec DecisionDTO si fourni
+        if (decisionDTO != null) {
+            if (!hadResponsable) {
+                secretaireGeneraleService.processDecision(
+                    id, 
+                    decisionDTO.isAccepted(), 
+                    decisionDTO.getApprovedEquipments(), 
+                    "SecretaireGenerale"
+                );
+            } else {
+                secretaireGeneraleService.viewReservation(reservation);
+                secretaireGeneraleService.processDecision(
+                    id, 
+                    decisionDTO.isAccepted(), 
+                    decisionDTO.getApprovedEquipments(), 
+                    "SecretaireGenerale"
+                );
+            }
+        } 
+        // Ancienne logique avec le paramètre accepted si fourni
+        else if (accepted != null) {
+            if (!hadResponsable) {
+                secretaireGeneraleService.processDecision(id, accepted, "SecretaireGenerale");
+            } else {
+                secretaireGeneraleService.viewReservation(reservation);
+                secretaireGeneraleService.processDecision(id, accepted, "SecretaireGenerale");
+            }
+        }
+        // Si aucun des deux n'est fourni
+        else {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("erreur", "Either accepted parameter or decisionDTO must be provided"));
+        }
+
+        return ResponseEntity.ok(Collections.singletonMap("message", "Décision enregistrée avec succès"));
+
+    } catch (NoSuchElementException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap("erreur", "Réservation introuvable"));
+                
+    } catch (IllegalStateException | IllegalArgumentException e) {
+        return ResponseEntity.badRequest()
+                .body(Collections.singletonMap("erreur", e.getMessage()));
+                
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("erreur", "Erreur interne du serveur"));
+    }
+}
 
 
 @GetMapping("/reservations/accepted")
@@ -111,7 +208,6 @@ public ResponseEntity<List<Reservation>> getReservationsRefusedBySG() {
 }
 
 @PostMapping("/reservations/cancel/{reservationId}")
-@PreAuthorize("hasRole('SECRETAIRE_GENERALE')")
 public ResponseEntity<?> annulerReservation(
         @PathVariable String reservationId,
         @RequestParam(required = false) String reason) {
@@ -128,7 +224,7 @@ public ResponseEntity<?> annulerReservation(
         return ResponseEntity.ok("Réservation annulée avec succès");
         
     } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 }
 

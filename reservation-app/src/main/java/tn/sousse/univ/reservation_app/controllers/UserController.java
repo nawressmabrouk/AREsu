@@ -12,13 +12,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import tn.sousse.univ.reservation_app.security.JwtUtil;
 import tn.sousse.univ.reservation_app.dto.UserDTO;
 import tn.sousse.univ.reservation_app.mappers.UserMapper;
 import tn.sousse.univ.reservation_app.models.Role;
@@ -34,7 +35,12 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    
+    
+     @Autowired
+    private JwtUtil jwtUtil; // Nom de variable cohérent
 
+    
     @Autowired
     private UserRepository userRepository;
 
@@ -74,7 +80,7 @@ public class UserController {
     public Optional<UserDTO> getUserByEmail(@PathVariable String email) {
         return userService.getUserByEmail(email).map(UserMapper::toDTO);
     }
-
+/*ednpoint nawress 
     @PutMapping("/modifierProfil")
     public ResponseEntity<UserDTO> modifierProfil(@RequestBody UserDTO updatedDTO, Authentication authentication) {
         String email = authentication.getName(); // Récupère l'email de l'utilisateur connecté
@@ -101,7 +107,50 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
         return ResponseEntity.ok(UserMapper.toDTO(user));
+    }*/
+
+    //ednpoint nourhen 
+     @PutMapping("/modifierProfil")
+public ResponseEntity<UserDTO> modifierProfil(@RequestBody UserDTO updatedDTO, Authentication authentication) {
+    String email = authentication.getName();
+    User existingUser = userService.getUserByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+    // Mise à jour des champs
+    existingUser.setNom(updatedDTO.getNom());
+    existingUser.setPrenom(updatedDTO.getPrenom());
+    existingUser.setNumTel(updatedDTO.getNumTel());
+    existingUser.setFonction(updatedDTO.getFonction());
+    existingUser.setNomEtablissement(updatedDTO.getNomEtablissement());
+    existingUser.setStructure(updatedDTO.getStructure());
+    existingUser.setLinkedInLink(updatedDTO.getLinkedInLink());
+
+    // Gestion du rôle
+    if (updatedDTO.getRole() != null) {
+        try {
+            Role newRole = Role.fromString(updatedDTO.getRole());
+            if (isDemandeur(existingUser.getRole()) && isDemandeur(newRole)) {
+                existingUser.setRole(newRole);
+            }
+        } catch (IllegalArgumentException e) {
+            // Gestion d'erreur
+        }
     }
+
+    User updatedUser = userService.updateUserProfile(existingUser);
+    
+    
+    
+    // Générer le nouveau token avec l'utilisateur mis à jour
+    String newToken = jwtUtil.generateToken(updatedUser);
+    
+    return ResponseEntity.ok()
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + newToken)
+        .body(UserMapper.toDTO(updatedUser));
+}
+private boolean isDemandeur(Role role) {
+    return role == Role.DEMANDEUR_INTERNE || role == Role.DEMANDEUR_EXTERNE;
+}
 
     @PostMapping("/changer-mot-de-passe")
     public ResponseEntity<?> changerMotDePasse(

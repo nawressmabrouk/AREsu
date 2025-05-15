@@ -1,10 +1,12 @@
 package tn.sousse.univ.reservation_app.repositories;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import tn.sousse.univ.reservation_app.models.Reservation;
@@ -37,6 +39,20 @@ public interface ReservationRepository extends MongoRepository<Reservation, Stri
     List<Reservation> findByEspaceIdInAndStatut(List<String> espaceIds, StatusReservation statut);
     
     List<Reservation> findByStatutAndDecideePar(String statut, String decideePar);
-
+ @Query("{ " +
+        "'espaceId': ?0, " +
+        "'statut': ?1, " +
+        "'$or': [ " +
+            "{ 'heureDebut': { '$lt': ?3 }, 'heureFin': { '$gt': ?2 } }, " + // Chevauchement partiel
+            "{ 'heureDebut': { '$gte': ?2, '$lte': ?3 } }, " + // Contenu entièrement dans l'intervalle
+            "{ 'heureFin': { '$gte': ?2, '$lte': ?3 } } " +    // Contenu entièrement dans l'intervalle
+        "] " +
+    "}")
+    List<Reservation> findConflictingReservations(
+        String espaceId, 
+        StatusReservation statut, 
+        Date heureDebut, 
+        Date heureFin
+    );
 
 }

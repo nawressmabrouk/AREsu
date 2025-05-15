@@ -414,8 +414,11 @@ public class ReservationService {
     @Autowired
     private EtablissementRepository etablissementRepository;
 
-    private static final String CALENDAR_ID = "REDACTED_OLD_APP_EMAIL";
+     @Autowired
+    private EmailService emailService;
 
+    private static final String CALENDAR_ID = "REDACTED_OLD_APP_EMAIL";
+/* 
 public ReservationResponseDTO creerReservation(ReservationRequestDTO reservationDTO) {
     // Fetch demandeur
     User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
@@ -444,6 +447,55 @@ public ReservationResponseDTO creerReservation(ReservationRequestDTO reservation
             demandeur.getRole().toString()
     );
 }
+
+
+*/
+
+
+//endpoint nourhen 
+public ReservationResponseDTO creerReservation(ReservationRequestDTO reservationDTO) {
+        // Fetch demandeur
+        User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
+                .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
+
+        // Fetch espace
+        Espace espace = espaceRepository.findById(reservationDTO.getEspaceId())
+                .orElseThrow(() -> new RuntimeException("Espace introuvable"));
+
+        // Create and save reservation
+        Reservation reservation = ReservationMapper.toEntity(reservationDTO, demandeur.getId());
+        reservation.setEspaceNom(espace.getNom());
+        reservation.setDemandeurRole(demandeur.getRole().toString());
+        reservation.setStatut(StatusReservation.EN_ATTENTE);
+        
+        Reservation savedReservation = reservationRepository.save(reservation);
+
+        // Trigger transmission process
+        transmettreReservation(savedReservation.getId());
+
+      
+
+        
+    String emailContent = String.format(
+        "Bonjour %s, votre demande de réservation pour '%s' a été enregistrée. Statut : En attente.",
+        demandeur.getNom(), 
+        espace.getNom()
+    );
+    emailService.sendEmail(
+        demandeur.getEmail(),
+        "Demande de réservation enregistrée",
+        emailContent
+    );
+
+     return ReservationMapper.toResponseDTOFull(
+                savedReservation,
+                demandeur.getEmail(),
+                demandeur.getNom(),
+                espace.getNom(),
+                demandeur.getRole().toString()
+        );
+
+    }
 
 
 
@@ -508,7 +560,7 @@ public ReservationResponseDTO creerReservation(ReservationRequestDTO reservation
     }
 
 
-    
+  /*endpoint nawress 
     @Transactional
  public String transmettreReservation(String reservationId) {
     Reservation reservation = reservationRepository.findById(reservationId)
@@ -544,6 +596,95 @@ public ReservationResponseDTO creerReservation(ReservationRequestDTO reservation
     }
 }
 
+*/
 
 
+
+//endpoint nourhen :
+    
+@Transactional
+public String transmettreReservation(String reservationId) {
+    Reservation reservation = reservationRepository.findById(reservationId)
+        .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
+
+    Espace espace = espaceRepository.findById(reservation.getEspaceId())
+        .orElseThrow(() -> new RuntimeException("Espace non trouvé"));
+
+    try {
+        String recipientId = determineRecipient(espace.getId());
+        Etablissement etablissement = etablissementRepository.findById(espace.getEtablissementId())
+            .orElseThrow(() -> new RuntimeException("Etablissement non trouvé"));
+
+        // Mise à jour du statut de vue
+        reservation.setVueParSecretaire(false);
+        reservationRepository.save(reservation);
+
+        // Notification avec contexte complet
+        notificationService.sendNotification(
+            recipientId,
+            "Nouvelle demande pour " + espace.getNom() + " (" + etablissement.getNom() + ")",
+            reservationId
+        );
+     User destinataire = userRepository.findById(recipientId).orElseThrow();
+    emailService.sendEmail(
+        destinataire.getEmail(),
+        "Nouvelle demande de réservation",
+        "Une nouvelle demande nécessite votre action : " + reservation.getIntituleAction()
+    );
+
+
+            if(espace.getResponsableId() != null) {
+                reservation.setStatut(StatusReservation.EN_ATTENTE);
+                reservation.setResponsableEspaceId(espace.getResponsableId());
+                 reservation.setVueParSecretaire(false); 
+                reservationRepository.save(reservation);
+                
+                // Notify secretary general if needed
+                User secretaire = userRepository.findById(etablissement.getSecretaireGeneraleId())
+                    .orElseThrow(() -> new RuntimeException("Secrétaire général non trouvé"));
+                
+                emailService.sendEmail(
+                    secretaire.getEmail(),
+                    "Notification de demande",
+                    "Une nouvelle demande a été transmise à un responsable : " + espace.getNom()
+                );
+                
+                return "ENVOYÉ_RESPONSABLE_ET_SG";
+            } else {
+                reservation.setStatut(StatusReservation.EN_ATTENTE);
+                reservationRepository.save(reservation);
+                return "ENVOYÉ_SG_SEUL";
+            }
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur de transmission: " + e.getMessage());
+        }
     }
+
+
+
+
+public String determineRecipient(String espaceId) {
+    // 1. Récupération de l'espace
+    Espace espace = espaceRepository.findById(espaceId)
+        .orElseThrow(() -> new RuntimeException("Espace non trouvé"));
+    
+    // 2. Priorité au responsable d'espace
+    if(espace.getResponsableId() != null && !espace.getResponsableId().isEmpty()) {
+        return espace.getResponsableId();
+    }
+    
+    // 3. Fallback au secrétaire d'établissement
+    Etablissement etablissement = etablissementRepository.findById(espace.getEtablissementId())
+        .orElseThrow(() -> new RuntimeException("Etablissement non trouvé"));
+    
+    if(etablissement.getSecretaireGeneraleId() == null) {
+        throw new RuntimeException("Secrétaire général non configuré");
+    }
+    
+    return etablissement.getSecretaireGeneraleId();
+}
+
+}
+
+    

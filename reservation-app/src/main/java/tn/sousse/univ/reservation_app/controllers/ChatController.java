@@ -26,7 +26,7 @@ public class ChatController {
         return chatService.getChatHistory(userId);
     }
 }*/
-package tn.sousse.univ.reservation_app.controllers;
+/*package tn.sousse.univ.reservation_app.controllers;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import reactor.core.publisher.Flux;
+import tn.sousse.univ.reservation_app.dto.ChatRequest;
 import tn.sousse.univ.reservation_app.models.ChatMessage;
 import tn.sousse.univ.reservation_app.services.ChatService;
 
@@ -54,16 +55,13 @@ public class ChatController {
 
     // Changed to POST for better REST semantics
 
-   
-   @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-public Flux<String> streamChat(@RequestParam String userId, @RequestBody String message) {
-    System.out.println(">>> streamChat called");
-    System.out.println(">>> userId = " + userId);
-    System.out.println(">>> message = " + message);
-    return chatService.streamResponse(userId, message);
-}
-    
-     @PostMapping(value = "/test", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> streamChat(@RequestBody ChatRequest request) {
+        System.out.println(">>> streamChat called");
+        return chatService.streamResponse(request.getUserId(), request.getMessage());
+    }
+
+    @PostMapping(value = "/test", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> testStream(@RequestBody String message) {
         return Flux.just("Hello from server: " + message);
     }
@@ -72,4 +70,4 @@ public Flux<String> streamChat(@RequestParam String userId, @RequestBody String 
     public Flux<ChatMessage> getHistory(@RequestParam String userId) {
         return chatService.getChatHistory(userId);
     }
-}
+}*/

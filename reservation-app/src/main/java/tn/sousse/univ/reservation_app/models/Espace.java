@@ -1,6 +1,7 @@
 package tn.sousse.univ.reservation_app.models;
 
 import java.util.List;
+import java.util.Map;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
@@ -33,5 +34,5 @@ public class Espace {
     private String etablissementNom;
 
     private String googleCalendarId;
-    
+     private Map<String, Boolean> equipementsDisponibles;
 }

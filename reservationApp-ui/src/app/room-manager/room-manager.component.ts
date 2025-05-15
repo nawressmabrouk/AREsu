@@ -43,12 +43,13 @@ import {
   faVolumeUp,
   faWifi
 } from '@fortawesome/free-solid-svg-icons';
-import { AuthService } from '../services/auth/auth.service';
-import { ProfileComponent } from '../shared/components/profile/profile.component';
-import { RoomManagerService } from '../services/room-manager/room-manager.service';
-import { Reservation , StatusReservation } from '../models/reservation.model';
-import { finalize } from 'rxjs/operators';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
+import { finalize } from 'rxjs/operators';
+import { Reservation, StatusReservation } from '../models/reservation.model';
+import { ReservationsCalendarComponent } from '../reservations-calendar/reservations-calendar.component';
+import { AuthService } from '../services/auth/auth.service';
+import { RoomManagerService } from '../services/room-manager/room-manager.service';
+import { ProfileComponent } from '../shared/components/profile/profile.component';
 
 
 
@@ -59,7 +60,8 @@ import { forkJoin } from 'rxjs/internal/observable/forkJoin';
     CommonModule, 
     FormsModule, 
     FontAwesomeModule,
-    ProfileComponent
+    ProfileComponent,
+    ReservationsCalendarComponent
   ],
   templateUrl: './room-manager.component.html',
   styleUrls: ['./room-manager.component.scss']

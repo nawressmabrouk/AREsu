@@ -48,7 +48,7 @@ import { ResetPasswordComponent } from './mot-de-passe-oubliée/reset-password/r
 import { NavbarComponent } from './navbar/navbar.component';
 import { RegisterComponent } from './register/register.component';
 import { ReservationFormComponent } from './reservation-form/reservation-form.component';
-import { ReservationsCalendarComponent } from './reservations-calendar/reservations-calendar.component';
+//import { ReservationsCalendarComponent } from './reservations-calendar/reservations-calendar.component';
 
 import { RoomManagerComponent } from './room-manager/room-manager.component';
 import { SecretaryComponent } from './secretary/secretary.component';
@@ -108,10 +108,10 @@ export const routes: Routes = [
     component: SelectionCalendarComponent,
     canActivate: [AuthGuard]
   },
-  { 
+  /*{ 
   path: 'reservations-calendar',
   component: ReservationsCalendarComponent,
   canActivate: [AuthGuard]
-},
+},*/
   { path: '**', redirectTo: '' }
 ];

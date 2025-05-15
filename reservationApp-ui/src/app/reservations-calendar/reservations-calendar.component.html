@@ -1,4 +1,4 @@
-<!--<div class="calendar-wrapper">
+<div class="calendar-wrapper">
   <div class="calendar-container">
     <div class="calendar-header">
       <div class="header-left">
@@ -32,14 +32,15 @@
           <div class="slots">
             <div *ngFor="let slot of getSlotsForDay(day).slice(0, 2)" 
                  class="slot"
-                 [class.confirmed]="slot.statut === 'confirmed'"
-                 [class.unconfirmed]="slot.statut !== 'confirmed'"
-                 (click)="selectSlot(slot); $event.stopPropagation()">
-              <div class="slot-time">{{ getSlotTime(slot) }}</div>
+                 [class.confirmed]="slot.statut === 'ACCEPTÉE'"
+                 [class.unconfirmed]="slot.statut === 'EN_ATTENTE'"
+                 (click)="$event.stopPropagation(); selectSlot(slot)">
+              <div class="slot-time">{{ getFormattedTime(slot.heureDebut) }}</div>
+              <div class="slot-title" *ngIf="slot.intituleAction">{{ slot.intituleAction }}</div>
             </div>
           </div> 
           <div *ngIf="getSlotsForDay(day).length > 2" class="more-slots" 
-               (click)="selectDay(day); $event.stopPropagation()">
+               (click)="$event.stopPropagation(); selectDay(day)">
             +{{ getSlotsForDay(day).length - 2 }} more 
           </div>
         </div>
@@ -47,40 +48,54 @@
     </div>
   </div>
 
-  <div class="slot-details" *ngIf="selectedSlot || selectedDaySlots.length > 0">
+  <!-- Slot Details Panel -->
+  <div class="slot-details" *ngIf="selectedSlot">
     <div class="slot-details-header">
-      <h3>
-        <span *ngIf="selectedSlot">{{ selectedDate | date:'fullDate' }}</span>
-        <span *ngIf="!selectedSlot && selectedDay">{{ selectedDay | date:'fullDate' }}</span>
-      </h3>
+      <h3>{{ selectedSlot.heureDebut | date:'EEEE, MMMM d, yyyy' }}</h3>
       <button class="btn close-btn" (click)="clearSelection()">
         <i class="fas fa-times"></i>
       </button>
     </div>
     
     <div class="slot-details-content">
-      <div *ngIf="selectedSlot" class="slot-detail-card">
-        <h4>Slot Details</h4>
-        <div class="slot-time">{{ getSlotTime(selectedSlot) }}</div>
-        <div class="slot-status">
-          <span class="badge" [class.badge-success]="selectedSlot.statut === 'confirmed'" 
-                [class.badge-warning]="selectedSlot.statut !== 'confirmed'">
-            {{ selectedSlot.statut === 'confirmed' ? 'Confirmed' : 'Pending' }}
-          </span>
-        </div>
-      </div>
-
-      <div *ngIf="!selectedSlot && selectedDaySlots.length > 0" class="day-slots-list">
-        <h4>{{ selectedDaySlots.length }} slot(s) on this day</h4>
-        <div *ngFor="let slot of selectedDaySlots" class="slot-list-item" (click)="selectSlot(slot)">
-          <div class="slot-list-item-time">{{ getSlotTime(slot) }}</div>
-          <div class="slot-list-item-status" 
-               [class.confirmed]="slot.statut === 'confirmed'" 
-               [class.unconfirmed]="slot.statut !== 'confirmed'">
-            {{ slot.statut === 'confirmed' ? '✓' : '?' }}
+      <div class="slot-detail-card">
+        <h4>Reservation Details</h4>
+        
+        <div class="time-display">
+          <div class="time-range">
+            <span class="time-label">Start:</span>
+            <span class="time-value">{{ getFormattedTime(selectedSlot.heureDebut) }}</span>
+          </div>
+          <div class="time-range">
+            <span class="time-label">End:</span>
+            <span class="time-value">{{ getFormattedTime(selectedSlot.heureFin) }}</span>
           </div>
         </div>
+        
+        <div class="detail-section" *ngIf="selectedSlot.intituleAction">
+          <h5>Action Title</h5>
+          <p>{{ selectedSlot.intituleAction }}</p>
+        </div>
+        
+        <div class="detail-section" *ngIf="selectedSlot.description">
+          <h5>Description</h5>
+          <p>{{ selectedSlot.description }}</p>
+        </div>
+        
+        <div class="status-display">
+          <span class="status-badge" 
+                [class.confirmed]="selectedSlot.statut === 'ACCEPTÉE'"
+                [class.pending]="selectedSlot.statut === 'EN_ATTENTE'">
+            {{ selectedSlot.statut === 'ACCEPTÉE' ? 'Confirmed' : 'Pending' }}
+          </span>
+        </div>
+        
+        <button *ngIf="selectedSlot.statut === 'EN_ATTENTE'"
+                class="confirm-btn"
+                (click)="confirmSelectedSlot()">
+          Confirm Reservation
+        </button>
       </div>
     </div>
   </div>
-</div> -->
+</div>

@@ -9,10 +9,15 @@ import org.springframework.web.bind.annotation.*;
 import tn.sousse.univ.reservation_app.security.CustomUserDetails;
 import tn.sousse.univ.reservation_app.models.StatusReservation;
 import tn.sousse.univ.reservation_app.services.ResponsableEspaceService;
+import tn.sousse.univ.reservation_app.models.Espace;
 import tn.sousse.univ.reservation_app.models.Reservation;
+import tn.sousse.univ.reservation_app.dto.DecisionDTO;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/responsable")
@@ -21,7 +26,7 @@ public class ResponsableEspaceController {
 
     @Autowired
     private ResponsableEspaceService responsableEspaceService;
-
+private static final Logger logger = LoggerFactory.getLogger(ResponsableEspaceController.class);
     /**
      * Endpoint pour obtenir toutes les réservations ou filtrer par statut
      * GET /api/responsable/reservations
@@ -50,7 +55,7 @@ public class ResponsableEspaceController {
     /**
      * Endpoint pour prendre une décision sur une réservation
      * POST /api/responsable/decision/{reservationId}?accepted=true|false
-     */
+     
     @PostMapping("/decision/{reservationId}")
     public ResponseEntity<String> prendreDecision(
             @PathVariable String reservationId,
@@ -71,7 +76,52 @@ public class ResponsableEspaceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Erreur lors du traitement de la décision");
         }
+    }*/
+// nouvelle endpoint pour prendre desicion :
+ @PostMapping("/decision/{reservationId}")
+
+
+public ResponseEntity<String> prendreDecision(
+        @PathVariable String reservationId,
+        @RequestParam(required = false) Boolean accepted,
+        @RequestBody(required = false) DecisionDTO decisionDTO,
+        Authentication authentication) {
+
+    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+    String responsableId = userDetails.getUserId();
+    
+    try {
+        // Si decisionDTO est présent, utiliser les nouvelles fonctionnalités
+        if (decisionDTO != null) {
+            responsableEspaceService.processDecision(
+                reservationId, 
+                decisionDTO.isAccepted(), 
+                decisionDTO.getApprovedEquipments(), 
+                responsableId
+            );
+        } 
+        // Sinon, utiliser l'ancienne méthode avec le paramètre accepted
+        else if (accepted != null) {
+            responsableEspaceService.processDecision(reservationId, accepted, Collections.emptyList(),  responsableId);
+        } 
+        // Si aucun des deux n'est fourni
+        else {
+            return ResponseEntity.badRequest().body("Either decisionDTO or accepted parameter must be provided");
+        }
+        
+        return ResponseEntity.ok("Décision enregistrée avec succès");
+    } catch (NoSuchElementException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    } catch (SecurityException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body("Erreur lors du traitement de la décision");
     }
+}
+
+
+
 
     /**
      * Endpoint supplémentaire pour voir les réservations acceptées
@@ -133,4 +183,64 @@ public ResponseEntity<String> annulerReservation(
     }
 }
 
+
+
+@GetMapping("/espaces")
+public ResponseEntity<?> getEspacesByResponsable(Authentication authentication) {
+    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+    String responsableId = userDetails.getUserId();
+    
+    try {
+        List<Espace> espaces = responsableEspaceService.getEspacesByResponsable(responsableId);
+        return ResponseEntity.ok(espaces);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erreur lors de la récupération des espaces: " + e.getMessage());
+    }
 }
+
+@PutMapping("/espaces/{espaceId}")
+public ResponseEntity<?> updateEspace(
+        @PathVariable String espaceId,
+        @RequestBody Espace updatedEspace,
+        Authentication authentication) {
+    
+    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+    String responsableId = userDetails.getUserId();
+    
+    try {
+        Espace espace = responsableEspaceService.updateEspace(espaceId, updatedEspace, responsableId);
+        return ResponseEntity.ok(espace);
+    } catch (NoSuchElementException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    } catch (SecurityException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erreur lors de la mise à jour de l'espace: " + e.getMessage());
+    }
+}
+
+@DeleteMapping("/espaces/{espaceId}")
+public ResponseEntity<?> deleteEspace(
+        @PathVariable String espaceId,
+        Authentication authentication) {
+    
+    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+    String responsableId = userDetails.getUserId();
+    
+    try {
+        responsableEspaceService.deleteEspace(espaceId, responsableId);
+        return ResponseEntity.ok("Espace supprimé avec succès");
+    } catch (NoSuchElementException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    } catch (SecurityException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erreur lors de la suppression de l'espace: " + e.getMessage());
+    }
+}
+}
+
+

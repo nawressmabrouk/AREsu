@@ -280,7 +280,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/notifications/**",
                                 "/api/chat/**",
-                                "/api/calendar/holidays")
+                                "/api/calendar/**")
                         .permitAll()
 
                         // Authenticated endpoints
@@ -296,12 +296,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/responsable/**").hasRole("RESPONSABLE_SALLE")
                         .requestMatchers("/api/demandeur/**").hasAnyRole("DEMANDEUR_INTERNE", "DEMANDEUR_EXTERNE")
 
-                        // reservations 
-                        .requestMatchers("/api/reservations/**").permitAll()
+                        // reservations
                         .requestMatchers("/api/reservations/**").permitAll()
 
                         // General fallback
-                        .anyRequest().authenticated())
+                        //.anyRequest().authenticated())
+                        .anyRequest().permitAll()) //just for testing
 
                 .addFilterBefore(new RequestLoggingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

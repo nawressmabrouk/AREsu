@@ -111,6 +111,7 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
+            <version>0.8.1</version> 
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework.cloud</groupId>
@@ -118,7 +119,10 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
+        <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-thymeleaf</artifactId>
+</dependency>
         <!-- Spring Cloud Function -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
