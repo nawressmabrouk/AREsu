@@ -4,7 +4,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { Reservation, StatusReservation } from '../../models/reservation.model';
-
+import { catchError } from 'rxjs/operators';
+import { HttpHeaders} from '@angular/common/http';
 @Injectable({
   providedIn: 'root'
 })
@@ -12,7 +13,10 @@ export class SecretaryService {
   private baseUrl = 'http://localhost:8080/api/secretaire';
 
   constructor(private http: HttpClient) { }
-
+  private getAuthHeaders(): HttpHeaders {
+    const token = localStorage.getItem('auth_token');
+    return new HttpHeaders().set('Authorization', `Bearer ${token}`);
+  }
   /**
    * Récupère toutes les réservations de l'établissement
    */
@@ -74,16 +78,22 @@ viewReservation(reservationId: string): Observable<any> {
    * @param reservationId - ID de la réservation
    * @param accepted - Décision (true = acceptée, false = refusée)
    */
-  submitDecision(reservationId: string, accepted: boolean): Observable<any> {
-  const params = new HttpParams().set('accepted', accepted.toString());
+makeDecision(reservationId: string, accepted: boolean, approvedEquipments: string[] = []): Observable<string> {
+  // Create the DTO with backend-compatible property name
+  const decisionDTO = {
+    accepted,
+    approvedEquipements: approvedEquipments // Map frontend name -> backend name
+  };
+
   return this.http.post(
     `${this.baseUrl}/decision/${reservationId}`,
-    {},
-    { params, responseType: 'text' }
-  );
+    decisionDTO,
+    { 
+      headers: this.getAuthHeaders(),
+      responseType: 'text'
+    }
+  )
 }
-
-
 
 
 /**

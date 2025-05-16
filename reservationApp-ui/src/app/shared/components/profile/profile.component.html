@@ -172,7 +172,28 @@
             <input type="text" [(ngModel)]="editData.nomEtablissement" name="nomEtablissement" required>
           </div>
         </div>
-
+        <!-- Ajoutez cette section pour le choix du rôle -->
+<div class="form-row" *ngIf="isDemandeur()">
+    <div class="form-group role-selection">
+        <label>Type de Demandeur</label>
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="role" 
+                       [(ngModel)]="editData.role" 
+                       value="DEMANDEUR_INTERNE"
+                       [checked]="editData.role === 'DEMANDEUR_INTERNE'">
+                Interne
+            </label>
+            <label>
+                <input type="radio" name="role" 
+                       [(ngModel)]="editData.role" 
+                       value="DEMANDEUR_EXTERNE"
+                       [checked]="editData.role === 'DEMANDEUR_EXTERNE'">
+                Externe
+            </label>
+        </div>
+    </div>
+</div>
         <!-- LinkedIn -->
         <div class="form-row">
           <div class="form-group1 ">

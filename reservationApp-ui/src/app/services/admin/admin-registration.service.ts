@@ -20,16 +20,16 @@ export enum Role {
 
 export interface AdminUser {
   id?: string;
-  prenom: string;
   nom: string;
+  prenom: string;
   email: string;
   numTel: string;
   role: Role;
   fonction: string;
   nomEtablissement: string;
   structure: string;
-  linkedInLink?: string;
-  espacesResponsables: string[];
+  linkedInLink?: string;  // Rendre ce champ optionnel
+ espacesResponsables: string[] | string;
 }
 @Injectable({
   providedIn: 'root'
@@ -40,13 +40,15 @@ export class AdminRegistrationService {
   constructor(private http: HttpClient) { }
 
   //la méthode registerAdmin 
-registerAdmin(userData: AdminUser): Observable<AdminUser> {
-    return this.http.post<AdminUser>(
-      `${this.apiUrl}/addSousAdmins`,
-      userData,
-      { withCredentials: true }
-    );
+  registerAdmin(userData: any): Observable<any> {
+    // Retirer le password du payload
+    const { password, ...dataWithoutPassword } = userData;
+    
+    return this.http.post(`${this.apiUrl}/addSousAdmins`, dataWithoutPassword, {
+      withCredentials: true
+    });
   }
+
 
 
 

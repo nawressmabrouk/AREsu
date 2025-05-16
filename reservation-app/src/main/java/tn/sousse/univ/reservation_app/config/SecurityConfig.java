@@ -287,7 +287,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/calendar/view",
                                 "/api/utilisateurs/modifierProfil",
-                                "/api/utilisateurs/changer-mot-de-passe")
+                                "/api/utilisateurs/changer-mot-de-passe",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password" )
                         .authenticated()
 
                         // Role-based endpoints

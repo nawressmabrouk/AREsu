@@ -7,5 +7,5 @@ import lombok.Setter;
 @Setter
 public class DecisionDTO {
      private boolean accepted;
-    private List<String> approvedEquipments;
+    private List<String> approvedEquipements;
 }

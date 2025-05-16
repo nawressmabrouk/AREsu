@@ -82,7 +82,8 @@ export class SecretaryComponent implements OnInit {
     approved: 0,
     rejected: 0
   };
-
+// Ajoutez cette propriété avec les autres propriétés de la classe
+approvedEquipment: { [reservationId: string]: string[] } = {};
   // Loading states
 loading: {
   toHandle: boolean;
@@ -236,30 +237,41 @@ setActiveTab(tab: StatusReservation): void {
     });
   }
 
-  approveRequest(reservation: Reservation): void {
-    this.secretaryService.submitDecision(reservation.id, true).subscribe({
-      next: () => {
+approveRequest(reservation: Reservation): void {
+  const approvedEquipments = this.approvedEquipment[reservation.id] || [];
+  
+  if (approvedEquipments.length === 0) {
+    if (!confirm('Aucun équipement sélectionné. Voulez-vous accepter sans équipement ?')) return;
+  }
+
+  this.secretaryService.makeDecision(
+    reservation.id, 
+    true,
+    approvedEquipments
+  ).subscribe({
+    next: () => {
+      delete this.approvedEquipment[reservation.id];
       forkJoin([
         this.loadToHandleReservations(),
         this.loadApprovedReservations(),
         this.loadRejectedReservations()
       ]).subscribe();
-      },
-      error: (err) => console.error('Error approving reservation:', err)
-    });
-  }
+    },
+    error: (err) => console.error('Erreur lors de l\'approbation:', err)
+  });
+}
 
-  rejectRequest(reservation: Reservation): void {
-    this.secretaryService.submitDecision(reservation.id, false).subscribe({
-      next: () => {
-        this.loadToHandleReservations();
-        this.loadRejectedReservations();
-        this.loadViewedReservations();
-      },
-      error: (err) => console.error('Error rejecting reservation:', err)
-    });
-  }
-
+rejectRequest(reservation: Reservation): void {
+  this.secretaryService.makeDecision(reservation.id, false).subscribe({
+    next: () => {
+      delete this.approvedEquipment[reservation.id]; // Nettoyage des équipements
+      this.loadToHandleReservations();
+      this.loadRejectedReservations();
+      this.loadViewedReservations();
+    },
+    error: (err) => console.error('Error rejecting reservation:', err)
+  });
+}
   switchSection(section: 'access' | 'unseen' | 'seen'): void {
     this.activeSection = section;
     this.searchTerm = '';
@@ -389,6 +401,22 @@ handleCancel(reservation: Reservation): void {
       }
     });
 }
+isEquipmentApproved(reservationId: string, equip: string): boolean {
+  return this.approvedEquipment[reservationId]?.includes(equip) || false;
+}
+
+toggleEquipmentApproval(reservationId: string, equip: string): void {
+  if (!this.approvedEquipment[reservationId]) {
+    this.approvedEquipment[reservationId] = [];
+  }
+  const index = this.approvedEquipment[reservationId].indexOf(equip);
+  if (index === -1) {
+    this.approvedEquipment[reservationId].push(equip);
+  } else {
+    this.approvedEquipment[reservationId].splice(index, 1);
+  }
+}
+
 
 
 }      

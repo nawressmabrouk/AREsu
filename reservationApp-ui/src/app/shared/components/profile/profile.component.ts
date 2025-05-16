@@ -72,7 +72,7 @@ export class ProfileComponent {
   }
 
   // Load user profile
-  loadProfile(): void {
+ loadProfile(): void {
     this.userService.getProfile().pipe(
       catchError(err => {
         console.error('Erreur lors du chargement du profil:', err);
@@ -86,6 +86,7 @@ export class ProfileComponent {
         if (data) {
           this.profileData = data;
           this.resetEditForm();
+          console.log('Rôle chargé:', this.profileData.role); // Ajout pour debug
         } else {
           console.error('Aucune donnée reçue');
         }
@@ -94,7 +95,7 @@ export class ProfileComponent {
         console.error('Erreur dans subscribe:', err);
       }
     });
-  }
+}
   // Toggle profile dropdown
   toggleDropdown(event: Event): void {
     event.stopPropagation();
@@ -154,74 +155,86 @@ closeLogoutModal(): void {
   }
 
   // Reset edit form with current profile data
-  resetEditForm(): void {
-    this.editData = {
-      nom: this.profileData?.nom || '',
-      prenom: this.profileData?.prenom || '',
-      email: this.profileData?.email || '',
-      numTel: this.profileData?.numTel || '',
-      fonction: this.profileData?.fonction || '',
-      nomEtablissement: this.profileData?.nomEtablissement || '',
-      structure: this.profileData?.structure || '',
-      linkedInLink: this.profileData?.linkedInLink || ''
-    };
-  }
+resetEditForm(): void {
+  this.editData = {
+    nom: this.profileData?.nom || '',
+    prenom: this.profileData?.prenom || '',
+    email: this.profileData?.email || '',
+    numTel: this.profileData?.numTel || '',
+    fonction: this.profileData?.fonction || '',
+    nomEtablissement: this.profileData?.nomEtablissement || '',
+    structure: this.profileData?.structure || '',
+    linkedInLink: this.profileData?.linkedInLink || '',
+    role: this.profileData?.role || '' // Ajoutez cette ligne
+  };
+}
 
   // modifier profil 
-  saveProfile(): void {
+saveProfile(): void {
     // Vérification des champs obligatoires
     const requiredFields = {
-      'Nom': this.editData.nom,
-      'Prénom': this.editData.prenom,
-      'Téléphone': this.editData.numTel,
-      'Fonction': this.editData.fonction,
-      'Établissement': this.editData.nomEtablissement,
-      'Structure': this.editData.structure
+        'Nom': this.editData.nom,
+        'Prénom': this.editData.prenom,
+        'Téléphone': this.editData.numTel,
+        'Fonction': this.editData.fonction,
+        'Établissement': this.editData.nomEtablissement,
+        'Structure': this.editData.structure
     };
-  
+
     // Trouver le premier champ vide
     const emptyField = Object.entries(requiredFields).find(([_, value]) => !value);
-  
+
     if (emptyField) {
-      const [fieldName, _] = emptyField;
-      this.notificationService.showError(`Le champ ${fieldName} est obligatoire !`);
-      return;
+        const [fieldName, _] = emptyField;
+        this.notificationService.showError(`Le champ ${fieldName} est obligatoire !`);
+        return;
     }
-  
-   
-  
-    console.log('Données avant envoi:', JSON.stringify(this.editData, null, 2));
-  
-    this.userService.updateProfile(this.editData).subscribe({
-      next: (updatedProfile) => {
-        console.log('Réponse complète du backend:', updatedProfile);
-        if (updatedProfile) {
-          this.profileData = { ...this.profileData, ...updatedProfile };
-          this.profileUpdated.emit(this.profileData);
-          this.notificationService.showSuccess('Profil mis à jour avec succès!');
-          this.loadProfile();
-        } else {
-          console.error('Réponse vide du backend');
-          this.notificationService.showError('Le serveur a répondu sans données');
+
+    // Créer une copie des données à envoyer
+    const dataToSend = {
+        ...this.editData,
+        role: this.isDemandeur() ? this.editData.role : this.profileData.role // Garder le rôle actuel si non demandeur
+    };
+
+    console.log('Données avant envoi:', JSON.stringify(dataToSend, null, 2));
+
+    this.userService.updateProfile(dataToSend).subscribe({
+        next: (updatedProfile) => {
+            console.log('Réponse complète du backend:', updatedProfile);
+           
+            if (updatedProfile) {
+                // Mettre à jour le profileData avec la réponse complète du backend
+                this.profileData = { 
+                    ...this.profileData, 
+                    ...updatedProfile,
+                    role: updatedProfile.role || this.profileData.role // Conserver le rôle si non retourné
+                };
+                this.profileUpdated.emit(this.profileData);
+                this.notificationService.showSuccess('Profil mis à jour avec succès!');
+                this.closeModal(); // Fermer le modal après la mise à jour
+                this.loadProfile(); // Recharger les données du profil
+            } else {
+                console.error('Réponse vide du backend');
+                this.notificationService.showError('Le serveur a répondu sans données');
+            }
+        },
+        error: (err) => {
+            console.error('Erreur détaillée:', err);
+            let errorMessage = 'Erreur lors de la mise à jour du profil';
+            
+            if (err.status === 401) {
+                errorMessage = 'Session expirée, veuillez vous reconnecter';
+                this.handleAuthError();
+            } else if (err.status === 403) {
+                errorMessage = 'Permission refusée';
+            } else if (err.error?.message) {
+                errorMessage = err.error.message;
+            }
+            
+            this.notificationService.showError(errorMessage);
         }
-      },
-      error: (err) => {
-        console.error('Erreur détaillée:', err);
-        let errorMessage = 'Erreur lors de la mise à jour du profil';
-        
-        if (err.status === 401) {
-          errorMessage = 'Session expirée, veuillez vous reconnecter';
-          this.handleAuthError();
-        } else if (err.status === 403) {
-          errorMessage = 'Permission refusée';
-        } else if (err.error?.message) {
-          errorMessage = err.error.message;
-        }
-        
-        this.notificationService.showError(errorMessage);
-      }
     });
-  }
+}
 // modification de mot de passe
 changePassword(): void {
   
@@ -330,10 +343,12 @@ onCancelReservation(reservationId: string): void {
   
 
   // Check if user is demandeur
-  isDemandeur(): boolean {
-    const role = this.profileData?.role?.toUpperCase();
-    return role === 'DEMANDEUR_INTERNE' || role === 'DEMANDEUR_EXTERNE';
-  }
+isDemandeur(): boolean {
+  if (!this.profileData?.role) return false;
+  
+  const role = this.profileData.role.toUpperCase();
+  return role === 'DEMANDEUR_INTERNE' || role === 'DEMANDEUR_EXTERNE';
+}
 }            
 
 

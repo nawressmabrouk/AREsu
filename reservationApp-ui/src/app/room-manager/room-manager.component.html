@@ -71,6 +71,7 @@
             </span>
           </div>
           <app-profile [user]="currentUser"></app-profile>
+         
         </div>
       </div>
     </div>
@@ -150,10 +151,18 @@
           {{ reservation.heureDebut | date:'dd/MM/yyyy HH:mm' }} - 
           {{ reservation.heureFin | date:'HH:mm' }}
         </td>
-        <td>
-            {{ reservation.equipements }}
-               
-          </td>
+<td>
+  <div class="equipment-list">
+    <div *ngFor="let equip of reservation.equipements" class="equipment-item">
+      <label>
+        <input type="checkbox" 
+               [checked]="isEquipmentApproved(reservation.id, equip)"
+               (change)="toggleEquipmentApproval(reservation.id, equip)">
+        {{ equip }}
+      </label>
+    </div>
+  </div>
+</td>
         <td class="actions">
           <button class="accept-btn" 
                   (click)="handleDecision(reservation.id, true)">
@@ -210,10 +219,14 @@
           {{ reservation.heureDebut | date:'dd/MM/yyyy HH:mm' }} - 
           {{ reservation.heureFin | date:'HH:mm' }}
         </td>
-          <td>
-            {{ reservation.equipements }}
-               
-          </td>
+         <td>
+  <div class="approved-equipment">
+<span *ngIf="(reservation.approvedEquipements || []).length > 0">
+  {{ (reservation.approvedEquipements || []).join(', ') }}
+</span>
+    <span *ngIf="!reservation.approvedEquipements?.length">Aucun équipement approuvé</span>
+  </div>
+</td>
         <td>
           <span [ngClass]="getStatusClass(reservation.statut)">
             {{ reservation.statut }}
@@ -291,12 +304,125 @@
       </div>
 
       <!-- Contenu pour l'ajout d'espace -->
-      <div *ngIf="activeSection === 'space'" class="space-management-container">
- 
+<div *ngIf="activeSection === 'space'" class="space-management-container">
+  
+  <!-- Liste des espaces -->
+  <div class="spaces-grid">
+    <div *ngFor="let espace of managedSpaces" class="space-card">
+      <div class="space-info">
+        <h3>{{ espace.nom }}</h3>
+        <div class="space-details">
+          <p><fa-icon [icon]="faUsers"></fa-icon> Capacité: {{ espace.capacite }}</p>
+          <p><fa-icon [icon]="faBuilding"></fa-icon> Type: {{ espace.type }}</p>
+          <p><fa-icon [icon]="faChalkboard"></fa-icon> Catégorie: {{ espace.categorie }}</p>
+          <div class="equipments">
+            <fa-icon [icon]="faTools"></fa-icon> Équipements:
+            <ul>
+              <li *ngFor="let equip of espace.equipement">{{ equip }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="space-actions">
+        <button class="edit-btn" (click)="openEditSpaceModal(espace)">
+          <fa-icon [icon]="faEdit"></fa-icon> Modifier
+        </button>
+        <button class="delete-btn" (click)="confirmDeleteSpace(espace.id)">
+          <fa-icon [icon]="faTrash"></fa-icon> Supprimer
+        </button>
       </div>
     </div>
   </div>
-    <app-reservations-calendar></app-reservations-calendar>
 
+  <!-- Modal d'ajout/modification -->
+  <div *ngIf="showAddSpaceModal || editingSpace" class="space-modal" (click)="closeSpaceModal()">
+     <div class="modal-content" (click)="$event.stopPropagation()">
+ <button class="close-modal-btn" (click)="closeSpaceModal()" aria-label="Fermer">
+  <fa-icon [icon]="faTimes"></fa-icon>
+</button>
+      <h3>{{ editingSpace ? 'Modifier Espace' : 'Ajouter un Espace' }}</h3>
+      
+      <form (ngSubmit)="editingSpace ? updateSpace() : addSpace()">
+        <div class="form-group">
+          <label>Nom:</label>
+          <input type="text" [(ngModel)]="currentSpace.nom" name="nom" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Capacité:</label>
+          <input type="number" [(ngModel)]="currentSpace.capacite" name="capacite" required>
+        </div>
+        
+  <div class="form-group">
+      <label>Catégorie:</label>
+      <select [(ngModel)]="currentSpace.categorie" name="categorie" required
+              (change)="currentSpace.type = ''">
+        <option value="">Sélectionnez une catégorie</option>
+        <option *ngFor="let cat of spaceCategories" [value]="cat.name">
+          {{ cat.name }}
+        </option>
+      </select>
+    </div>
+        <div class="form-group" *ngIf="currentSpace.categorie">
+      <label>Type:</label>
+      <select [(ngModel)]="currentSpace.type" name="type" required>
+        <option value="">Sélectionnez un type</option>
+        <option *ngFor="let type of getTypesForCategory(currentSpace.categorie)" 
+                [value]="type">
+          {{ type }}
+        </option>
+      </select>
+    </div>
+
+        
+<div class="form-group">
+      <label>Équipements:</label>
+      <div class="equipment-selection expanded">
+        <!-- Liste des équipements standards -->
+        <div *ngFor="let equip of equipmentsList" class="equipment-item">
+          <label>
+            <input type="checkbox" 
+                   [checked]="currentSpace.equipement.includes(equip)"
+                   (change)="toggleEquipment(equip)">
+            {{ equip }}
+          </label>
+        </div>
+        
+        <!-- Ajout d'équipement personnalisé -->
+<div class="custom-equipment">
+  <input type="text" [(ngModel)]="customEquipmentInput" 
+         placeholder="Ajouter un équipement personnalisé"
+         (keyup.enter)="addCustomEquipment()"> <!-- Ajout de la touche Enter -->
+  <button type="button" class="add-equipment-btn"
+          (click)="addCustomEquipment()">
+    <fa-icon [icon]="faPlusCircle"></fa-icon> Ajouter
+  </button>
+</div>
+        
+        <!-- Liste des équipements ajoutés -->
+        <div class="current-equipments">
+          <div *ngFor="let equip of currentSpace.equipement" class="equipment-tag">
+            {{ equip }}
+            <button (click)="removeEquipment(equip)" class="remove-equipment">
+              <fa-icon [icon]="faTimesCircle"></fa-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+        
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" (click)="closeSpaceModal()">Annuler</button>
+          <button type="submit" class="save-btn">{{ editingSpace ? 'Enregistrer' : 'Ajouter' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+    </div>
+  </div>
+
+
+   <app-reservations-calendar></app-reservations-calendar>
 </div>  
-

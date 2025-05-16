@@ -41,7 +41,7 @@ import {
   faUserTag,
   faUserTie,
   faVolumeUp,
-  faWifi
+  faWifi , faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import { finalize } from 'rxjs/operators';
@@ -50,8 +50,7 @@ import { ReservationsCalendarComponent } from '../reservations-calendar/reservat
 import { AuthService } from '../services/auth/auth.service';
 import { RoomManagerService } from '../services/room-manager/room-manager.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
-
-
+import { Espace } from '../models/espace.model';
 
 @Component({
   selector: 'app-room-manager',
@@ -107,7 +106,7 @@ export class RoomManagerComponent{
   faLock = faLock;
   faEye = faEye;
   faEyeSlash = faEyeSlash; 
-
+  faTimes= faTimes ;
   // UI State
   isTooltipVisible = false;
   isSidebarExpanded = false;
@@ -133,10 +132,39 @@ export class RoomManagerComponent{
 
   searchTerm: string = '';
   activeSection: 'access' | 'space' = 'access';
+approvedEquipment: { [reservationId: string]: string[] } = {};
+  managedSpaces: Espace[] = [];
+currentSpace: Espace = {
+  id: '',
+  nom: '',
+  disponibilite: true,
+  capacite: 0,
+  equipement: [],
+  type: '',
+  categorie: '',
+  responsableId: '',
+  equipementsDisponibles: {}
+};
+selectedEquipments: string[] = [];
 
+spaceCategories = [
+  {
+    name: 'Espaces administratifs & académiques',
+    types: ['Laboratoire_de_recherche', 'Salle_de_conference', 'Salle_de_marche/bourse']
+  },
+  {
+    name: 'Espaces d\'employabilité & d\'innovation', 
+    types: ['Espace_4C', 'Incubateur', 'FabLab', 'Coworking_space', 'Pole_etudiant_entrepreneur']
+  }
+];
+customEquipmentInput = '';
+
+editingSpace: Espace | null = null;
+showAddSpaceModal = false;
+isLoadingSpaces = false;
 
   spaces: any[] = []; // Créer une interface Space appropriée
-  isLoadingSpaces = false;
+ 
    // Nouveaux états
    reservations: Reservation[] = [];
    currentStatus: StatusReservation = StatusReservation.EN_ATTENTE;
@@ -187,6 +215,113 @@ rejectedCount: number = 0;
     }, 1000); // Simulation de chargement
   }
 
+// Add these methods to the existing component (code 1)
+private loadManagedSpaces(): void {
+  this.isLoadingSpaces = true;
+  this.roomManagerService.getManagedSpaces()
+    .pipe(finalize(() => this.isLoadingSpaces = false))
+    .subscribe({
+      next: (spaces) => this.managedSpaces = spaces,
+      error: (err) => {
+        console.error('Erreur chargement espaces:', err);
+        this.errorMessage = "Échec du chargement des espaces";
+      }
+    });
+}
+
+openEditSpaceModal(espace: Espace): void {
+  this.editingSpace = espace;
+  this.currentSpace = { ...espace };
+  this.showAddSpaceModal = true;
+}
+
+getTypesForCategory(category: string): string[] {
+  const found = this.spaceCategories.find(cat => cat.name === category);
+  return found ? found.types : [];
+}
+
+addCustomEquipment(): void {
+  if (this.customEquipmentInput && this.customEquipmentInput.trim() !== '') {
+    const newEquipment = this.customEquipmentInput.trim();
+    
+    if (!this.currentSpace.equipement.includes(newEquipment)) {
+      this.currentSpace.equipement.push(newEquipment);
+      this.customEquipmentInput = '';
+      
+      if (!this.equipmentsList.includes(newEquipment)) {
+        this.equipmentsList.push(newEquipment);
+      }
+    } else {
+      alert('Cet équipement existe déjà !');
+    }
+  }
+}
+removeEquipment(equip: string): void {
+  const index = this.currentSpace.equipement.indexOf(equip);
+  if (index !== -1) {
+    this.currentSpace.equipement.splice(index, 1);
+  }
+}
+
+closeSpaceModal(): void {
+  this.showAddSpaceModal = false;
+  this.editingSpace = null;
+  this.currentSpace = {
+    id: '',
+    nom: '',
+    disponibilite: true,
+    capacite: 0,
+    equipement: [],
+    type: '',
+    categorie: '',
+    responsableId: '',
+    equipementsDisponibles: {}
+  };
+}
+toggleEquipment(equip: string): void {
+  const index = this.currentSpace.equipement.indexOf(equip);
+  if (index === -1) {
+    this.currentSpace.equipement.push(equip);
+  } else {
+    this.currentSpace.equipement.splice(index, 1);
+  }
+}
+
+addSpace(): void {
+  this.isLoadingSpaces = true;
+  // Implémentez l'ajout via votre service
+  // this.roomManagerService.addSpace(this.currentSpace).subscribe(...)
+  this.closeSpaceModal();
+  this.loadManagedSpaces();
+}
+updateSpace(): void {
+  if (!this.editingSpace) return;
+  
+  this.isLoadingSpaces = true;
+  this.roomManagerService.updateSpace(this.editingSpace.id, this.currentSpace)
+    .pipe(finalize(() => this.isLoadingSpaces = false))
+    .subscribe({
+      next: () => {
+        this.closeSpaceModal();
+        this.loadManagedSpaces();
+      },
+      error: (err) => console.error('Erreur modification:', err)
+    });
+}
+
+confirmDeleteSpace(spaceId: string): void {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer cet espace?')) return;
+  
+  this.isLoadingSpaces = true;
+  this.roomManagerService.deleteSpace(spaceId)
+    .pipe(finalize(() => this.isLoadingSpaces = false))
+    .subscribe({
+      next: () => this.loadManagedSpaces(),
+      error: (err) => console.error('Erreur suppression:', err)
+    });
+}
+
+
 
     // Nouvelle méthode de chargement
 loadReservations(status: StatusReservation): void {
@@ -223,24 +358,34 @@ private loadAllCounts(): void {
 }
 
 
-      // Nouvelle méthode de décision
-      handleDecision(reservationId: string, accept: boolean): void {
-        if (!confirm(`Êtes-vous sûr de vouloir ${accept ? 'accepter' : 'refuser'} cette réservation ?`)) return;
-      
-        this.isLoading = true;
-        this.errorMessage = undefined;
-      
-        this.roomManagerService.makeDecision(reservationId, accept).pipe(
-          finalize(() => this.isLoading = false)
-        ).subscribe({
-          next: () => this.loadReservations(this.currentStatus),
-          error: (err) => {
-            this.errorMessage = err.message || 'Erreur lors de la décision';
-            this.loadReservations(this.currentStatus);
-          }
-        });
-      }
+handleDecision(reservationId: string, accept: boolean): void {
+  // Récupérer les équipements approuvés pour cette réservation
+  const approvedEquipments = this.approvedEquipment[reservationId] || [];
+  
+  // Ajouter une confirmation si acceptation sans équipement
+  if (accept && approvedEquipments.length === 0) {
+    if (!confirm('Aucun équipement sélectionné. Voulez-vous accepter sans équipement ?')) return;
+  }
+  
+  if (!confirm(`Êtes-vous sûr de vouloir ${accept ? 'accepter' : 'refuser'} cette réservation ?`)) return;
 
+  this.isLoading = true;
+  this.errorMessage = undefined;
+
+  this.roomManagerService.makeDecision(reservationId, accept, approvedEquipments).pipe(
+    finalize(() => this.isLoading = false)
+  ).subscribe({
+    next: () => {
+      // Supprimer le cache des équipements approuvés après décision
+      delete this.approvedEquipment[reservationId];
+      this.loadReservations(this.currentStatus);
+    },
+    error: (err) => {
+      this.errorMessage = err.message || 'Erreur lors de la décision';
+      this.loadReservations(this.currentStatus);
+    }
+  });
+}
   setActiveTab(status: StatusReservation): void {
     this.currentStatus = status;
     this.loadReservations(status);
@@ -253,22 +398,22 @@ private loadAllCounts(): void {
   }
 
   // Navigation methods
-  switchSection(section: 'access' | 'space'): void {
-    this.activeSection = section;
-    this.searchTerm = '';
-  
-    if (section === 'access') {
-      this.currentPageTitle = 'Gestion des Réservations';
-      this.currentPageSubtitle = 'Validation et contrôle des accès utilisateurs';
-      this.currentStatus = StatusReservation.EN_ATTENTE;
-      this.loadReservations(this.currentStatus);
-    } else {
-      this.currentPageTitle = 'Gestion des Espaces';
-      this.currentPageSubtitle = 'Création et configuration des espaces';
-      this.loadSpaces();
-     
-    }
+switchSection(section: 'access' | 'space'): void {
+  this.activeSection = section;
+  this.searchTerm = '';
+
+  if (section === 'access') {
+    this.currentPageTitle = 'Gestion des Réservations';
+    this.currentPageSubtitle = 'Validation et contrôle des accès utilisateurs';
+    this.currentStatus = StatusReservation.EN_ATTENTE;
+    this.loadReservations(this.currentStatus);
+  } else {
+    this.currentPageTitle = 'Gestion des Espaces';
+    this.currentPageSubtitle = 'Création et configuration des espaces';
+    this.loadManagedSpaces(); // Changed from loadSpaces()
   }
+}
+
   toggleSidebar() {
     this.isSidebarExpanded = !this.isSidebarExpanded;
   }
@@ -385,4 +530,20 @@ handleCancel(reservation: Reservation): void {
 }
 
 
+
+ isEquipmentApproved(reservationId: string, equip: string): boolean {
+  return this.approvedEquipment[reservationId]?.includes(equip) || false;
+}
+
+toggleEquipmentApproval(reservationId: string, equip: string): void {
+  if (!this.approvedEquipment[reservationId]) {
+    this.approvedEquipment[reservationId] = [];
+  }
+  const index = this.approvedEquipment[reservationId].indexOf(equip);
+  if (index === -1) {
+    this.approvedEquipment[reservationId].push(equip);
+  } else {
+    this.approvedEquipment[reservationId].splice(index, 1);
+  }
+}
 }

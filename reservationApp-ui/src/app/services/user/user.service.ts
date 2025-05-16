@@ -1,15 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable ,  throwError } from 'rxjs';
+import { BehaviorSubject, Observable ,  throwError } from 'rxjs';
 import { AuthService } from '../../services/auth/auth.service';
 import { map, tap, catchError } from 'rxjs/operators';
-
+import { User , Role } from '../../shared/interfaces/user.model';
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
   private apiUrl = 'http://localhost:8080/api';
-
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
   constructor(
     private http: HttpClient,
     private authService: AuthService
@@ -25,6 +26,15 @@ export class UserService {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     });
+  }
+
+
+   get currentUserValue(): User | null {
+    return this.currentUserSubject.value;
+  }
+  
+   setCurrentUser(user: User): void {
+    this.currentUserSubject.next(user);
   }
 
   // Get user profile
@@ -54,35 +64,50 @@ export class UserService {
 
 
 
-  // Update profile
-  updateProfile(profileData: any): Observable<any> {
-    // Structure data as expected by backend
-    const requestData = {
+updateProfile(profileData: any): Observable<any> {
+    const requestData: {
+      nom: any;
+      prenom: any;
+      numTel: any;
+      fonction: any;
+      nomEtablissement: any;
+      structure: any;
+      linkedInLink: any;
+      role?: string; 
+    } = {
       nom: profileData.nom,
       prenom: profileData.prenom,
-      email: profileData.email, // Added to identify user
       numTel: profileData.numTel,
       fonction: profileData.fonction,
       nomEtablissement: profileData.nomEtablissement,
       structure: profileData.structure,
-      linkedInLink: profileData.linkedInLink
+      linkedInLink: profileData.linkedInLink, 
+      role: profileData.role, 
+      
     };
 
-    console.log('Données envoyées au backend:', JSON.stringify(requestData, null, 2));
+    const currentUser = this.currentUserValue;
+    if (currentUser && 
+        (currentUser.role === Role.DEMANDEUR_INTERNE || 
+         currentUser.role === Role.DEMANDEUR_EXTERNE) &&
+        profileData.role) {
+      requestData.role = profileData.role;
+    }
 
     return this.http.put(`${this.apiUrl}/utilisateurs/modifierProfil`, requestData, {
       headers: this.getAuthHeaders(),
-      observe: 'response' // To see full response
+      observe: 'response'
     }).pipe(
-      tap(response => console.log('Réponse du backend:', response)),
-      map(response => response.body), // Extract response body
+      tap(response => {
+        console.log('Réponse du backend:', response);
+        // After successful update, refresh user data
+        if (response.status === 200) {
+          this.authService.refreshUserData();
+        }
+      }),
+      map(response => response.body),
       catchError(error => {
         console.error('Erreur détaillée:', error);
-        if (error.error instanceof ErrorEvent) {
-          console.error('Erreur client:', error.error.message);
-        } else {
-          console.error(`Code d'erreur: ${error.status}, body: ${JSON.stringify(error.error)}`);
-        }
         throw error;
       })
     );

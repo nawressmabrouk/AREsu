@@ -96,7 +96,7 @@ public ResponseEntity<String> prendreDecision(
             responsableEspaceService.processDecision(
                 reservationId, 
                 decisionDTO.isAccepted(), 
-                decisionDTO.getApprovedEquipments(), 
+                decisionDTO.getApprovedEquipements(), 
                 responsableId
             );
         } 

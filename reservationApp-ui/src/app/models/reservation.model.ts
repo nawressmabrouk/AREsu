@@ -23,7 +23,8 @@ export interface Reservation {
     equipements: string[];
     espaceNom: string;         
     demandeurRole: string;      
-    annulationReason: String; // Stores why a reservation was canceled
+    annulationReason: String; 
+    approvedEquipements: string[]; // Stores why a reservation was canceled
   }
   
   export enum StatusReservation {

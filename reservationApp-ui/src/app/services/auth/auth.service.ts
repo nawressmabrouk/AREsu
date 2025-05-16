@@ -264,7 +264,16 @@ isAuthenticated(): Observable<boolean> {
       })
     );
   }
-
+refreshUserData(): void {
+  const token = this.getToken();
+  if (token) {
+    const userData = this.decodeAndValidateToken(token);
+    if (userData) {
+      this.saveUserData(userData);
+      console.log('User data refreshed in localStorage:', userData);
+    }
+  }
+}
   // Clear all auth data
 clearAuth(): void {
   localStorage.removeItem(this.tokenKey);

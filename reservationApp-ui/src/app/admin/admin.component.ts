@@ -22,8 +22,9 @@ import {
   faEdit,
   faUserTag
 } from '@fortawesome/free-solid-svg-icons';
+import { ElementRef, ViewChild } from '@angular/core';
 import { NotificationComponent } from '../alert-notif/notification.component';
-import { AdminRegistrationService, AdminUser } from '../services/admin/admin-registration.service';
+import { AdminRegistrationService, AdminUser  } from '../services/admin/admin-registration.service';
 import { NotificationService } from '../services/alert-notif/notification.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
 interface Espace {
@@ -51,6 +52,8 @@ export enum Role {
 
 
 export class AdminComponent {
+  // Ajoutez ces propriétés à votre classe AdminComponent (composant 2)
+
   faUser = faUser;
   faEnvelope = faEnvelope;
   faBriefcase = faBriefcase;
@@ -557,35 +560,55 @@ formatTypeName(type: string): string {
 }
 
 //Modification des méthodes dans le TypeScript
-onSubmitSousAdmin() {
-  // Utilisation directe de sousAdminFormData
+// Dans AdminComponent (code 1)
+
+onSubmit(event: Event) {
+  event.preventDefault();
+
+  // Validation
   const requiredFields = {
-    'Prénom': this.sousAdminFormData.prenom,
     'Nom': this.sousAdminFormData.nom,
+    'Prénom': this.sousAdminFormData.prenom,
     'Email': this.sousAdminFormData.email,
-    'Rôle': this.sousAdminFormData.role,
-    'Établissement': this.sousAdminFormData.nomEtablissement
+    'Fonction': this.sousAdminFormData.fonction,
+    'Téléphone': this.sousAdminFormData.numTel,
+    'Établissement': this.sousAdminFormData.nomEtablissement,
+    'Structure': this.sousAdminFormData.structure,
+    'espaces responsables': this.sousAdminFormData.espacesResponsables,
+    'Rôle': this.sousAdminFormData.role
   };
 
-  for (const [field, value] of Object.entries(requiredFields)) {
+  for (const [fieldName, value] of Object.entries(requiredFields)) {
     if (!value) {
-      this.notificationService.showError(`${field} est requis`);
+      this.notificationService.showError(`Le champ ${fieldName} est obligatoire`);
       return;
     }
   }
 
-  this.adminService.registerAdmin(this.sousAdminFormData).subscribe({
-    next: (res) => {
-      this.notificationService.showSuccess('Sous-admin créé !');
+  if (!this.isValidEmail(this.sousAdminFormData.email)) {
+    this.notificationService.showError('Veuillez entrer une adresse email valide');
+    return;
+  }
+
+  // Prepare data
+  const userData = {
+    ...this.sousAdminFormData,
+    espacesResponsables: Array.isArray(this.sousAdminFormData.espacesResponsables) 
+      ? this.sousAdminFormData.espacesResponsables
+      : this.sousAdminFormData.espacesResponsables.split(',').map(item => item.trim())
+  };
+
+  this.adminService.registerAdmin(userData).subscribe({
+    next: (response) => {
+      this.notificationService.showSuccess('Sous-admin créé avec succès !');
       this.loadSousAdminsFromDatabase();
       this.resetSousAdminForm();
     },
-    error: (err) => {
-      this.notificationService.showError(err.error?.message || 'Erreur');
+    error: (error) => {
+      this.notificationService.showError(error.error?.message || 'Erreur lors de la création');
     }
   });
 }
-
 onModifierSousAdmin() {
   if (!this.currentSousAdmin?.id) return;
 

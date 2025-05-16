@@ -132,9 +132,11 @@
     </div>
    
    <!-- Formulaire Ajout Sous-admin -->
+<!-- Formulaire Ajout Sous-admin -->
 <div *ngIf="currentSousAdminView === 'ajouter'" class="form-section">
-  <h2>{{ isEditingSousAdmin ? 'Modifier' : 'Ajouter' }} un Sous-admin</h2>
-  <form #sousAdminForm="ngForm" (submit)="isEditingSousAdmin ? onModifierSousAdmin() : onSubmitSousAdmin()">
+    <h2>{{ isEditingSousAdmin ? 'Modifier' : 'Ajouter' }} un Sous-admin</h2>
+   <form class="register-form" (submit)="onSubmit($event)">
+    
     <!-- Ligne 1: Nom et Prénom -->
     <div class="form-row">
       <div class="form-group">
@@ -145,6 +147,7 @@
                 id="prenom" 
                 [(ngModel)]="sousAdminFormData.prenom" 
                 name="prenom" 
+                #firstName
                 required>
         </div>
       </div>
@@ -157,6 +160,7 @@
                 id="nom" 
                 [(ngModel)]="sousAdminFormData.nom" 
                 name="nom" 
+                #lastName
                 required>
         </div>
       </div>
@@ -172,6 +176,7 @@
                 id="email" 
                 [(ngModel)]="sousAdminFormData.email" 
                 name="email" 
+                #email
                 required>
         </div>
       </div>
@@ -184,6 +189,7 @@
                 id="fonction" 
                 [(ngModel)]="sousAdminFormData.fonction" 
                 name="fonction" 
+                #fonction
                 required>
         </div>
       </div>
@@ -191,16 +197,17 @@
 
     <!-- Ligne 3: Téléphone et Établissement -->
     <div class="form-row">
-      <div class="form-group">
-        <label for="telephone">Téléphone</label>
-        <div class="input-container">
-          <fa-icon [icon]="faPhone" class="icon"></fa-icon>
-          <input type="tel" 
-                id="telephone" 
-                [(ngModel)]="sousAdminFormData.numTel" 
-                name="numTel">
-        </div>
-      </div>
+  <div class="form-group">
+    <label for="telephone">Téléphone</label>
+    <div class="input-container">
+      <fa-icon [icon]="faPhone" class="icon"></fa-icon>
+      <input type="tel" 
+            id="telephone" 
+            [(ngModel)]="sousAdminFormData.numTel" 
+            name="numTel"
+            required>
+    </div>
+  </div>
       
       <div class="form-group">
         <label for="etablissement">Établissement</label>
@@ -210,6 +217,7 @@
                 id="etablissement" 
                 [(ngModel)]="sousAdminFormData.nomEtablissement" 
                 name="nomEtablissement" 
+                #nomEtablissement
                 required>
         </div>
       </div>
@@ -224,7 +232,8 @@
           <input type="url" 
                 id="linkedin" 
                 [(ngModel)]="sousAdminFormData.linkedInLink" 
-                name="linkedin">
+                name="linkedin"
+                #linkedInLink>
         </div>
       </div>
       
@@ -236,6 +245,7 @@
                 id="structure" 
                 [(ngModel)]="sousAdminFormData.structure" 
                 name="structure" 
+                #structure
                 required>
         </div>
       </div>
@@ -251,6 +261,7 @@
                 id="espacesResponsables" 
                 [(ngModel)]="sousAdminFormData.espacesResponsables" 
                 name="espacesResponsables"
+                #espacesResponsables
                 placeholder="Ex: Salle1,Salle2,Salle3">
         </div>
       </div>
@@ -281,8 +292,6 @@
     </button>
   </form>
 </div>
-   
-   
    
    
    

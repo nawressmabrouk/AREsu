@@ -144,7 +144,7 @@ public ResponseEntity<Map<String, String>> secretaireDecision(
                 secretaireGeneraleService.processDecision(
                     id, 
                     decisionDTO.isAccepted(), 
-                    decisionDTO.getApprovedEquipments(), 
+                    decisionDTO.getApprovedEquipements(), 
                     "SecretaireGenerale"
                 );
             } else {
@@ -152,7 +152,7 @@ public ResponseEntity<Map<String, String>> secretaireDecision(
                 secretaireGeneraleService.processDecision(
                     id, 
                     decisionDTO.isAccepted(), 
-                    decisionDTO.getApprovedEquipments(), 
+                    decisionDTO.getApprovedEquipements(), 
                     "SecretaireGenerale"
                 );
             }

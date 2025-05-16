@@ -1311,33 +1311,7 @@ justify-content: center;
   z-index: 1;
   }
   
-  input {
-  width:75%;
-  padding: 12px 20px 12px 45px;
-  border: 2px solid #121111;
-  border-radius: 20px;
-  font-size: 14px;
-  
-  transition: all 0.3s ease;
-  color: #fbfafa;
-  }
-  input[type="text"]:not(.search-box input) {
-    /* vos autres styles */
-    background: linear-gradient(135deg, #094677, #070233);
-  }
-  input[type="url"]:not(.search-box input) {
-    /* vos autres styles */
-    background: linear-gradient(135deg, #094677, #070233);
-  }
-  input[type="tel"]:not(.search-box input) {
-    /* vos autres styles */
-    background: linear-gradient(135deg, #094677, #070233);
-  }
-  input:focus {
-  outline: none;
-  border-color: #f2f5f8;
-  box-shadow: 0 0 8px rgba(9, 70, 119, 0.3);
-  }
+
   
   input:focus {
   outline: none;
@@ -2263,3 +2237,394 @@ to { opacity: 1; transform: translateY(0); }
   font-style: italic;
   font-size: 0.9em;
 }
+
+
+// room-manager.component.scss
+.equipment-list {
+  max-width: 200px;
+  .equipment-item {
+    margin: 5px 0;
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    input[type="checkbox"] {
+      margin: 0;
+    }
+  }
+}
+
+.approved-equipment {
+  font-weight: 500;
+  color: #2e7d32;
+}
+
+
+
+
+
+
+
+
+
+
+.space-management-container {
+  padding: 20px;
+  
+  .space-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    
+    .add-space-btn {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      
+      &:hover {
+        background-color: #45a049;
+      }
+    }
+  }
+  
+.spaces-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); /* Largeur minimale augmentée à 350px */
+    gap: 30px; /* Espace entre les cartes augmenté */
+    padding: 20px; /* Ajout de padding autour de la grille */
+    
+    .space-card {
+      border: 2px solid #ddd;
+      border-radius: 12px; /* Bordure plus arrondie */
+      padding: 20px; /* Plus d'espace à l'intérieur */
+      background-color: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.1); /* Ombre plus prononcée */
+      transition: transform 0.3s ease, box-shadow 0.3s ease; /* Animation douce au survol */
+      
+      &:hover {
+        transform: translateY(-5px); /* Léger effet de levée au survol */
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2), 0 12px 24px rgba(0,0,0,0.15);
+      }
+      
+      .space-info {
+        margin-bottom: 20px; /* Plus d'espace en bas */
+        
+        h3 {
+          margin-top: 0;
+          color: #333;
+          font-size: 1.4rem; /* Taille de police légèrement augmentée */
+          margin-bottom: 15px;
+        }
+        
+        .space-details {
+          p {
+            margin: 8px 0; /* Plus d'espace entre les paragraphes */
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            
+            fa-icon {
+              margin-right: 10px; /* Plus d'espace pour les icônes */
+              color: #666;
+            }
+          }
+          
+          .equipments {
+            margin-top: 15px;
+            ul {
+              padding-left: 25px;
+              margin: 8px 0;
+              
+              li {
+                list-style-type: disc;
+                margin-bottom: 5px; /* Espace entre les éléments de liste */
+              }
+            }
+          }
+        }
+      }
+      
+      .space-actions {
+        display: flex;
+        gap: 15px; /* Plus d'espace entre les boutons */
+        
+        button {
+          flex: 1;
+          padding: 10px 12px; /* Boutons plus grands */
+          border: 1px solid black;
+          border-radius: 25px; /* Coins plus arrondis */
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px; /* Plus d'espace entre icône et texte */
+          font-size: 1rem;
+          transition: all 0.2s ease;
+          
+          fa-icon {
+            font-size: 16px; /* Icônes légèrement plus grandes */
+          }
+          
+          &.edit-btn {
+            background-color: #17A2B8;
+            color: white;
+            
+            &:hover {
+              background-color: #078e85;
+              transform: scale(1.02); /* Effet de zoom léger */
+            }
+          }
+          
+          &.delete-btn {
+            background-color: #e75c52;
+            color: white;
+            
+            &:hover {
+              background-color: #da190b;
+              transform: scale(1.02);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .space-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    
+    .modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 800px;
+      
+      h3 {
+        margin-top: 0;
+      }
+      
+      .form-group {
+        margin-bottom: 15px;
+        
+        label {
+          display: block;
+          margin-bottom: 5px;
+          font-weight: bold;
+          position: relative;
+          right: -10px;
+        }
+        
+        input, select {
+          width: 100%;
+          padding: 8px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+        }
+        
+        .equipment-selection {
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          padding: 10px;
+          max-height: 150px;
+          overflow-y: auto;
+          
+          .equipment-item {
+            margin-bottom: 5px;
+            
+            label {
+              display: flex;
+              align-items: center;
+              font-weight: normal;
+              cursor: pointer;
+              
+              input {
+                width: auto;
+                margin-right: 8px;
+                color: white;
+                border-radius: 20px;
+              }
+            }
+          }
+        }
+      }
+      
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        top: -10px;
+        position: relative;
+        right: 500px;
+        button {
+          padding: 8px 15px;
+          border: 0.5px solid black;
+          border-radius: 28px;
+          cursor: pointer;
+          
+          &.cancel-btn {
+            background-color: #e9e5e5;
+            
+            &:hover {
+              background-color: #ddd;
+            }
+          }
+          
+          &.save-btn {
+            background-color: #17A2B8;
+            color: white;
+            
+            &:hover {
+              background-color: #095562;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Ajoutez à room-manager.component.scss */
+
+.large-modal {
+  width: 90%;
+  max-width: 700px;
+}
+
+.equipment-selection.expanded {
+  max-height: 300px;
+  padding: 15px;
+  
+  .custom-equipment {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+    
+    input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .add-equipment-btn {
+      background-color: #17A2B8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 0 15px;
+      cursor: pointer;
+      
+      &:hover {
+        background-color: #095562;
+      }
+    }
+  }
+  
+  .current-equipments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    
+    .equipment-tag {
+      background-color: #e0e0e0;
+      padding: 5px 10px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      
+      .remove-equipment {
+        background: none;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        
+        &:hover {
+          color: #f44336;
+        }
+      }
+    }
+  }
+}
+
+/* Pour améliorer les selects */
+select {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  background-color: white;
+}
+
+
+.close-modal-btn {
+  position: relative;
+  
+  right: -770px;
+  background: none;
+  border: none;
+  font-size: 1.8rem; /* Taille augmentée */
+  cursor: pointer;
+  color: #333; /* Couleur grise */
+  padding: 5px;
+  width: 30px; /* Largeur fixe */
+  height: 30px; /* Hauteur fixe */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  
+  &:hover {
+    color: #f44336; /* Rouge au survol */
+    background: none; /* Pas de fond */
+  }
+  
+  &:focus {
+    outline: none; /* Supprime le contour au focus */
+  }
+  
+  fa-icon {
+    transition: transform 0.2s ease;
+  }
+  
+  &:hover fa-icon {
+    transform: scale(1.1); /* Légère animation au survol */
+  }
+}
+
+
+
+.modal-box, 
+.password-modal-content, 
+.reservations-modal-box {
+ 
+  z-index: 1001; /* Doit être supérieur à celui de l'overlay */
+} 
+
+
+
+
+dans .modal-overlay {
+
+   /* Ajoutez ces propriétés pour le flou */
+   backdrop-filter: blur(5px);
+   -webkit-backdrop-filter: blur(5px); /* Pour la compatibilité avec Safari */}

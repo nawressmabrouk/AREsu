@@ -12,14 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import tn.sousse.univ.reservation_app.security.JwtUtil;
+import org.springframework.http.HttpHeaders;
 import tn.sousse.univ.reservation_app.dto.UserDTO;
 import tn.sousse.univ.reservation_app.mappers.UserMapper;
 import tn.sousse.univ.reservation_app.models.Role;
@@ -27,6 +26,7 @@ import tn.sousse.univ.reservation_app.models.User;
 import tn.sousse.univ.reservation_app.models.VerificationToken;
 import tn.sousse.univ.reservation_app.repositories.UserRepository;
 import tn.sousse.univ.reservation_app.repositories.VerificationTokenRepository;
+import tn.sousse.univ.reservation_app.security.JwtUtil;
 import tn.sousse.univ.reservation_app.services.UserService;
 
 @RestController
@@ -35,25 +35,15 @@ public class UserController {
 
     @Autowired
     private UserService userService;
-    
-    
+
      @Autowired
     private JwtUtil jwtUtil; // Nom de variable cohérent
 
-    
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private VerificationTokenRepository verificationTokenRepository;
-    /*
-     * @PostMapping("/inscription")
-     * public UserDTO inscrireUtilisateur(@RequestBody UserDTO userDTO) {
-     * User user = UserMapper.toEntity(userDTO);
-     * User savedUser = userService.registerUser(user);
-     * return UserMapper.toDTO(savedUser);
-     * }
-     */
 
     @PostMapping("/inscription")
     public ResponseEntity<?> inscrireUtilisateur(@RequestBody UserDTO userDTO) {
@@ -80,37 +70,8 @@ public class UserController {
     public Optional<UserDTO> getUserByEmail(@PathVariable String email) {
         return userService.getUserByEmail(email).map(UserMapper::toDTO);
     }
-/*ednpoint nawress 
+
     @PutMapping("/modifierProfil")
-    public ResponseEntity<UserDTO> modifierProfil(@RequestBody UserDTO updatedDTO, Authentication authentication) {
-        String email = authentication.getName(); // Récupère l'email de l'utilisateur connecté
-        User existingUser = userService.getUserByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-
-        // Mettre à jour uniquement les champs autorisés
-        existingUser.setNom(updatedDTO.getNom());
-        existingUser.setPrenom(updatedDTO.getPrenom());
-        existingUser.setNumTel(updatedDTO.getNumTel());
-        existingUser.setFonction(updatedDTO.getFonction());
-        existingUser.setNomEtablissement(updatedDTO.getNomEtablissement());
-        existingUser.setStructure(updatedDTO.getStructure());
-        existingUser.setLinkedInLink(updatedDTO.getLinkedInLink());
-
-        User updatedUser = userService.updateUserProfile(existingUser);
-        return ResponseEntity.ok(UserMapper.toDTO(updatedUser));
-    }
-
-    @GetMapping("/voirProfil")
-    public ResponseEntity<UserDTO> voirProfilConnecte(Authentication authentication) {
-        String email = authentication.getName();
-        User user = userService.getUserByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-
-        return ResponseEntity.ok(UserMapper.toDTO(user));
-    }*/
-
-    //ednpoint nourhen 
-     @PutMapping("/modifierProfil")
 public ResponseEntity<UserDTO> modifierProfil(@RequestBody UserDTO updatedDTO, Authentication authentication) {
     String email = authentication.getName();
     User existingUser = userService.getUserByEmail(email)
@@ -148,9 +109,19 @@ public ResponseEntity<UserDTO> modifierProfil(@RequestBody UserDTO updatedDTO, A
         .header(HttpHeaders.AUTHORIZATION, "Bearer " + newToken)
         .body(UserMapper.toDTO(updatedUser));
 }
+
 private boolean isDemandeur(Role role) {
     return role == Role.DEMANDEUR_INTERNE || role == Role.DEMANDEUR_EXTERNE;
 }
+
+    @GetMapping("/voirProfil")
+    public ResponseEntity<UserDTO> voirProfilConnecte(Authentication authentication) {
+        String email = authentication.getName();
+        User user = userService.getUserByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        return ResponseEntity.ok(UserMapper.toDTO(user));
+    }
 
     @PostMapping("/changer-mot-de-passe")
     public ResponseEntity<?> changerMotDePasse(

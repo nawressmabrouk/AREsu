@@ -1,38 +1,4 @@
-/*/ reservation.service.ts
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { AuthService } from '../auth/auth.service';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class ReservationsubmissionService {
-  private apiUrl = "http://localhost:8080/api/";
-
-  constructor(private http: HttpClient,
-    private authService: AuthService
-
-  ) {}
-
-  private getHeaders(): HttpHeaders {
-    const token = this.authService.getToken();
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    });
-  }
-  createReservation(reservationData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/demandeur/demanderReservation`, reservationData, { headers: this.getHeaders() });
-  }
-
-  sendReservation(reservationId: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/reservations/${reservationId}/envoyer`, {},
-      { headers: this.getHeaders() }
-    );
-  }
-}
-*/
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
@@ -56,6 +22,7 @@ export class ReservationsubmissionService {
       reservationData,
       { 
         headers: this.getHeaders(),
+        responseType: 'json'
        
       }
     ).pipe(
@@ -66,11 +33,11 @@ export class ReservationsubmissionService {
 
   sendReservation(reservationId: string): Observable<any> {
     return this.http.post(
-      `${this.apiUrl}/reservations/${reservationId}/envoyer`, 
+    `${this.apiUrl}/reservations/${reservationId}/envoyer`,
       {},
       { 
         headers: this.getHeaders(),
-        observe: 'response'
+       responseType: 'text'
       }
     ).pipe(
       catchError(this.handleError)
@@ -95,11 +62,11 @@ export class ReservationsubmissionService {
       // Client-side error
       errorMessage = `Error: ${error.error.message}`;
     }
-    if (error.status === 200) {
+    if (error.status === 200 && typeof error.error === 'string') {
       console.warn('Received 200 status with non-JSON response');
       return throwError(() => new Error('Server returned unexpected format'));
     }
-    
+
      else {
       // Server-side error
       switch (error.status) {

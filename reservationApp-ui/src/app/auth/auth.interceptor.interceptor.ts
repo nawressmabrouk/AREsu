@@ -26,25 +26,36 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       return throwError(() => err);
     })
   );
-};*/
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+};*/import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpHandler } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth/auth.service';
 import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, throwError, Observable } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
+  
+  // Liste des endpoints à exclure
+  const excludedUrls = [
+    '/api/auth/login',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password'
+  ];
+
+  // Vérifier si la requête doit être exclue
+  if (excludedUrls.some(url => req.url.includes(url))) {
+    return next(req); // Pas d'ajout du JWT
+  }
+
   const token = authService.getToken();
 
-  // Clone request and add headers if token exists
+  // Clone et ajout des headers si token existe
   if (token) {
     const headers: { [key: string]: string } = {
       Authorization: `Bearer ${token}`
     };
 
-    // Only add Content-Type for requests with body
     if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
       headers['Content-Type'] = 'application/json';
     }

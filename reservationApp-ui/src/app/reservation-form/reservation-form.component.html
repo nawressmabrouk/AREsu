@@ -1,4 +1,4 @@
-component reservation form : <div class="reservation-container">
+<div class="reservation-container">
     <div class="admin-header">
       <div class="header-content">
         <!-- Left Section - Logo -->
@@ -178,12 +178,19 @@ component reservation form : <div class="reservation-container">
           </div>
           
           <!-- Add Equipment Button -->
-          <div class="add-button">
-            <button type="button" class="addd-equipment" (click)="showAddEquipmentModal()">
-              <fa-icon [icon]="faPlus" class="add-icon"></fa-icon>
-              Ajouter équipement
-            </button> 
-          </div>
+        <!-- Modify the add equipment button -->
+<div class="add-button">
+    <button 
+        type="button" 
+        class="addd-equipment" 
+        (click)="showAddEquipmentModal()"
+        [disabled]="!canAddEquipment"
+        [class.disabled]="!canAddEquipment"
+        [title]="!canAddEquipment ? 'Seuls les demandeurs internes peuvent ajouter des équipements' : ''">
+        <fa-icon [icon]="faPlus" class="add-icon"></fa-icon>
+        Ajouter équipement
+    </button> 
+</div>
           
           <!-- Add Equipment Modal -->
           <div class="modal-overlay" *ngIf="showEquipmentModal">

@@ -140,6 +140,7 @@ public class UserService {
 
 }*/
 
+
 // nouveau code 
 package tn.sousse.univ.reservation_app.services;
 
@@ -320,7 +321,18 @@ public class UserService {
         currentUser.setNomEtablissement(updatedData.getNomEtablissement());
         currentUser.setStructure(updatedData.getStructure());
         currentUser.setLinkedInLink(updatedData.getLinkedInLink());
-        return userRepository.save(currentUser);
+       
+        // Handle role change only for demandeurs
+    if (updatedData.getRole() != null) {
+        Role currentRole = currentUser.getRole();
+        Role newRole = updatedData.getRole();
+        
+        if ((currentRole == Role.DEMANDEUR_INTERNE || currentRole == Role.DEMANDEUR_EXTERNE) &&
+            (newRole == Role.DEMANDEUR_INTERNE || newRole == Role.DEMANDEUR_EXTERNE)) {
+            currentUser.setRole(newRole);
+        }
+    }
+     return userRepository.save(currentUser);
     }
 
     public User getCurrentUser() {
