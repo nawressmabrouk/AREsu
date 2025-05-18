@@ -55,12 +55,6 @@ public class ResponsableEspaceService {
 
 
 
-
-
-
-    @Autowired
-    private CalendarIntegrationService calendarIntegrationService;
-
  private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleService.class);
 
  /* 
@@ -120,12 +114,6 @@ public class ResponsableEspaceService {
                accepted ? "ACCEPTED" : "REJECTED");
    }*/
 
-
-
-
-   //methode nourhen 
-
-   // Updated method signature to include approvedEquipments
 public void processDecision(String reservationId, boolean accepted, 
                           List<String> approvedEquipments, String decidedBy) {
     Reservation reservation = reservationRepository.findById(reservationId)
@@ -135,7 +123,7 @@ public void processDecision(String reservationId, boolean accepted,
         throw new IllegalStateException("Only pending reservations can be processed");
     }
 
-    // Handle equipment validation (like Method 2)
+    // Handle equipment validation
     if (accepted) {
         try {
             // Equipment validation
@@ -146,14 +134,22 @@ public void processDecision(String reservationId, boolean accepted,
                 throw new IllegalArgumentException("Approved equipment not in requested list");
             }
 
-            Espace espace = espaceRepository.findById(reservation.getEspaceId())
-                    .orElseThrow(() -> new RuntimeException("Espace not found"));
+            // Get the establishment's calendar ID
+            Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
+                    .orElseThrow(() -> new RuntimeException("Etablissement not found"));
             
-            // Google Calendar integration
-            String calendarId = espace.getGoogleCalendarId() != null 
-                    ? espace.getGoogleCalendarId()
-                    : googleCalendarConfig.getCalendarId();
+            if (etab.getGoogleCalendarId() == null) {
+                throw new IllegalStateException("Etablissement has no calendar assigned");
+            }
+
+            /*  Check space availability
+            if (!isEspaceDisponible(new ObjectId(reservation.getEspaceId()),
+                    reservation.getHeureDebut(),
+                    reservation.getHeureFin())) {
+                throw new IllegalStateException("Space is not available for the requested time");
+            }*/
             
+            // Create calendar event
             Event event = new Event()
                     .setSummary(reservation.getIntituleAction())
                     .setDescription(reservation.getDescription())
@@ -162,12 +158,12 @@ public void processDecision(String reservationId, boolean accepted,
             
             Event createdEvent = googleCalendarService.getGoogleCalendarClient()
                     .events()
-                    .insert(calendarId, event)
+                    .insert(etab.getGoogleCalendarId(), event)
                     .execute();
             
             reservation.setStatut(StatusReservation.ACCEPTÉE);
             reservation.setGoogleCalendarEventId(createdEvent.getId());
-            reservation.setApprovedEquipements(approvedEquipments); // Set approved equipment
+            reservation.setApprovedEquipements(approvedEquipments);
             
         } catch (Exception e) {
             logger.error("Failed to process reservation acceptance", e);
@@ -175,13 +171,12 @@ public void processDecision(String reservationId, boolean accepted,
         }
     } else {
         reservation.setStatut(StatusReservation.REFUSÉE);
-        reservation.setApprovedEquipements(Collections.emptyList()); // Empty list on rejection
+        reservation.setApprovedEquipements(Collections.emptyList());
     }
 
     reservation.setDecideePar(decidedBy);
     reservationRepository.save(reservation);
     
-    // Reuse notification logic from Method 2
     sendNotificationsAndEmails(reservation, reservation.getStatut());
     
     logger.info("Reservation {} processed by {} - Decision: {}",
@@ -296,14 +291,6 @@ private void sendNotificationsAndEmails(Reservation reservation, StatusReservati
     reservation.setStatut(StatusReservation.ANNULÉE);
     reservation.setAnnulationReason(reason);
     reservation.setDecideePar(responsableId);
-    
-   
-   
-   
-   
-   
-   
-   
    
     
     reservationRepository.save(reservation);

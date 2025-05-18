@@ -11,6 +11,9 @@ import { isSameDay, parse, setDefaultOptions } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { AuthService } from '../services/auth/auth.service';
 import { CalendarService } from '../services/calendar/calendar.service';
+import { Etablissement, EtablissementService } from '../services/etablissement/etablissement.service';
+import { Espace } from '../models/espace.model';
+import { forkJoin } from 'rxjs';
 
 @Injectable()
 export class CustomDateFnsAdapter extends DateFnsAdapter {
@@ -66,17 +69,36 @@ export class SelectionCalendarComponent {
   selectedDate: Date = new Date();
   reservedDates: Date[] = [];
   dateControl = new FormControl(new Date());
+   isLoadingEtablissements = false;
+
+ etablissementId: string | null = null;
+  espaceId: string | null = null;
+  selectedEtablissement: Etablissement | null = null;
+  selectedEspace: Espace | null = null;
+
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private calendarService: CalendarService,
+    private etablissementService: EtablissementService,
     private authService: AuthService,
     private datePipe: DatePipe
   ) {}
 
-  ngOnInit() {
-    this.loadReservedDates();
+ ngOnInit() {
+    this.route.queryParamMap.subscribe(params => {
+      this.etablissementId = params.get('etablissementId');
+      this.espaceId = params.get('espaceId');
+      
+      if (this.etablissementId && this.espaceId) {
+        this.loadEstablishmentAndSpace();
+      } else {
+        console.error('Missing required parameters in URL');
+        // You might want to redirect back or show an error message
+        this.errorMessage = 'Missing establishment or space information';
+      }
+    });
   }
 
   // Date filter function that disables weekends and reserved dates
@@ -118,10 +140,37 @@ export class SelectionCalendarComponent {
       return null;
     }
   }
+  
+loadEstablishmentAndSpace(): void {
+    forkJoin([
+      this.etablissementService.getEtablissementById(this.etablissementId!),
+      this.etablissementService.getEspaceById(this.espaceId!)
+    ]).subscribe({
+      next: ([etablissement, espace]) => {
+        this.selectedEtablissement = etablissement;
+        this.selectedEspace = espace;
+        this.loadReservedDates();
+      },
+      error: (err: any) => {
+        console.error('Error loading establishment or space:', err);
+        this.errorMessage = 'Failed to load establishment or space information';
+      }
+    });
+  }
 
-  loadReservedDates(): void {
+/*onEtablissementChange(etablissement: Etablissement): void {
+    this.selectedEtablissement = etablissement;
+    this.loadReservedDates(); // Reload calendar when establishment changes
+  }*/
+
+ /* loadReservedDates(): void {
     this.isLoading = true;
-    this.calendarService.getUnavailableDates().subscribe({
+    const etablissementId = this.selectedEtablissement?.id; 
+      if (!etablissementId) {
+    console.error('No establishment selected');
+    return;
+  }
+    this.calendarService.getUnavailableDates(etablissementId).subscribe({
       next: (dateStrings: string[]) => {
         // Parse all valid dates and filter out empty/null values
         this.reservedDates = dateStrings
@@ -138,9 +187,30 @@ export class SelectionCalendarComponent {
         this.isLoading = false;
       }
     });
-  }
+  }*/
+ loadReservedDates(): void {
+    if (!this.etablissementId || !this.espaceId) {
+      console.warn('Cannot load reserved dates - missing IDs');
+      return;
+    }
 
-  // ... rest of your component methods remain unchanged ...
+    this.isLoading = true;
+    this.calendarService.getUnavailableDates(this.etablissementId)
+      .subscribe({
+        next: (dateStrings: string[]) => {
+          this.reservedDates = dateStrings
+            .map(dateStr => this.parseBackendDate(dateStr))
+            .filter((date): date is Date => date !== null);
+          this.isLoading = false;
+          this.dateControl.updateValueAndValidity();
+        },
+        error: (err) => {
+          console.error('Error loading reserved dates:', err);
+          this.errorMessage = 'Failed to load reserved dates. Please try again later.';
+          this.isLoading = false;
+        }
+      });
+  }
   isUnavailable(time: string): boolean {
     const hour = parseInt(time.split(':')[0], 10);
     const dateToCheck = new Date(this.selectedDate);

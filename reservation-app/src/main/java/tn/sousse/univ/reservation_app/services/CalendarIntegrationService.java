@@ -1,4 +1,4 @@
-package tn.sousse.univ.reservation_app.services;
+/*package tn.sousse.univ.reservation_app.services;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -29,9 +29,7 @@ public class CalendarIntegrationService {
 
     @Autowired
     private GoogleCalendarService calendarService;
-
-    @Value("${google.calendar.calendar-id}")
-    private String calendarId;
+    
 
     @Value("${google.calendar.timezone}")
     private String timeZone;
@@ -115,3 +113,4 @@ public class CalendarIntegrationService {
         }
     }
 }
+*/

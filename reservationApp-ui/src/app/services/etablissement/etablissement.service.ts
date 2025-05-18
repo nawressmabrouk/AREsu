@@ -13,6 +13,8 @@ export interface Etablissement {
   zone: string;
   adresse: string;
   logo: string;
+  googleCalendarId?: string;
+  calendarEmail?: string;
 }
 
 export interface Espace {

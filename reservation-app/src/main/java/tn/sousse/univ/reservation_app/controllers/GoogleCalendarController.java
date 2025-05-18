@@ -27,9 +27,10 @@ public class GoogleCalendarController {
     private GoogleCalendarService googleCalendarService;
 
     @GetMapping("/reservations/dates")
-    public ResponseEntity<List<String>> getReservedDates() {
+    public ResponseEntity<List<String>> getReservedDates(
+            @RequestParam String etablissementId) {
         try {
-            return ResponseEntity.ok(googleCalendarService.getReservedDates());
+            return ResponseEntity.ok(googleCalendarService.getReservedDates(etablissementId));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }

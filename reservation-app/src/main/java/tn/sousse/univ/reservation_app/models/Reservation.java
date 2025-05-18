@@ -40,8 +40,9 @@ public class Reservation {
     private String DecideePar;
     private List<String> equipements;
     private List<String> approvedEquipements; // Approved equipment //
-    private String espaceNom;       
+    private String espaceNom;
     private String demandeurRole;
+    private String etablissementId;
 
     private String annulationReason;
 

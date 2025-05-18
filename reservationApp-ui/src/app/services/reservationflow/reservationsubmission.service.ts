@@ -23,7 +23,6 @@ export class ReservationsubmissionService {
       { 
         headers: this.getHeaders(),
         responseType: 'json'
-       
       }
     ).pipe(
       catchError(this.handleError)

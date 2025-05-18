@@ -25,6 +25,7 @@ export interface Reservation {
     demandeurRole: string;      
     annulationReason: String; 
     approvedEquipements: string[]; // Stores why a reservation was canceled
+     etablissementId: string;
   }
   
   export enum StatusReservation {

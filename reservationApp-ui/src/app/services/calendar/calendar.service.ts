@@ -148,13 +148,27 @@ export class CalendarService {
     );
   }
 
-  getUnavailableDates(): Observable<string[]> {
+  /*getUnavailableDates(): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiUrl}/reservations/dates`, {
       headers: this.getHeaders()
     }).pipe(
       catchError(this.handleError)
     );
+  }*/
+ 
+ // Modify the getUnavailableDates method to accept etablissementId
+getUnavailableDates(etablissementId: string): Observable<string[]> {
+  if (!etablissementId) {
+    return throwError(() => new Error('Etablissement ID is required'));
   }
+
+  return this.http.get<string[]>(`${this.apiUrl}/reservations/dates`, {
+    headers: this.getHeaders(),
+    params: new HttpParams().set('etablissementId', etablissementId)
+  }).pipe(
+    catchError(this.handleError)
+  );
+}
 
   getConfirmedEvents(): Observable<CalendarSlotDTO[]> {
     return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/reservations/confirmed`, {

@@ -238,26 +238,55 @@ setActiveTab(tab: StatusReservation): void {
   }
 
 approveRequest(reservation: Reservation): void {
+  // Get approved equipment for this reservation
   const approvedEquipments = this.approvedEquipment[reservation.id] || [];
   
+  // Confirm if no equipment is selected
   if (approvedEquipments.length === 0) {
-    if (!confirm('Aucun équipement sélectionné. Voulez-vous accepter sans équipement ?')) return;
+    if (!confirm('Aucun équipement sélectionné. Voulez-vous accepter sans équipement ?')) {
+      return;
+    }
   }
+
+  // Create the request payload
+  const payload = {
+    accepted: true,
+    approvedEquipements: approvedEquipments
+  };
+
+  // Show loading state
+  this.loading['approving_' + reservation.id] = true;
 
   this.secretaryService.makeDecision(
     reservation.id, 
-    true,
-    approvedEquipments
+    true, // accepted parameter
+    approvedEquipments // equipment list
+  ).pipe(
+    finalize(() => {
+      delete this.loading['approving_' + reservation.id];
+    })
   ).subscribe({
     next: () => {
+      // Clean up and refresh data
       delete this.approvedEquipment[reservation.id];
+      
+      // Refresh all relevant lists
       forkJoin([
         this.loadToHandleReservations(),
         this.loadApprovedReservations(),
-        this.loadRejectedReservations()
+        this.loadViewedReservations()
       ]).subscribe();
+      
+      // Show success message
+      alert('Réservation approuvée avec succès');
     },
-    error: (err) => console.error('Erreur lors de l\'approbation:', err)
+    error: (err) => {
+      console.error('Erreur lors de l\'approbation:', err);
+      
+      // Show detailed error message if available
+      const errorMsg = err.error?.erreur || err.message || 'Une erreur est survenue';
+      alert(`Échec de l'approbation: ${errorMsg}`);
+    }
   });
 }
 
