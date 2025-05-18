@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import tn.sousse.univ.reservation_app.security.CustomUserDetails;
 import tn.sousse.univ.reservation_app.models.StatusReservation;
+import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
 import tn.sousse.univ.reservation_app.services.ResponsableEspaceService;
 import tn.sousse.univ.reservation_app.models.Espace;
 import tn.sousse.univ.reservation_app.models.Reservation;
@@ -23,6 +24,9 @@ import org.slf4j.LoggerFactory;
 @RequestMapping("/api/responsable")
 @PreAuthorize("hasRole('RESPONSABLE_SALLE')")
 public class ResponsableEspaceController {
+    
+ @Autowired
+    private EspaceRepository espaceRepository;
 
     @Autowired
     private ResponsableEspaceService responsableEspaceService;
@@ -78,48 +82,46 @@ private static final Logger logger = LoggerFactory.getLogger(ResponsableEspaceCo
         }
     }*/
 // nouvelle endpoint pour prendre desicion :
- @PostMapping("/decision/{reservationId}")
 
 
-public ResponseEntity<String> prendreDecision(
+
+
+@PostMapping("/decision/{reservationId}")
+public ResponseEntity<?> prendreDecision(
         @PathVariable String reservationId,
-        @RequestParam(required = false) Boolean accepted,
-        @RequestBody(required = false) DecisionDTO decisionDTO,
+        @RequestBody DecisionDTO decisionDTO,
         Authentication authentication) {
-
+  logger.info("Processing decision for reservation: {}", reservationId);
+    logger.info("Decision data: accepted={}, equipements={}", 
+        decisionDTO.isAccepted(), decisionDTO.getApprovedEquipements());
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
     String responsableId = userDetails.getUserId();
-    
+       logger.info("Responsable ID: {}", responsableId);
     try {
-        // Si decisionDTO est présent, utiliser les nouvelles fonctionnalités
-        if (decisionDTO != null) {
-            responsableEspaceService.processDecision(
-                reservationId, 
-                decisionDTO.isAccepted(), 
-                decisionDTO.getApprovedEquipements(), 
-                responsableId
-            );
-        } 
-        // Sinon, utiliser l'ancienne méthode avec le paramètre accepted
-        else if (accepted != null) {
-            responsableEspaceService.processDecision(reservationId, accepted, Collections.emptyList(),  responsableId);
-        } 
-        // Si aucun des deux n'est fourni
-        else {
-            return ResponseEntity.badRequest().body("Either decisionDTO or accepted parameter must be provided");
-        }
+        logger.debug("Processing decision for reservation {}: accepted={}", 
+            reservationId, decisionDTO.isAccepted());
+            
+        responsableEspaceService.processDecision(
+            reservationId, 
+            decisionDTO.isAccepted(), 
+            decisionDTO.getApprovedEquipements() != null ? 
+                decisionDTO.getApprovedEquipements() : Collections.emptyList(),
+            responsableId
+        );
         
         return ResponseEntity.ok("Décision enregistrée avec succès");
     } catch (NoSuchElementException e) {
+        logger.error("Reservation not found: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     } catch (SecurityException e) {
+        logger.error("Authorization error: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
     } catch (Exception e) {
+        logger.error("Error processing decision: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body("Erreur lors du traitement de la décision");
+            .body("Erreur lors du traitement de la décision: " + e.getMessage());
     }
 }
-
 
 
 
@@ -145,11 +147,24 @@ public ResponseEntity<String> prendreDecision(
      * Endpoint supplémentaire pour voir les réservations en attente
      * GET /api/responsable/reservations/en-attente
      */
-    @GetMapping("/reservations/en-attente")
-    public ResponseEntity<?> getReservationsEnAttente(Authentication authentication) {
-        return getReservationsByStatus(authentication, StatusReservation.EN_ATTENTE);
-    }
-
+@GetMapping("/reservations/en-attente")
+public ResponseEntity<?> getReservationsEnAttente(Authentication authentication) {
+    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+    String responsableId = userDetails.getUserId();
+    
+    logger.debug("Fetching pending reservations for responsable: {}", responsableId);
+    List<String> espaceIds = espaceRepository.findByResponsableId(responsableId)
+        .stream()
+        .map(Espace::getId)
+        .toList();
+    logger.debug("Responsable manages these spaces: {}", espaceIds);
+    
+    List<Reservation> reservations = responsableEspaceService
+        .getReservationsByResponsableAndStatus(responsableId, StatusReservation.EN_ATTENTE);
+    logger.debug("Found {} pending reservations", reservations.size());
+    
+    return ResponseEntity.ok(reservations);
+}
     private ResponseEntity<?> getReservationsByStatus(Authentication authentication, StatusReservation status) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         String responsableId = userDetails.getUserId();

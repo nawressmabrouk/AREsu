@@ -1,4 +1,3 @@
-
 package tn.sousse.univ.reservation_app.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,6 +115,10 @@ public class ResponsableEspaceService {
 
 public void processDecision(String reservationId, boolean accepted, 
                           List<String> approvedEquipments, String decidedBy) {
+    logger.info("Processing decision for reservation {}", reservationId);
+     if (reservationId == null) {
+        throw new IllegalArgumentException("Reservation ID must not be null");
+    }
     Reservation reservation = reservationRepository.findById(reservationId)
             .orElseThrow(() -> new RuntimeException("Reservation not found"));
     
@@ -123,32 +126,36 @@ public void processDecision(String reservationId, boolean accepted,
         throw new IllegalStateException("Only pending reservations can be processed");
     }
 
-    // Handle equipment validation
+    // Handle null equipment list
+    List<String> requestedEquipments = reservation.getEquipements() != null ? 
+        reservation.getEquipements() : Collections.emptyList();
+    
     if (accepted) {
         try {
             // Equipment validation
             if (approvedEquipments == null) {
                 approvedEquipments = Collections.emptyList();
             }
-            if (!reservation.getEquipements().containsAll(approvedEquipments)) {
+            
+            // Check if approved equipment is subset of requested
+            if (!requestedEquipments.containsAll(approvedEquipments)) {
                 throw new IllegalArgumentException("Approved equipment not in requested list");
             }
 
+            // Get espace first to get etablissementId
+            Espace espace = espaceRepository.findById(reservation.getEspaceId())
+                    .orElseThrow(() -> new RuntimeException("Espace not found"));
+            if (espace.getId() == null) {
+    throw new IllegalStateException("Espace ID is null in the database");
+}
             // Get the establishment's calendar ID
-            Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
+            Etablissement etab = etablissementRepository.findById(espace.getEtablissementId())
                     .orElseThrow(() -> new RuntimeException("Etablissement not found"));
             
             if (etab.getGoogleCalendarId() == null) {
                 throw new IllegalStateException("Etablissement has no calendar assigned");
             }
 
-            /*  Check space availability
-            if (!isEspaceDisponible(new ObjectId(reservation.getEspaceId()),
-                    reservation.getHeureDebut(),
-                    reservation.getHeureFin())) {
-                throw new IllegalStateException("Space is not available for the requested time");
-            }*/
-            
             // Create calendar event
             Event event = new Event()
                     .setSummary(reservation.getIntituleAction())
@@ -167,7 +174,7 @@ public void processDecision(String reservationId, boolean accepted,
             
         } catch (Exception e) {
             logger.error("Failed to process reservation acceptance", e);
-            throw new RuntimeException("Failed to process reservation acceptance", e);
+            throw new RuntimeException("Failed to process reservation acceptance: " + e.getMessage(), e);
         }
     } else {
         reservation.setStatut(StatusReservation.REFUSÉE);
@@ -184,7 +191,6 @@ public void processDecision(String reservationId, boolean accepted,
             decidedBy,
             accepted ? "ACCEPTED" : "REJECTED");
 }
-
 
 
 private void sendNotificationsAndEmails(Reservation reservation, StatusReservation status) {

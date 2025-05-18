@@ -199,40 +199,82 @@ private EtablissementRepository etablissementRepository;
 
 
 
+public void ensureEtablissementIdExists(Reservation reservation) {
+    if (reservation.getEtablissementId() == null) {
+        Espace espace = espaceRepository.findById(reservation.getEspaceId())
+                .orElseThrow(() -> new RuntimeException("Espace not found"));
+        reservation.setEtablissementId(espace.getEtablissementId());
+        reservationRepository.save(reservation);
+    }
+}
 
-
-// New version with same parameters as Method 2 
 public void processDecision(String reservationId, boolean accepted, 
-                          List<String> approvedEquipments, String decidedBy) {
+                         List<String> approvedEquipments, String decidedBy) {
+    // Debug 1: Log input parameters
+    logger.debug("Starting processDecision with params - reservationId: {}, accepted: {}, decidedBy: {}, approvedEquipments: {}", 
+                reservationId, accepted, decidedBy, approvedEquipments);
+
     Reservation reservation = reservationRepository.findById(reservationId)
-            .orElseThrow(() -> new RuntimeException("Reservation not found"));
+            .orElseThrow(() -> {
+                logger.error("Reservation not found for ID: {}", reservationId);
+                return new RuntimeException("Reservation not found");
+            });
     
+    // Debug 2: Log basic reservation info
+    logger.debug("Found reservation - ID: {}, Status: {}, EtablissementId: {}, EspaceId: {}", 
+               reservation.getId(), 
+               reservation.getStatut(),
+               reservation.getEtablissementId(),
+               reservation.getEspaceId());
+
     if (reservation.getStatut() != StatusReservation.EN_ATTENTE) {
+        logger.warn("Reservation {} is not in EN_ATTENTE status. Current status: {}", 
+                   reservationId, reservation.getStatut());
         throw new IllegalStateException("Only pending reservations can be processed");
     }
 
     if (approvedEquipments == null) {
         approvedEquipments = Collections.emptyList();
+        logger.debug("Approved equipments was null, set to empty list");
     }
+    
     if (accepted && !reservation.getEquipements().containsAll(approvedEquipments)) {
+        logger.error("Equipment validation failed. Requested: {}, Approved: {}", 
+                   reservation.getEquipements(), approvedEquipments);
         throw new IllegalArgumentException("Approved equipment not in requested list");
     }
 
     if (accepted) {
         try {
-            // Get the establishment's calendar ID
-            Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
-                    .orElseThrow(() -> new RuntimeException("Etablissement not found"));
+            logger.info("Processing acceptance for reservation: {}", reservationId);
             
-            if (etab.getGoogleCalendarId() == null) {
+            // Debug 3: Before etablissement lookup
+            String etablissementId = reservation.getEtablissementId();
+            logger.debug("Looking up etablissement with ID: {}", etablissementId);
+            
+            if (etablissementId == null) {
+                logger.error("Reservation {} has null etablissementId", reservationId);
+                throw new IllegalStateException("Reservation has no etablissementId assigned");
+            }
+
+            Etablissement etab = etablissementRepository.findById(etablissementId)
+                    .orElseThrow(() -> {
+                        logger.error("Etablissement not found for id: {}", etablissementId);
+                        return new RuntimeException("Etablissement not found for id: " + etablissementId);
+                    });
+            
+            // Debug 4: Etablissement found
+            logger.debug("Found etablissement - ID: {}, Name: {}, CalendarID: {}", 
+                         etab.getId(), etab.getNom(), etab.getGoogleCalendarId());
+            
+            if (etab.getGoogleCalendarId() == null || etab.getGoogleCalendarId().isEmpty()) {
+                logger.error("No calendar ID configured for etablissement: {}", etab.getId());
                 throw new IllegalStateException("Etablissement has no calendar assigned");
             }
             
-            /*if (!isEspaceDisponible(new ObjectId(reservation.getEspaceId()),
-                    reservation.getHeureDebut(),
-                    reservation.getHeureFin())) {
-                throw new IllegalStateException("Space is not available for the requested time");
-            }*/
+            // Debug 5: Before event creation
+            logger.debug("Creating calendar event for reservation {} with times: {} to {}", 
+                        reservationId, reservation.getHeureDebut(), reservation.getHeureFin());
             
             Event event = new Event()
                     .setSummary(reservation.getIntituleAction())
@@ -240,27 +282,48 @@ public void processDecision(String reservationId, boolean accepted,
                     .setStart(new EventDateTime().setDateTime(new DateTime(reservation.getHeureDebut())))
                     .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin())));
             
+            // Debug 6: Before Google Calendar API call
+            logger.debug("Inserting event into calendar: {}", etab.getGoogleCalendarId());
+            
             Event createdEvent = googleCalendarService.getGoogleCalendarClient()
                     .events()
                     .insert(etab.getGoogleCalendarId(), event)
+                    .setFields("id")
                     .execute();
+            
+            if (createdEvent == null || createdEvent.getId() == null) {
+                logger.error("Google Calendar returned null event or null event ID");
+                throw new RuntimeException("Failed to create calendar event - no event ID returned");
+            }
+            
+            logger.info("Successfully created calendar event with ID: {}", createdEvent.getId());
             
             reservation.setStatut(StatusReservation.ACCEPTÉE);
             reservation.setGoogleCalendarEventId(createdEvent.getId());
             
         } catch (Exception e) {
-            logger.error("Failed to create calendar event", e);
-            throw new RuntimeException("Failed to process reservation acceptance", e);
+            logger.error("Failed to process reservation acceptance for ID: {}", reservationId, e);
+            throw new RuntimeException("Failed to process reservation acceptance: " + e.getMessage(), e);
         }
     } else {
         reservation.setStatut(StatusReservation.REFUSÉE);
+        logger.debug("Reservation {} set to REFUSÉE status", reservationId);
     }
 
+    // Debug 7: Before saving reservation
+    logger.debug("Updating reservation with approved equipments: {} and decidedBy: {}", 
+                approvedEquipments, decidedBy);
+    
     reservation.setApprovedEquipements(approvedEquipments);
     reservation.setDecideePar(decidedBy);
     reservationRepository.save(reservation);
     
-    sendNotificationsAndEmails(reservation, reservation.getStatut());
+    try {
+        logger.debug("Sending notifications for reservation {}", reservationId);
+        sendNotificationsAndEmails(reservation, reservation.getStatut());
+    } catch (Exception e) {
+        logger.error("Failed to send notifications for reservation: {}", reservationId, e);
+    }
     
     logger.info("Reservation {} processed by {} - Decision: {}",
             reservationId,

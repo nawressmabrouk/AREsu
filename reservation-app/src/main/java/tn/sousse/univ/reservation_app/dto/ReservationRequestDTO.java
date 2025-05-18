@@ -23,5 +23,7 @@ public class ReservationRequestDTO {
     private String demandeurId;
     private String espaceId;
     private List<String> equipements;
+    private String etablissementId;
+
 
 }

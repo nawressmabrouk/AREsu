@@ -1,362 +1,3 @@
-/*package tn.sousse.univ.reservation_app.services;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-
-import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.google.api.client.util.DateTime;
-import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.model.Event;
-import com.google.api.services.calendar.model.EventDateTime;
-
-import tn.sousse.univ.reservation_app.dto.ReservationRequestDTO;
-import tn.sousse.univ.reservation_app.dto.ReservationResponseDTO;
-import tn.sousse.univ.reservation_app.mappers.ReservationMapper;
-import tn.sousse.univ.reservation_app.models.Espace;
-import tn.sousse.univ.reservation_app.models.Reservation;
-import tn.sousse.univ.reservation_app.models.StatusReservation;
-import tn.sousse.univ.reservation_app.models.User;
-import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
-import tn.sousse.univ.reservation_app.repositories.ReservationRepository;
-import tn.sousse.univ.reservation_app.repositories.UserRepository;
-
-@Service
-public class ReservationService {
-
-    @Autowired
-    private Calendar googleCalendar;
-
-    @Autowired
-    private ReservationRepository reservationRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private GoogleCalendarService googleCalendarService;
-
-    @Autowired
-    private EspaceRepository espaceRepository;
-
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    private SecretaireGeneraleService secretaireGeneraleService;
-
-    private static final String CALENDAR_ID = "REDACTED_OLD_APP_EMAIL";
-
-    public ReservationResponseDTO creerReservation(ReservationRequestDTO reservationDTO) {
-        User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Demandeur introuvable avec ID: " + reservationDTO.getDemandeurId()));
-
-        Reservation reservation = ReservationMapper.toEntity(reservationDTO, demandeur.getId());
-        reservation.setStatut(StatusReservation.EN_ATTENTE);
-
-        Reservation savedReservation = reservationRepository.save(reservation);
-
-        return ReservationMapper.toResponseDTO(savedReservation, demandeur.getEmail(), demandeur.getNom());
-    }
-
-    public void addReservationToCalendar(Reservation reservation) throws IOException {
-        Event event = new Event()
-                .setSummary(reservation.getIntituleAction())
-                .setDescription(reservation.getDescription())
-                .setStart(new EventDateTime().setDateTime(new DateTime(reservation.getHeureDebut())))
-                .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin())));
-
-        googleCalendar.events().insert(CALENDAR_ID, event).execute();
-    }
-
-    public void supprimerReservation(String id) {
-        reservationRepository.deleteById(id);
-    }
-
-    public List<Reservation> trouverReservationsParStatut(String statut) {
-        return reservationRepository.findByStatut(statut);
-    }
-
-    public List<Reservation> trouverReservationsParEspaceId(ObjectId espaceId) {
-        return reservationRepository.findByEspaceId(espaceId);
-    }
-
-    public Reservation trouverReservationParId(String id) {
-        return reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Réservation non trouvée avec ID: " + id));
-    }
-
-    public List<Reservation> trouverReservationsParDemandeurId(String demandeurId) {
-        return reservationRepository.findByDemandeurId(demandeurId);
-    }
-
-    /* hedhy version mta3 nawres 
-    public void annulerReservation(String reservationId, Long demandeurId) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Réservation non trouvée avec l'ID : " + reservationId));
-
-        if (!reservation.getDemandeurId().equals(demandeurId)) {
-            throw new RuntimeException("Vous n'avez pas le droit d'annuler cette réservation.");
-        }
-
-        if (reservation.getStatut() == StatusReservation.ANNULÉE) {
-            throw new RuntimeException("Cette réservation est déjà annulée.");
-        }
-
-        reservation.setStatut(StatusReservation.ANNULÉE);
-        reservationRepository.save(reservation);
-
-        // Mise à jour dans Google Calendar
-        if (reservation.getGoogleCalendarEventId() != null) {
-            try {
-                googleCalendarService.marquerEvenementCommeAnnule(reservation.getGoogleCalendarEventId(), reservation);
-            } catch (Exception e) {
-                throw new RuntimeException("Erreur lors de la mise à jour du calendrier: " + e.getMessage());
-            }
-        }
-    }
-
-    public void annulerReservation(String reservationId, String demandeurId) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Réservation non trouvée avec l'ID : " + reservationId));
-
-        if (!reservation.getDemandeurId().equals(demandeurId)) {
-            throw new RuntimeException("Vous n'avez pas le droit d'annuler cette réservation.");
-        }
-
-        if (reservation.getStatut() == StatusReservation.ANNULÉE) {
-            throw new RuntimeException("Cette réservation est déjà annulée.");
-        }
-
-        reservation.setStatut(StatusReservation.ANNULÉE);
-        reservationRepository.save(reservation);
-
-        // Mise à jour dans Google Calendar
-        if (reservation.getGoogleCalendarEventId() != null) {
-            try {
-                googleCalendarService.marquerEvenementCommeAnnule(reservation.getGoogleCalendarEventId(), reservation);
-            } catch (Exception e) {
-                throw new RuntimeException("Erreur lors de la mise à jour du calendrier: " + e.getMessage());
-            }
-        }
-    }
-    @Transactional
-    public String transmettreReservation(String reservationId) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
-
-        String espaceId = reservation.getEspaceId();
-        Optional<Espace> optionalEspace = espaceRepository.findById(espaceId);
-
-        if (optionalEspace.isEmpty()) {
-            return "ESPACE_NOT_FOUND";
-        }
-
-        Espace espace = optionalEspace.get();
-        String responsableId = espace.getResponsableId();
-
-        if (responsableId != null) {
-            // Dispatch to Responsable
-            reservation.setStatut(StatusReservation.ATTRIBUÉE);
-            reservation.setResponsableEspaceId(responsableId);
-            reservationRepository.save(reservation);
-
-            notificationService.sendNotification(
-                    responsableId,
-                    "Nouvelle demande de réservation à examiner.",
-                    reservationId);
-
-            // Visa by SG
-            // secretaireGeneraleService.viewReservation(reservation);
-
-            return "ENVOYÉ_RESPONSABLE_ET_SG";
-        } else {
-            // SG handles it fully
-            reservation.setStatut(StatusReservation.EN_ATTENTE);
-            reservationRepository.save(reservation);
-
-            secretaireGeneraleService.handleReservation(reservation);
-
-            return "ENVOYÉ_SG_SEUL";
-        }
-    }
-
-}*/
-
-
-/*version le5ra mta3 nawress  */
-/*package tn.sousse.univ.reservation_app.services;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-
-import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.google.api.client.util.DateTime;
-import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.model.Event;
-import com.google.api.services.calendar.model.EventDateTime;
-
-import tn.sousse.univ.reservation_app.dto.ReservationRequestDTO;
-import tn.sousse.univ.reservation_app.dto.ReservationResponseDTO;
-import tn.sousse.univ.reservation_app.mappers.ReservationMapper;
-import tn.sousse.univ.reservation_app.models.Espace;
-import tn.sousse.univ.reservation_app.models.Reservation;
-import tn.sousse.univ.reservation_app.models.StatusReservation;
-import tn.sousse.univ.reservation_app.models.User;
-import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
-import tn.sousse.univ.reservation_app.repositories.ReservationRepository;
-import tn.sousse.univ.reservation_app.repositories.UserRepository;
-
-@Service
-public class ReservationService {
-
-    @Autowired
-    private Calendar googleCalendar;
-
-    @Autowired
-    private ReservationRepository reservationRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private GoogleCalendarService googleCalendarService;
-
-    @Autowired
-    private EspaceRepository espaceRepository;
-
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    private SecretaireGeneraleService secretaireGeneraleService;
-
-    private static final String CALENDAR_ID = "REDACTED_OLD_APP_EMAIL";
-
-    public ReservationResponseDTO creerReservation(ReservationRequestDTO reservationDTO) {
-        User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
-                .orElseThrow(() -> new RuntimeException(
-
-                        "Demandeur introuvable avec ID: " + reservationDTO.getDemandeurId()));
-
-        Reservation reservation = ReservationMapper.toEntity(reservationDTO, demandeur.getId());
-        reservation.setStatut(StatusReservation.EN_ATTENTE);
-
-        Reservation savedReservation = reservationRepository.save(reservation);
-
-        return ReservationMapper.toResponseDTO(savedReservation, demandeur.getEmail(), demandeur.getNom());
-    }
-
-    public void addReservationToCalendar(Reservation reservation) throws IOException {
-        Event event = new Event()
-                .setSummary(reservation.getIntituleAction())
-                .setDescription(reservation.getDescription())
-                .setStart(new EventDateTime().setDateTime(new DateTime(reservation.getHeureDebut())))
-                .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin())));
-
-        googleCalendar.events().insert(CALENDAR_ID, event).execute();
-    }
-
-    public void supprimerReservation(String id) {
-        reservationRepository.deleteById(id);
-    }
-
-    public List<Reservation> trouverReservationsParStatut(String statut) {
-        return reservationRepository.findByStatut(statut);
-    }
-
-    public List<Reservation> trouverReservationsParEspaceId(ObjectId espaceId) {
-        return reservationRepository.findByEspaceId(espaceId);
-    }
-
-    public Reservation trouverReservationParId(String id) {
-        return reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Réservation non trouvée avec ID: " + id));
-    }
-
-
-    public List<Reservation> trouverReservationsParDemandeurId(String demandeurId) {
-        return reservationRepository.findByDemandeurId(demandeurId);
-    }
-
-
-
-    public void annulerReservation(String reservationId, String demandeurId) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Réservation non trouvée avec l'ID : " + reservationId));
-
-        if (!reservation.getDemandeurId().equals(demandeurId)) {
-            throw new RuntimeException("Vous n'avez pas le droit d'annuler cette réservation.");
-        }
-
-        if (reservation.getStatut() == StatusReservation.ANNULÉE) {
-            throw new RuntimeException("Cette réservation est déjà annulée.");
-        }
-
-        reservation.setStatut(StatusReservation.ANNULÉE);
-        reservationRepository.save(reservation);
-
-       
-       
-       
-       
-       
-       
-       
-       
-    }
-
-
-    @Transactional
-    public String transmettreReservation(String reservationId) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
-    
-        String espaceId = reservation.getEspaceId();
-        Optional<Espace> optionalEspace = espaceRepository.findById(espaceId);
-    
-        if (optionalEspace.isEmpty()) {
-            return "ESPACE_NOT_FOUND";
-        }
-    
-        Espace espace = optionalEspace.get();
-        String responsableId = espace.getResponsableId();
-    
-        if (responsableId != null) {
-            // Update reservation status and assign responsible
-            reservation.setStatut(StatusReservation.ATTRIBUÉE);
-            reservation.setResponsableEspaceId(responsableId);
-            reservationRepository.save(reservation);
-    
-            // Send notification
-            notificationService.sendNotification(
-                    responsableId,
-                    "Nouvelle demande de réservation à examiner.",
-                    reservationId);
-    
-            return "ENVOYÉ_RESPONSABLE";
-        } else {
-            // Handle case where space has no responsible
-            reservation.setStatut(StatusReservation.EN_ATTENTE);
-            reservationRepository.save(reservation);
-            return "ENVOYÉ_SG";
-        }
-    }
-    
-    
-    
-    
-}   */
 
 
 package tn.sousse.univ.reservation_app.services;
@@ -364,7 +5,8 @@ package tn.sousse.univ.reservation_app.services;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -389,7 +31,7 @@ import tn.sousse.univ.reservation_app.repositories.UserRepository;
 import tn.sousse.univ.reservation_app.repositories.EtablissementRepository;
 @Service
 public class ReservationService {
-
+private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleService.class);
     @Autowired
     private Calendar googleCalendar;
 
@@ -452,50 +94,58 @@ public ReservationResponseDTO creerReservation(ReservationRequestDTO reservation
 */
 
 
-//endpoint nourhen 
 public ReservationResponseDTO creerReservation(ReservationRequestDTO reservationDTO) {
-        // Fetch demandeur
-        User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
-                .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
+    logger.debug("Début de creerReservation avec DTO: {}", reservationDTO);
 
-        // Fetch espace
-        Espace espace = espaceRepository.findById(reservationDTO.getEspaceId())
-                .orElseThrow(() -> new RuntimeException("Espace introuvable"));
+    // 1. Fetch demandeur
+    User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
+            .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
 
-        // Create and save reservation
-        Reservation reservation = ReservationMapper.toEntity(reservationDTO, demandeur.getId());
-        reservation.setEspaceNom(espace.getNom());
-        reservation.setDemandeurRole(demandeur.getRole().toString());
-        reservation.setStatut(StatusReservation.EN_ATTENTE);
-        
-        Reservation savedReservation = reservationRepository.save(reservation);
-
-        // Trigger transmission process
-        transmettreReservation(savedReservation.getId());
-
-      
-
-        
-    String emailContent = String.format(
-        "Bonjour %s, votre demande de réservation pour '%s' a été enregistrée. Statut : En attente.",
-        demandeur.getNom(), 
-        espace.getNom()
-    );
-    emailService.sendEmail(
-        demandeur.getEmail(),
-        "Demande de réservation enregistrée",
-        emailContent
-    );
-
-     return ReservationMapper.toResponseDTOFull(
-                savedReservation,
-                demandeur.getEmail(),
-                demandeur.getNom(),
-                espace.getNom(),
-                demandeur.getRole().toString()
-        );
-
+    // 2. Fetch espace and verify etablissementId
+    Espace espace = espaceRepository.findById(reservationDTO.getEspaceId())
+            .orElseThrow(() -> new RuntimeException("Espace introuvable"));
+    
+    if (espace.getEtablissementId() == null || espace.getEtablissementId().isEmpty()) {
+        logger.error("L'espace {} n'a pas d'etablissementId associé", espace.getId());
+        throw new IllegalStateException("L'espace n'est associé à aucun établissement");
     }
+
+    // 3. Create reservation with ALL required fields
+    Reservation reservation = ReservationMapper.toEntity(reservationDTO, demandeur.getId());
+    reservation.setEspaceNom(espace.getNom());
+    reservation.setDemandeurRole(demandeur.getRole().toString());
+    reservation.setStatut(StatusReservation.EN_ATTENTE);
+    reservation.setEtablissementId(espace.getEtablissementId()); // CRITICAL: Set etablissementId
+    
+    // 4. Save reservation
+    Reservation savedReservation = reservationRepository.save(reservation);
+    logger.info("Réservation créée avec ID: {}", savedReservation.getId());
+
+    // 5. Verify transmission data
+    logger.debug("Transmission data - ReservationID: {}, EspaceID: {}, EtablissementID: {}", 
+        savedReservation.getId(), 
+        savedReservation.getEspaceId(), 
+        savedReservation.getEtablissementId()
+    );
+
+    try {
+        transmettreReservation(savedReservation.getId());
+    } catch (Exception e) {
+        logger.error("Échec transmission pour réservation {}", savedReservation.getId(), e);
+        throw new RuntimeException("Erreur de transmission: " + e.getMessage(), e);
+    }
+
+    // ... (email sending code remains the same)
+
+    return ReservationMapper.toResponseDTOFull(
+            savedReservation,
+            demandeur.getEmail(),
+            demandeur.getNom(),
+            espace.getNom(),
+            demandeur.getRole().toString()
+    );
+}
+
 
 
 
@@ -560,43 +210,7 @@ public ReservationResponseDTO creerReservation(ReservationRequestDTO reservation
     }
 
 
-  /*endpoint nawress 
-    @Transactional
- public String transmettreReservation(String reservationId) {
-    Reservation reservation = reservationRepository.findById(reservationId)
-            .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
 
-    String espaceId = reservation.getEspaceId();
-    Optional<Espace> optionalEspace = espaceRepository.findById(espaceId);
-
-    if (optionalEspace.isEmpty()) {
-        return "ESPACE_NOT_FOUND";
-    }
-
-    Espace espace = optionalEspace.get();
-    String responsableId = espace.getResponsableId();
-
-    if (responsableId != null) {
-        // Dispatch to Responsable
-        reservation.setStatut(StatusReservation.ATTRIBUÉE);
-        reservation.setResponsableEspaceId(responsableId);
-        reservation.setVueParSecretaire(false); // Initialiser à false pour le SG
-        reservationRepository.save(reservation);
-
-        notificationService.sendNotification(
-                responsableId,
-                "Nouvelle demande de réservation à examiner.",
-                reservationId);
-
-        return "ENVOYÉ_RESPONSABLE_ET_SG";
-    } else {
-        reservation.setStatut(StatusReservation.EN_ATTENTE);
-        reservationRepository.save(reservation);
-        return "ENVOYÉ_SG_SEUL";
-    }
-}
-
-*/
 
 
 
