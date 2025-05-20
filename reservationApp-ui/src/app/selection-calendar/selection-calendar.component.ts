@@ -7,13 +7,14 @@ import { MatDatepickerInputEvent, MatDatepickerModule } from '@angular/material/
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { isSameDay, parse, setDefaultOptions } from 'date-fns';
+import { format, isSameDay, parse, setDefaultOptions } from 'date-fns';
 import { enUS } from 'date-fns/locale';
+import { forkJoin } from 'rxjs';
+import { Espace } from '../models/espace.model';
 import { AuthService } from '../services/auth/auth.service';
 import { CalendarService } from '../services/calendar/calendar.service';
 import { Etablissement, EtablissementService } from '../services/etablissement/etablissement.service';
-import { Espace } from '../models/espace.model';
-import { forkJoin } from 'rxjs';
+import { CalendarSlotDTO } from '../shared/interfaces/calendar-slot.dto';
 
 @Injectable()
 export class CustomDateFnsAdapter extends DateFnsAdapter {
@@ -75,6 +76,10 @@ export class SelectionCalendarComponent {
   espaceId: string | null = null;
   selectedEtablissement: Etablissement | null = null;
   selectedEspace: Espace | null = null;
+
+  availableSlots: CalendarSlotDTO[] | undefined;
+
+  unavailableTimes: any;
 
 
   constructor(
@@ -347,4 +352,52 @@ loadEstablishmentAndSpace(): void {
     const position = (minutes - 8*60) / 30 * slotHeight;
     return `${position}px`;
   }
+
+  // In selection-calendar.component.ts
+
+// In your component
+loadAvailability(date: Date): void {
+  if (!this.etablissementId) {
+    console.error('Etablissement ID is required');
+    return;
+  }
+
+  const dateStr = format(date, 'yyyy-MM-dd');
+  this.calendarService.getCalendarView(this.etablissementId, dateStr)
+    .subscribe({
+      next: (slots) => {
+        this.processSlots(slots);
+      },
+      error: (err) => {
+        console.error('Failed to load availability', err);
+      }
+    });
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+private processSlots(slots: CalendarSlotDTO[]): void {
+  this.availableSlots = slots.filter(slot => 
+    !slot.reserved || slot.selectable
+  );
+  
+  // Mark unavailable times
+  this.timeSlots.forEach(time => {
+    const hour = parseInt(time.split(':')[0]);
+    this.unavailableTimes[time] = slots.some(slot => 
+      slot.reserved && 
+      !slot.selectable && 
+      slot.heureDebut.getHours() === hour
+    );
+  });
+}
 }

@@ -1,17 +1,18 @@
 
-
 package tn.sousse.univ.reservation_app.services;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
@@ -26,12 +27,13 @@ import tn.sousse.univ.reservation_app.models.Reservation;
 import tn.sousse.univ.reservation_app.models.StatusReservation;
 import tn.sousse.univ.reservation_app.models.User;
 import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
+import tn.sousse.univ.reservation_app.repositories.EtablissementRepository;
 import tn.sousse.univ.reservation_app.repositories.ReservationRepository;
 import tn.sousse.univ.reservation_app.repositories.UserRepository;
-import tn.sousse.univ.reservation_app.repositories.EtablissementRepository;
+
 @Service
 public class ReservationService {
-private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleService.class);
     @Autowired
     private Calendar googleCalendar;
 
@@ -52,47 +54,50 @@ private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleS
 
     @Autowired
     private SecretaireGeneraleService secretaireGeneraleService;
-    
+
     @Autowired
     private EtablissementRepository etablissementRepository;
 
-     @Autowired
+    @Autowired
     private EmailService emailService;
 
     private static final String CALENDAR_ID = "REDACTED_OLD_APP_EMAIL";
-/* 
-public ReservationResponseDTO creerReservation(ReservationRequestDTO reservationDTO) {
-    // Fetch demandeur
-    User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
-            .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
-
-    // Fetch espace
-    Espace espace = espaceRepository.findById(reservationDTO.getEspaceId())
-            .orElseThrow(() -> new RuntimeException("Espace introuvable"));
-
-    // Create reservation entity
-    Reservation reservation = ReservationMapper.toEntity(reservationDTO, demandeur.getId());
-    
-    // Set espace name and demandeur role HERE
-    reservation.setEspaceNom(espace.getNom());                // Add this line
-    reservation.setDemandeurRole(demandeur.getRole().toString()); // Add this line
-    
-    reservation.setStatut(StatusReservation.EN_ATTENTE);
-    Reservation savedReservation = reservationRepository.save(reservation); // Saved to DB
-
-    // Build response
-    return ReservationMapper.toResponseDTOFull(
-            savedReservation,
-            demandeur.getEmail(),
-            demandeur.getNom(),
-            espace.getNom(),
-            demandeur.getRole().toString()
-    );
-}
-
-
-*/
-
+    /*
+     * public ReservationResponseDTO creerReservation(ReservationRequestDTO
+     * reservationDTO) {
+     * // Fetch demandeur
+     * User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
+     * .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
+     * 
+     * // Fetch espace
+     * Espace espace = espaceRepository.findById(reservationDTO.getEspaceId())
+     * .orElseThrow(() -> new RuntimeException("Espace introuvable"));
+     * 
+     * // Create reservation entity
+     * Reservation reservation = ReservationMapper.toEntity(reservationDTO,
+     * demandeur.getId());
+     * 
+     * // Set espace name and demandeur role HERE
+     * reservation.setEspaceNom(espace.getNom()); // Add this line
+     * reservation.setDemandeurRole(demandeur.getRole().toString()); // Add this
+     * line
+     * 
+     * reservation.setStatut(StatusReservation.EN_ATTENTE);
+     * Reservation savedReservation = reservationRepository.save(reservation); //
+     * Saved to DB
+     * 
+     * // Build response
+     * return ReservationMapper.toResponseDTOFull(
+     * savedReservation,
+     * demandeur.getEmail(),
+     * demandeur.getNom(),
+     * espace.getNom(),
+     * demandeur.getRole().toString()
+     * );
+     * }
+     * 
+     * 
+     */
 
 public ReservationResponseDTO creerReservation(ReservationRequestDTO reservationDTO) {
     logger.debug("Début de creerReservation avec DTO: {}", reservationDTO);
@@ -105,6 +110,14 @@ public ReservationResponseDTO creerReservation(ReservationRequestDTO reservation
     Espace espace = espaceRepository.findById(reservationDTO.getEspaceId())
             .orElseThrow(() -> new RuntimeException("Espace introuvable"));
     
+            Etablissement etab = etablissementRepository.findById(espace.getEtablissementId())
+    .orElseThrow(() -> new RuntimeException("Establishment not found"));
+
+if (etab.getGoogleCalendarId() == null) {
+    logger.error("Establishment {} has no Google Calendar configured", etab.getId());
+    throw new IllegalStateException("This establishment has no calendar configured");
+}
+
     if (espace.getEtablissementId() == null || espace.getEtablissementId().isEmpty()) {
         logger.error("L'espace {} n'a pas d'etablissementId associé", espace.getId());
         throw new IllegalStateException("L'espace n'est associé à aucun établissement");
@@ -145,20 +158,48 @@ public ReservationResponseDTO creerReservation(ReservationRequestDTO reservation
             demandeur.getRole().toString()
     );
 }
-
-
-
-
-
+ 
     public void addReservationToCalendar(Reservation reservation) throws IOException {
+        // 1. Get the establishment's calendar ID
+        Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
+                .orElseThrow(() -> new RuntimeException("Establishment not found"));
+
+        // ADDED STRICT VALIDATION
+        if (etab.getGoogleCalendarId() == null || etab.getGoogleCalendarId().isEmpty()) {
+            throw new IllegalStateException("No Google Calendar configured for establishment: " + etab.getNom());
+        }
+
+        logger.info("Adding reservation to calendar {} for establishment {}", 
+            etab.getGoogleCalendarId(), etab.getNom());
+
+        // 2. Create event with proper timezone handling
         Event event = new Event()
                 .setSummary(reservation.getIntituleAction())
                 .setDescription(reservation.getDescription())
-                .setStart(new EventDateTime().setDateTime(new DateTime(reservation.getHeureDebut())))
-                .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin())));
+                .setStart(new EventDateTime()
+                        .setDateTime(new DateTime(reservation.getHeureDebut())))
+                .setEnd(new EventDateTime()
+                        .setDateTime(new DateTime(reservation.getHeureFin())))
+                // ADDED RESERVATION ID AS EXTENDED PROPERTY
+                .setExtendedProperties(new Event.ExtendedProperties()
+                        .setPrivate(Map.of("reservationId", reservation.getId())));
 
-        googleCalendar.events().insert(CALENDAR_ID, event).execute();
+        // 3. Insert into the SPECIFIC establishment calendar
+        Event createdEvent = googleCalendar.events()
+                .insert(etab.getGoogleCalendarId(), event)
+                .execute();
+
+        // 4. Store event ID in reservation
+        reservation.setGoogleEventId(createdEvent.getId());
+        reservationRepository.save(reservation);
+
+        logger.info("Successfully added event {} to calendar {}", 
+            createdEvent.getId(), etab.getGoogleCalendarId());
     }
+ 
+ 
+ 
+ 
 
     public void supprimerReservation(String id) {
         reservationRepository.deleteById(id);
@@ -177,12 +218,9 @@ public ReservationResponseDTO creerReservation(ReservationRequestDTO reservation
                 .orElseThrow(() -> new RuntimeException("Réservation non trouvée avec ID: " + id));
     }
 
-
     public List<Reservation> trouverReservationsParDemandeurId(String demandeurId) {
         return reservationRepository.findByDemandeurId(demandeurId);
     }
-
-
 
     public void annulerReservation(String reservationId, String demandeurId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -199,106 +237,95 @@ public ReservationResponseDTO creerReservation(ReservationRequestDTO reservation
         reservation.setStatut(StatusReservation.ANNULÉE);
         reservationRepository.save(reservation);
 
-       
-       
-       
-       
-       
-       
-       
-       
     }
 
+    // endpoint nourhen :
 
+    @Transactional
+    public String transmettreReservation(String reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
 
+        Espace espace = espaceRepository.findById(reservation.getEspaceId())
+                .orElseThrow(() -> new RuntimeException("Espace non trouvé"));
 
+        try {
+            String recipientId = determineRecipient(espace.getId());
+            Etablissement etablissement = etablissementRepository.findById(espace.getEtablissementId())
+                    .orElseThrow(() -> new RuntimeException("Etablissement non trouvé"));
 
+            // Mise à jour du statut de vue
+            reservation.setVueParSecretaire(false);
+            reservationRepository.save(reservation);
 
-//endpoint nourhen :
-    
-@Transactional
-public String transmettreReservation(String reservationId) {
-    Reservation reservation = reservationRepository.findById(reservationId)
-        .orElseThrow(() -> new RuntimeException("Réservation introuvable"));
+            // Notification avec contexte complet
+            notificationService.sendNotification(
+                    recipientId,
+                    "Nouvelle demande pour " + espace.getNom() + " (" + etablissement.getNom() + ")",
+                    reservationId);
+            User destinataire = userRepository.findById(recipientId).orElseThrow();
+            emailService.sendEmail(
+                    destinataire.getEmail(),
+                    "Nouvelle demande de réservation",
+                    "Une nouvelle demande nécessite votre action : " + reservation.getIntituleAction());
 
-    Espace espace = espaceRepository.findById(reservation.getEspaceId())
-        .orElseThrow(() -> new RuntimeException("Espace non trouvé"));
-
-    try {
-        String recipientId = determineRecipient(espace.getId());
-        Etablissement etablissement = etablissementRepository.findById(espace.getEtablissementId())
-            .orElseThrow(() -> new RuntimeException("Etablissement non trouvé"));
-
-        // Mise à jour du statut de vue
-        reservation.setVueParSecretaire(false);
-        reservationRepository.save(reservation);
-
-        // Notification avec contexte complet
-        notificationService.sendNotification(
-            recipientId,
-            "Nouvelle demande pour " + espace.getNom() + " (" + etablissement.getNom() + ")",
-            reservationId
-        );
-     User destinataire = userRepository.findById(recipientId).orElseThrow();
-    emailService.sendEmail(
-        destinataire.getEmail(),
-        "Nouvelle demande de réservation",
-        "Une nouvelle demande nécessite votre action : " + reservation.getIntituleAction()
-    );
-
-
-            if(espace.getResponsableId() != null) {
+            if (espace.getResponsableId() != null) {
                 reservation.setStatut(StatusReservation.EN_ATTENTE);
                 reservation.setResponsableEspaceId(espace.getResponsableId());
-                 reservation.setVueParSecretaire(false); 
+                reservation.setVueParSecretaire(false);
                 reservationRepository.save(reservation);
-                
+
                 // Notify secretary general if needed
                 User secretaire = userRepository.findById(etablissement.getSecretaireGeneraleId())
-                    .orElseThrow(() -> new RuntimeException("Secrétaire général non trouvé"));
-                
+                        .orElseThrow(() -> new RuntimeException("Secrétaire général non trouvé"));
+
                 emailService.sendEmail(
-                    secretaire.getEmail(),
-                    "Notification de demande",
-                    "Une nouvelle demande a été transmise à un responsable : " + espace.getNom()
-                );
-                
+                        secretaire.getEmail(),
+                        "Notification de demande",
+                        "Une nouvelle demande a été transmise à un responsable : " + espace.getNom());
+
                 return "ENVOYÉ_RESPONSABLE_ET_SG";
             } else {
                 reservation.setStatut(StatusReservation.EN_ATTENTE);
                 reservationRepository.save(reservation);
                 return "ENVOYÉ_SG_SEUL";
             }
-            
+
         } catch (Exception e) {
             throw new RuntimeException("Erreur de transmission: " + e.getMessage());
         }
     }
 
+    public String determineRecipient(String espaceId) {
+        // 1. Récupération de l'espace
+        Espace espace = espaceRepository.findById(espaceId)
+                .orElseThrow(() -> new RuntimeException("Espace non trouvé"));
 
+        // 2. Priorité au responsable d'espace
+        if (espace.getResponsableId() != null && !espace.getResponsableId().isEmpty()) {
+            return espace.getResponsableId();
+        }
 
+        // 3. Fallback au secrétaire d'établissement
+        Etablissement etablissement = etablissementRepository.findById(espace.getEtablissementId())
+                .orElseThrow(() -> new RuntimeException("Etablissement non trouvé"));
 
-public String determineRecipient(String espaceId) {
-    // 1. Récupération de l'espace
-    Espace espace = espaceRepository.findById(espaceId)
-        .orElseThrow(() -> new RuntimeException("Espace non trouvé"));
-    
-    // 2. Priorité au responsable d'espace
-    if(espace.getResponsableId() != null && !espace.getResponsableId().isEmpty()) {
-        return espace.getResponsableId();
+        if (etablissement.getSecretaireGeneraleId() == null) {
+            throw new RuntimeException("Secrétaire général non configuré");
+        }
+
+        return etablissement.getSecretaireGeneraleId();
     }
-    
-    // 3. Fallback au secrétaire d'établissement
-    Etablissement etablissement = etablissementRepository.findById(espace.getEtablissementId())
-        .orElseThrow(() -> new RuntimeException("Etablissement non trouvé"));
-    
-    if(etablissement.getSecretaireGeneraleId() == null) {
-        throw new RuntimeException("Secrétaire général non configuré");
+
+    private void verifyCalendarAccess(String calendarId) throws IOException {
+    try {
+        // This will throw if calendar doesn't exist or isn't accessible
+        googleCalendar.calendars().get(calendarId).execute();
+    } catch (GoogleJsonResponseException e) {
+        if (e.getStatusCode() == 404) {
+            throw new IOException("Calendar not found: " + calendarId);
+        }
+        throw new IOException("Calendar access error: " + e.getMessage());
     }
-    
-    return etablissement.getSecretaireGeneraleId();
 }
-
 }
-
-    

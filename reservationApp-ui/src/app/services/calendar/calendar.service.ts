@@ -95,7 +95,7 @@ export class CalendarService {
     );
   }
 
-  // Fetches calendar view with time slots
+  /* Fetches calendar view with time slots
   getCalendarView(
     etablissementId: string,
     espaceId: string,
@@ -126,7 +126,25 @@ export class CalendarService {
     ).pipe(
       catchError(this.handleError)
     );
-  }
+  }*/
+ 
+getCalendarView(
+  etablissementId: string,
+  date: string
+): Observable<CalendarSlotDTO[]> {
+  return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/view`, {
+    params: new HttpParams()
+      .set('date', date)
+      .set('etablissementId', etablissementId),
+    headers: this.getHeaders()
+  }).pipe(
+    map(slots => slots.map(slot => ({
+      ...slot,
+      heureDebut: new Date(slot.heureDebut),
+      heureFin: new Date(slot.heureFin)
+    })))
+  );
+}
 
   // Sanitizes input IDs
   private cleanId(id: string): string {
@@ -170,7 +188,7 @@ getUnavailableDates(etablissementId: string): Observable<string[]> {
   );
 }
 
-  getConfirmedEvents(): Observable<CalendarSlotDTO[]> {
+ /* getConfirmedEvents(): Observable<CalendarSlotDTO[]> {
     return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/reservations/confirmed`, {
       headers: this.getHeaders()
     }).pipe(
@@ -181,9 +199,10 @@ getUnavailableDates(etablissementId: string): Observable<string[]> {
       }))),
       catchError(this.handleError)
     );
-  }
+  }*/
 
-  getUnconfirmedEvents(): Observable<CalendarSlotDTO[]> {
+
+ /* getUnconfirmedEvents(): Observable<CalendarSlotDTO[]> {
     return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/reservations/pending`, {
       headers: this.getHeaders()
     }).pipe(
@@ -194,5 +213,32 @@ getUnavailableDates(etablissementId: string): Observable<string[]> {
       }))),
       catchError(this.handleError)
     );
-  }
+  }*/
+getConfirmedEvents(etablissementId: string): Observable<CalendarSlotDTO[]> {
+  return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/reservations/confirmed`, {
+    headers: this.getHeaders(),
+    params: new HttpParams().set('etablissementId', etablissementId)
+  }).pipe(
+    map(slots => slots.map(slot => ({
+      ...slot,
+      heureDebut: new Date(slot.heureDebut),
+      heureFin: new Date(slot.heureFin)
+    }))),
+    catchError(this.handleError)
+  );
+}
+
+getUnconfirmedEvents(etablissementId: string): Observable<CalendarSlotDTO[]> {
+  return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/reservations/pending`, {
+    headers: this.getHeaders(),
+    params: new HttpParams().set('etablissementId', etablissementId)
+  }).pipe(
+    map(slots => slots.map(slot => ({
+      ...slot,
+      heureDebut: new Date(slot.heureDebut),
+      heureFin: new Date(slot.heureFin)
+    }))),
+    catchError(this.handleError)
+  );
+}
 }

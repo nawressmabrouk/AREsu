@@ -1,12 +1,10 @@
 package tn.sousse.univ.reservation_app.services;
 
-import java.security.GeneralSecurityException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +13,13 @@ import org.springframework.stereotype.Service;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
-import tn.sousse.univ.reservation_app.models.User;
+
 import tn.sousse.univ.reservation_app.config.GoogleCalendarConfig;
 import tn.sousse.univ.reservation_app.models.Espace;
 import tn.sousse.univ.reservation_app.models.Etablissement;
 import tn.sousse.univ.reservation_app.models.Reservation;
 import tn.sousse.univ.reservation_app.models.StatusReservation;
+import tn.sousse.univ.reservation_app.models.User;
 import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
 import tn.sousse.univ.reservation_app.repositories.EtablissementRepository;
 import tn.sousse.univ.reservation_app.repositories.ReservationRepository;
@@ -207,129 +206,58 @@ public void ensureEtablissementIdExists(Reservation reservation) {
         reservationRepository.save(reservation);
     }
 }
+    public void processDecision(String reservationId, boolean accepted, 
+                             List<String> approvedEquipments, String decidedBy) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
-public void processDecision(String reservationId, boolean accepted, 
-                         List<String> approvedEquipments, String decidedBy) {
-    // Debug 1: Log input parameters
-    logger.debug("Starting processDecision with params - reservationId: {}, accepted: {}, decidedBy: {}, approvedEquipments: {}", 
-                reservationId, accepted, decidedBy, approvedEquipments);
+        // ENSURE ESTABLISHMENT ID EXISTS
+        ensureEtablissementIdExists(reservation);
 
-    Reservation reservation = reservationRepository.findById(reservationId)
-            .orElseThrow(() -> {
-                logger.error("Reservation not found for ID: {}", reservationId);
-                return new RuntimeException("Reservation not found");
-            });
-    
-    // Debug 2: Log basic reservation info
-    logger.debug("Found reservation - ID: {}, Status: {}, EtablissementId: {}, EspaceId: {}", 
-               reservation.getId(), 
-               reservation.getStatut(),
-               reservation.getEtablissementId(),
-               reservation.getEspaceId());
-
-    if (reservation.getStatut() != StatusReservation.EN_ATTENTE) {
-        logger.warn("Reservation {} is not in EN_ATTENTE status. Current status: {}", 
-                   reservationId, reservation.getStatut());
-        throw new IllegalStateException("Only pending reservations can be processed");
-    }
-
-    if (approvedEquipments == null) {
-        approvedEquipments = Collections.emptyList();
-        logger.debug("Approved equipments was null, set to empty list");
-    }
-    
-    if (accepted && !reservation.getEquipements().containsAll(approvedEquipments)) {
-        logger.error("Equipment validation failed. Requested: {}, Approved: {}", 
-                   reservation.getEquipements(), approvedEquipments);
-        throw new IllegalArgumentException("Approved equipment not in requested list");
-    }
-
-    if (accepted) {
-        try {
-            logger.info("Processing acceptance for reservation: {}", reservationId);
-            
-            // Debug 3: Before etablissement lookup
-            String etablissementId = reservation.getEtablissementId();
-            logger.debug("Looking up etablissement with ID: {}", etablissementId);
-            
-            if (etablissementId == null) {
-                logger.error("Reservation {} has null etablissementId", reservationId);
-                throw new IllegalStateException("Reservation has no etablissementId assigned");
-            }
-
-            Etablissement etab = etablissementRepository.findById(etablissementId)
-                    .orElseThrow(() -> {
-                        logger.error("Etablissement not found for id: {}", etablissementId);
-                        return new RuntimeException("Etablissement not found for id: " + etablissementId);
-                    });
-            
-            // Debug 4: Etablissement found
-            logger.debug("Found etablissement - ID: {}, Name: {}, CalendarID: {}", 
-                         etab.getId(), etab.getNom(), etab.getGoogleCalendarId());
-            
-            if (etab.getGoogleCalendarId() == null || etab.getGoogleCalendarId().isEmpty()) {
-                logger.error("No calendar ID configured for etablissement: {}", etab.getId());
-                throw new IllegalStateException("Etablissement has no calendar assigned");
-            }
-            
-            // Debug 5: Before event creation
-            logger.debug("Creating calendar event for reservation {} with times: {} to {}", 
-                        reservationId, reservation.getHeureDebut(), reservation.getHeureFin());
-            
-            Event event = new Event()
-                    .setSummary(reservation.getIntituleAction())
-                    .setDescription(reservation.getDescription())
-                    .setStart(new EventDateTime().setDateTime(new DateTime(reservation.getHeureDebut())))
-                    .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin())));
-            
-            // Debug 6: Before Google Calendar API call
-            logger.debug("Inserting event into calendar: {}", etab.getGoogleCalendarId());
-            
-            Event createdEvent = googleCalendarService.getGoogleCalendarClient()
-                    .events()
-                    .insert(etab.getGoogleCalendarId(), event)
-                    .setFields("id")
-                    .execute();
-            
-            if (createdEvent == null || createdEvent.getId() == null) {
-                logger.error("Google Calendar returned null event or null event ID");
-                throw new RuntimeException("Failed to create calendar event - no event ID returned");
-            }
-            
-            logger.info("Successfully created calendar event with ID: {}", createdEvent.getId());
-            
-            reservation.setStatut(StatusReservation.ACCEPTÉE);
-            reservation.setGoogleCalendarEventId(createdEvent.getId());
-            
-        } catch (Exception e) {
-            logger.error("Failed to process reservation acceptance for ID: {}", reservationId, e);
-            throw new RuntimeException("Failed to process reservation acceptance: " + e.getMessage(), e);
+        Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
+                .orElseThrow(() -> new RuntimeException("Etablissement not found"));
+        
+        // STRICT CALENDAR VALIDATION
+        if (etab.getGoogleCalendarId() == null) {
+            throw new IllegalStateException("No calendar ID configured for establishment: " + etab.getNom());
         }
-    } else {
-        reservation.setStatut(StatusReservation.REFUSÉE);
-        logger.debug("Reservation {} set to REFUSÉE status", reservationId);
-    }
 
-    // Debug 7: Before saving reservation
-    logger.debug("Updating reservation with approved equipments: {} and decidedBy: {}", 
-                approvedEquipments, decidedBy);
-    
-    reservation.setApprovedEquipements(approvedEquipments);
-    reservation.setDecideePar(decidedBy);
-    reservationRepository.save(reservation);
-    
-    try {
-        logger.debug("Sending notifications for reservation {}", reservationId);
-        sendNotificationsAndEmails(reservation, reservation.getStatut());
-    } catch (Exception e) {
-        logger.error("Failed to send notifications for reservation: {}", reservationId, e);
+        if (accepted) {
+            try {
+                Event event = new Event()
+                        .setSummary(reservation.getIntituleAction())
+                        .setDescription(reservation.getDescription())
+                        .setStart(new EventDateTime().setDateTime(new DateTime(reservation.getHeureDebut())))
+                        .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin())))
+                        // ADDED RESERVATION TRACKING
+                        .setExtendedProperties(new Event.ExtendedProperties()
+                                .setPrivate(Map.of("reservationId", reservationId)));
+
+                logger.info("Creating event in calendar {} for establishment {}", 
+                    etab.getGoogleCalendarId(), etab.getNom());
+
+                Event createdEvent = googleCalendarService.getGoogleCalendarClient()
+                        .events()
+                        .insert(etab.getGoogleCalendarId(), event)
+                        .execute();
+
+                reservation.setStatut(StatusReservation.ACCEPTÉE);
+                reservation.setGoogleEventId(createdEvent.getId());
+            } catch (Exception e) {
+                logger.error("Failed to create calendar event", e);
+                throw new RuntimeException("Failed to process reservation acceptance", e);
+            }
+        } else {
+            reservation.setStatut(StatusReservation.REFUSÉE);
+        }
+
+        reservation.setDecideePar(decidedBy);
+        reservationRepository.save(reservation);
+        
+        // In your reservation confirmation logic:
+logger.info("Adding event to calendar {} for {}", 
+    etab.getGoogleCalendarId(), etab.getNom());
     }
-    
-    logger.info("Reservation {} processed by {} - Decision: {}",
-            reservationId,
-            decidedBy,
-            accepted ? "ACCEPTED" : "REJECTED");
-}
 
     
 private void sendNotificationsAndEmails(Reservation reservation, StatusReservation status) {
@@ -386,7 +314,7 @@ public void annulerReservation(String reservationId, String reason) {
     }
     
     try {
-        if (reservation.getGoogleCalendarEventId() != null) {
+        if (reservation.getGoogleEventId() != null) {
             // Get the establishment's calendar ID
             Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
                     .orElseThrow(() -> new RuntimeException("Etablissement not found"));
@@ -397,7 +325,7 @@ public void annulerReservation(String reservationId, String reason) {
             
             googleCalendarService.getGoogleCalendarClient()
                     .events()
-                    .delete(etab.getGoogleCalendarId(), reservation.getGoogleCalendarEventId())
+                    .delete(etab.getGoogleCalendarId(), reservation.getGoogleEventId())
                     .execute();
         }
     } catch (Exception e) {

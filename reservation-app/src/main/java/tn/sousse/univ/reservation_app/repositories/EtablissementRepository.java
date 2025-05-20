@@ -17,4 +17,6 @@ public interface EtablissementRepository extends MongoRepository<Etablissement, 
 
     // Find establishments without a Google Calendar ID
     List<Etablissement> findByGoogleCalendarIdIsNull();
+
+    Etablissement findByGoogleCalendarId(String calendarId);
 }

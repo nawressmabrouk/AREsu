@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import tn.sousse.univ.reservation_app.security.CustomUserDetails;
 import tn.sousse.univ.reservation_app.models.StatusReservation;
 import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
+import tn.sousse.univ.reservation_app.repositories.ReservationRepository;
 import tn.sousse.univ.reservation_app.services.ResponsableEspaceService;
 import tn.sousse.univ.reservation_app.models.Espace;
 import tn.sousse.univ.reservation_app.models.Reservation;
@@ -27,6 +28,9 @@ public class ResponsableEspaceController {
     
  @Autowired
     private EspaceRepository espaceRepository;
+
+     @Autowired
+    private ReservationRepository reservationRepository;
 
     @Autowired
     private ResponsableEspaceService responsableEspaceService;
@@ -97,10 +101,18 @@ public ResponseEntity<?> prendreDecision(
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
     String responsableId = userDetails.getUserId();
        logger.info("Responsable ID: {}", responsableId);
-    try {
-        logger.debug("Processing decision for reservation {}: accepted={}", 
-            reservationId, decisionDTO.isAccepted());
-            
+    
+     try {
+        // Get reservation first to log establishment info
+        Reservation reservation = reservationRepository.findById(reservationId)
+            .orElseThrow(() -> new RuntimeException("Reservation not found"));
+        
+        logger.info("Reservation details - Space ID: {}, Establishment ID: {}", 
+            reservation.getEspaceId(), 
+            espaceRepository.findById(reservation.getEspaceId())
+                .map(Espace::getEtablissementId)
+                .orElse("NOT FOUND"));
+        
         responsableEspaceService.processDecision(
             reservationId, 
             decisionDTO.isAccepted(), 
@@ -110,6 +122,7 @@ public ResponseEntity<?> prendreDecision(
         );
         
         return ResponseEntity.ok("Décision enregistrée avec succès");
+    
     } catch (NoSuchElementException e) {
         logger.error("Reservation not found: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

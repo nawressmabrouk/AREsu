@@ -280,7 +280,16 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/notifications/**",
                                 "/api/chat/**",
-                                "/api/calendar/**")
+                                "/api/calendar/**",
+                                "/api/calendar/verify",
+                                "/api/calendar/test-visibility/{calendarId}",
+                                "/calendar-details/{calendarId}",
+                                "/visibility-status/{calendarId}",
+                                "/verify-calendar/{calendarId}",
+                                "/check-ui-status/{calendarId}",
+                                "/grant-access/{calendarId}",
+                                "/check-all-visibility",
+                                "/cleanup")
                         .permitAll()
 
                         // Authenticated endpoints
@@ -289,7 +298,12 @@ public class SecurityConfig {
                                 "/api/utilisateurs/modifierProfil",
                                 "/api/utilisateurs/changer-mot-de-passe",
                                 "/api/auth/forgot-password",
-                                "/api/auth/reset-password" )
+                                "/api/auth/reset-password",
+                                "/share-all-with-user",
+                                "/force-all-ui-visibility",
+                                "/add-test-events",
+                                "/fix-ui-display",
+                                "/{calendarId}/reservations")
                         .authenticated()
 
                         // Role-based endpoints
@@ -302,8 +316,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/reservations/**").permitAll()
 
                         // General fallback
-                        //.anyRequest().authenticated())
-                        .anyRequest().permitAll()) //just for testing
+                        // .anyRequest().authenticated())
+                        .anyRequest().permitAll()) // just for testing
 
                 .addFilterBefore(new RequestLoggingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

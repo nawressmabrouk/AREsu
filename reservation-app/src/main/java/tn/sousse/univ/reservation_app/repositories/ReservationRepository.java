@@ -21,38 +21,51 @@ public interface ReservationRepository extends MongoRepository<Reservation, Stri
     List<Reservation> findByStatut(String statut);
     // Trouver les réservations par statut
 
-
     List<Reservation> findByEspaceIdAndStatut(ObjectId espaceId, StatusReservation statut);
 
     List<Reservation> findByEspaceIdAndDemandeurId(ObjectId espaceId, String demandeurId);
 
     Optional<Reservation> findById(ObjectId reservationId);
 
-    List<Reservation> findByGoogleCalendarEventIdNull();
+    List<Reservation> findByGoogleEventIdNull();
 
-    List<Reservation> findByGoogleCalendarEventIdNotNull();
+    List<Reservation> findByGoogleEventIdNotNull();
 
     List<Reservation> findByStatut(StatusReservation acceptée);
 
+    List<Reservation> findByEspaceIdIn(List<String> espaceIds);
 
-        List<Reservation> findByEspaceIdIn(List<String> espaceIds);
     List<Reservation> findByEspaceIdInAndStatut(List<String> espaceIds, StatusReservation statut);
-    
+
     List<Reservation> findByStatutAndDecideePar(String statut, String decideePar);
- @Query("{ " +
-        "'espaceId': ?0, " +
-        "'statut': ?1, " +
-        "'$or': [ " +
+
+    @Query("{ " +
+            "'espaceId': ?0, " +
+            "'statut': ?1, " +
+            "'$or': [ " +
             "{ 'heureDebut': { '$lt': ?3 }, 'heureFin': { '$gt': ?2 } }, " + // Chevauchement partiel
             "{ 'heureDebut': { '$gte': ?2, '$lte': ?3 } }, " + // Contenu entièrement dans l'intervalle
-            "{ 'heureFin': { '$gte': ?2, '$lte': ?3 } } " +    // Contenu entièrement dans l'intervalle
-        "] " +
-    "}")
+            "{ 'heureFin': { '$gte': ?2, '$lte': ?3 } } " + // Contenu entièrement dans l'intervalle
+            "] " +
+            "}")
     List<Reservation> findConflictingReservations(
-        String espaceId, 
-        StatusReservation statut, 
-        Date heureDebut, 
-        Date heureFin
-    );
+            String espaceId,
+            StatusReservation statut,
+            Date heureDebut,
+            Date heureFin);
 
+    List<Reservation> findByEtablissementIdAndStatut(String etablissementId, StatusReservation acceptée);
+
+    List<Reservation> findByEtablissementIdAndEspaceIdAndStatut(String etablissementId, String espaceId, StatusReservation acceptée);
+
+@Query("{ 'etablissementId' : ?0, 'heureDebut' : { $gte: ?1, $lt: ?2 } }")
+List<Reservation> findByEtablissementIdAndHeureDebutBetween(String etablissementId, Date startOfDay, Date endOfDay);
+
+@Query("{ 'etablissementId' : ?0, 'espaceId' : ?1, 'heureDebut' : { $gte: ?2, $lt: ?3 } }")
+List<Reservation> findByEtablissementIdAndEspaceIdAndHeureDebutBetween(
+    String etablissementId, 
+    String espaceId, 
+    Date startOfDay, 
+    Date endOfDay
+);
 }

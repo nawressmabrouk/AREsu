@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,7 +36,6 @@ public class Reservation {
     private String demandeurId;
     private String espaceId;
     private String responsableEspaceId;
-    private String googleCalendarEventId;
     private Boolean vueParSecretaire = false;
     private String DecideePar;
     private List<String> equipements;
@@ -45,5 +45,7 @@ public class Reservation {
     private String etablissementId;
 
     private String annulationReason;
+    @Field("google_event_id") // MongoDB annotation
+    private String googleEventId;
 
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   addMonths,
@@ -26,6 +26,8 @@ import { CalendarService } from '../services/calendar/calendar.service';
   imports: [CommonModule]
 })
 export class ReservationsCalendarComponent {
+    // Input property for establishment ID
+  @Input() etablissementId: string = '';
   // Calendar configuration
   currentDate = new Date();
   weeks: Date[][] = [];
@@ -44,7 +46,7 @@ export class ReservationsCalendarComponent {
     this.loadSlots();
   }
 
-  private loadSlots(): void {
+  /*private loadSlots(): void {
     this.loading = true;
     
     forkJoin([
@@ -71,8 +73,38 @@ export class ReservationsCalendarComponent {
         this.loading = false;
       }
     });
-  }
+  }*/
 
+      private loadSlots(): void {
+    if (!this.etablissementId) return;
+
+    this.loading = true;
+    
+    forkJoin([
+      this.calendarService.getConfirmedEvents(this.etablissementId),
+      this.calendarService.getUnconfirmedEvents(this.etablissementId)
+    ]).subscribe({
+      next: ([confirmedSlots, unconfirmedSlots]) => {
+        this.slots = [...confirmedSlots, ...unconfirmedSlots]
+          .map(slot => ({
+            ...slot,
+            heureDebut: typeof slot.heureDebut === 'string' ? parseISO(slot.heureDebut) : new Date(slot.heureDebut),
+            heureFin: typeof slot.heureFin === 'string' ? parseISO(slot.heureFin) : new Date(slot.heureFin)
+          }));
+        
+        this.loading = false;
+        
+        const todaySlots = this.getSlotsForDay(new Date());
+        if (todaySlots.length > 0) {
+          this.selectDay(new Date());
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load slots:', err);
+        this.loading = false;
+      }
+    });
+  }
   generateCalendar(): void {
     const firstDay = startOfWeek(startOfMonth(this.currentDate));
     const lastDay = endOfWeek(endOfMonth(this.currentDate));
@@ -183,5 +215,13 @@ getFormattedTimeRange(start: Date, end: Date): string {
   if (!start || !end) return '';
   return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
 }
+
+  private updateCalendarView(): void {
+    // Update your calendar display based on reservations
+    this.generateCalendar();
+    if (this.selectedDay) {
+      this.selectDay(this.selectedDay); // Refresh selected day
+    }
+  }
 
 }

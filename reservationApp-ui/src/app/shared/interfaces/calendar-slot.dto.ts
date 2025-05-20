@@ -10,6 +10,7 @@
 */
 
 export interface CalendarSlotDTO {
+  selectable: boolean;
   id: string;
   heureDebut: Date;
   heureFin: Date;
