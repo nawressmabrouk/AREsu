@@ -1,0 +1,12 @@
+<div class="etablissement-card" [class.active]="isActive">
+  <div class="card-header">
+    <h3>{{etablissement.nom}}</h3>
+    <div class="address">
+      <p>{{etablissement.adresse}}</p>
+    </div>
+  </div>
+  <div class="card-stats">
+    <span><mat-icon>people</mat-icon> {{etablissement.responsables.length}} responsables</span>
+    <span><mat-icon>meeting_room</mat-icon> {{etablissement.espaces.length}} espaces</span>
+  </div>
+</div>

@@ -311,6 +311,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/secretaire/**").hasRole("SECRETAIRE_GENERALE")
                         .requestMatchers("/api/responsable/**").hasRole("RESPONSABLE_SALLE")
                         .requestMatchers("/api/demandeur/**").hasAnyRole("DEMANDEUR_INTERNE", "DEMANDEUR_EXTERNE")
+                        .requestMatchers("/api/super-admin/**").hasRole("SUPER_ADMIN")
 
                         // reservations
                         .requestMatchers("/api/reservations/**").permitAll()

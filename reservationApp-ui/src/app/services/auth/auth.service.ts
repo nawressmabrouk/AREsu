@@ -154,7 +154,8 @@ export class AuthService {
   'ROLE_DEMANDEUR_EXTERNE',
   'ROLE_SECRETAIRE_GENERALE',
   'ROLE_ADMIN',
-  'ROLE_RESPONSABLE_SALLE'   
+  'ROLE_RESPONSABLE_SALLE',
+  'ROLE_SUPER_ADMIN'
   ];
 
   constructor(

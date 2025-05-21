@@ -49,13 +49,15 @@ import { NavbarComponent } from './navbar/navbar.component';
 import { RegisterComponent } from './register/register.component';
 import { ReservationFormComponent } from './reservation-form/reservation-form.component';
 //import { ReservationsCalendarComponent } from './reservations-calendar/reservations-calendar.component';
-
 import { RoomManagerComponent } from './room-manager/room-manager.component';
 import { SecretaryComponent } from './secretary/secretary.component';
 import {
   SelectionCalendarComponent
 } from './selection-calendar/selection-calendar.component';
 import { SpacesComponent } from './spaces/spaces.component';
+import { DashboardComponent } from './super-admin/dashboard/dashboard.component';
+import { EtablissementCardComponent } from './super-admin/etablissement-card/etablissement-card.component';
+import { EtablissementDetailsComponent } from './super-admin/etablissement-details/etablissement-details.component';
 export const routes: Routes = [
   { 
     path: '', 
@@ -103,6 +105,21 @@ export const routes: Routes = [
     component: ReservationFormComponent,
     canActivate: [AuthGuard] // For all authenticated users
   },
+  { 
+  path: 'super-admin/dashboard',
+  component: DashboardComponent,
+  canActivate: [AuthGuard]
+},
+  { 
+  path: 'super-admin/etablissement-card',
+  component: EtablissementCardComponent,
+  canActivate: [AuthGuard]
+},
+  { 
+  path: 'super-admin/etablissement-details',
+  component: EtablissementDetailsComponent,
+  canActivate: [AuthGuard]
+},
   { 
     path: 'selection-calendar',
     component: SelectionCalendarComponent,

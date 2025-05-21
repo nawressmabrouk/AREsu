@@ -8,6 +8,7 @@ public enum Role {
     DEMANDEUR_EXTERNE,
     SECRETAIRE_GENERALE,
     ADMIN,
+    SUPER_ADMIN,
     RESPONSABLE_SALLE;
 
     @JsonCreator

@@ -1,0 +1,49 @@
+ <header class="spaces-header">
+  <div class="header-content">
+    <div class="header-brand">
+      <img src="/logo2.png" alt="Université de Sousse" class="logo-image" >
+     
+    </div>
+
+ <h1 class="page-title">
+     Tableau de bord Super Admin
+      </h1>
+        <p class="page-subtitle">
+       Visualisation de tous les établissements et leurs données
+      </p>
+
+    <app-profile   class="profile-icon" [user]="currentUser"></app-profile>
+  </div>
+   
+</header>
+
+
+<div class="super-admin-dashboard">
+  <div class="content">
+    <!-- Liste des établissements -->
+    <div class="etablissements-list">
+      <h2>Liste des établissements ({{etablissements.length}})</h2>
+      
+      <div *ngIf="isLoading" class="loading">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+      
+      <div *ngIf="!isLoading" class="cards-container">
+        <app-etablissement-card 
+          *ngFor="let etablissement of etablissements" 
+          [etablissement]="etablissement"
+          [isActive]="selectedEtablissement?.id === etablissement.id"
+          (click)="showEtablissementDetails(etablissement)">
+        </app-etablissement-card>
+      </div>
+    </div>
+
+    <!-- Détails de l'établissement sélectionné -->
+    <div class="etablissement-details" *ngIf="selectedEtablissement">
+      <app-etablissement-details 
+        [etablissement]="selectedEtablissement"
+        (close)="selectedEtablissement = null">
+      </app-etablissement-details>
+    </div>
+  </div>
+</div>

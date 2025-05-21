@@ -3,15 +3,23 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { 
-  faKey, faSignInAlt, faUser, faUserPlus,
-  faEnvelope, faBriefcase, faPhone, faBuilding,
-  faUniversity, faDoorOpen, faLock, faLink 
+import {
+  faBriefcase,
+  faBuilding,
+  faDoorOpen,
+  faEnvelope,
+  faKey,
+  faLink,
+  faLock,
+  faPhone,
+  faSignInAlt,
+  faUniversity,
+  faUser, faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
-import { AuthService } from '../services/auth/auth.service';
-import { RegistrationService } from '../services/auth/register.service';
 import { NotificationComponent } from '../alert-notif/notification.component';
 import { NotificationService } from '../services/alert-notif/notification.service';
+import { AuthService } from '../services/auth/auth.service';
+import { RegistrationService } from '../services/auth/register.service';
 
 @Component({
   selector: 'app-auth',
@@ -244,7 +252,8 @@ export class AuthComponent {
       'demandeur_externe': '/spaces',
       'secretaire_generale': '/secretary',
       'admin': '/admin',
-      'responsable_salle': '/room-manager'
+      'responsable_salle': '/room-manager',
+      'super_admin': '/super-admin/dashboard',
     };
 
     const targetRoute = roleRoutes[normalizedRole] || '/unauthorized';
