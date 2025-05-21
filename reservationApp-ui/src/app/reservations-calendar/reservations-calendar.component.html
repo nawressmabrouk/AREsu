@@ -32,8 +32,8 @@
           <div class="slots">
             <div *ngFor="let slot of getSlotsForDay(day).slice(0, 2)" 
                  class="slot"
-                 [class.confirmed]="slot.statut === 'ACCEPTÉE'"
-                 [class.unconfirmed]="slot.statut === 'EN_ATTENTE'"
+                [class.confirmed]="slot.reserved"
+                [class.unconfirmed]="!slot.reserved && slot.selectable"
                  (click)="$event.stopPropagation(); selectSlot(slot)">
               <div class="slot-time">{{ getFormattedTime(slot.heureDebut) }}</div>
               <div class="slot-title" *ngIf="slot.intituleAction">{{ slot.intituleAction }}</div>
@@ -82,13 +82,16 @@
           <p>{{ selectedSlot.description }}</p>
         </div>
         
-        <div class="status-display">
-          <span class="status-badge" 
-                [class.confirmed]="selectedSlot.statut === 'ACCEPTÉE'"
-                [class.pending]="selectedSlot.statut === 'EN_ATTENTE'">
-            {{ selectedSlot.statut === 'ACCEPTÉE' ? 'Confirmed' : 'Pending' }}
-          </span>
-        </div>
+<div class="status-display">
+  <span
+    class="status-badge"
+    [class.confirmed]="selectedSlot.statut === StatusReservation.ACCEPTEE"
+    [class.pending]  ="selectedSlot.statut === StatusReservation.EN_ATTENTE"
+  >
+    {{ selectedSlot.statut === StatusReservation.ACCEPTEE ? 'Confirmed' : 'Pending' }}
+  </span>
+</div>
+
         
         <button *ngIf="selectedSlot.statut === 'EN_ATTENTE'"
                 class="confirm-btn"

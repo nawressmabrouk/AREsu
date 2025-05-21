@@ -15,6 +15,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -44,8 +46,11 @@ import tn.sousse.univ.reservation_app.dto.CalendarSlotDTO;
 import tn.sousse.univ.reservation_app.models.Etablissement;
 import tn.sousse.univ.reservation_app.models.Reservation;
 import tn.sousse.univ.reservation_app.models.StatusReservation;
+import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
 import tn.sousse.univ.reservation_app.repositories.EtablissementRepository;
 import tn.sousse.univ.reservation_app.repositories.ReservationRepository;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 
 @Service
 public class GoogleCalendarService {
@@ -68,11 +73,13 @@ public class GoogleCalendarService {
     // Google API credentials
     private final GoogleCredentials credentials;
     // Tunis time zone for slot generation
-    private static final ZoneId TUNIS_ZONE = ZoneId.of("Africa/Tunis");
+   private static final ZoneId TUNIS_ZONE = ZoneId.of("Africa/Tunis");
     // Unused MongoTemplate (potential future use)
     private MongoTemplate mongoTemplate;
-
+ private final EspaceRepository espaceRepo;
      private final EtablissementRepository etablissementRepo;
+// right after DATE_FORMATTER, for example
+private static final SimpleDateFormat ISO_FMT = new SimpleDateFormat("yyyy-MM-dd");
 
     /**
      * Constructor: Initializes Google Calendar credentials using a service account
@@ -82,12 +89,12 @@ public class GoogleCalendarService {
      * @param reservationRepository Repository for reservation data
      * @throws IOException If credentials initialization fails
      */
-    public GoogleCalendarService(GoogleCalendarConfig calendarProperties, ReservationRepository reservationRepository, EtablissementRepository etablissementRepo)
+    public GoogleCalendarService(GoogleCalendarConfig calendarProperties, ReservationRepository reservationRepository, EtablissementRepository etablissementRepo ,  EspaceRepository espaceRepo )
             throws IOException {
         this.calendarProperties = calendarProperties;
         this.reservationRepository = reservationRepository;
         this.etablissementRepo = etablissementRepo;
-
+         this.espaceRepo  = espaceRepo; 
         try {
             // Load credentials from the service account key
             this.credentials = GoogleCredentials.fromStream(calendarProperties.getServiceAccountKey().getInputStream())
@@ -147,27 +154,30 @@ public class GoogleCalendarService {
      * @param calendarId ID of the calendar to query
      * @return List of dates in "yyyy-MM-dd" format
      */
-    private List<String> getReservationsFromCalendar(Calendar service, String calendarId) throws IOException {
-        List<String> dates = new ArrayList<>();
-        // Build API request to list events
-        Events events = service.events().list(calendarId)
-                .setTimeMin(new DateTime(System.currentTimeMillis())) // Events from now onward
-                .setSingleEvents(true) // Expand recurring events
-                .setOrderBy("startTime") // Chronological order
-                .execute();
+private List<String> getReservationsFromCalendar(Calendar service, String calendarId) throws IOException {
+    List<String> dates = new ArrayList<>();
+    // Build API request to list events
+    Events events = service.events().list(calendarId)
+            .setTimeMin(new DateTime(System.currentTimeMillis())) // Events from now onward
+            .setSingleEvents(true)   // Expand recurring events
+            .setOrderBy("startTime") // Chronological order
+            .execute();
 
-        // Extract start dates from events
-        for (Event event : events.getItems()) {
-            DateTime start = event.getStart().getDateTime();
-            if (start == null) {
-                start = event.getStart().getDate(); // Handle all-day events
-            }
-            if (start != null) {
-                dates.add(new java.util.Date(start.getValue()).toString().substring(0, 10)); // Format to "yyyy-MM-dd"
-            }
+    // Extract start dates from events
+    for (Event event : events.getItems()) {
+        DateTime start = event.getStart().getDateTime();
+        if (start == null) {
+            start = event.getStart().getDate(); // Handle all-day events
         }
-        return dates;
+        if (start != null) {
+            // Format as "yyyy-MM-dd" instead of the default Date.toString()
+            dates.add(ISO_FMT.format(new Date(start.getValue())));
+        }
     }
+
+    return dates;
+}
+
 
     /**
      * Confirms a reservation by:
@@ -419,10 +429,22 @@ public class GoogleCalendarService {
     // Mark reserved slots
     for (Reservation res : reservations) {
         for (CalendarSlotDTO slot : slots) {
-            if (isSlotReserved(slot, res)) {
-                slot.setReserved(true);
-                slot.setSelectable(res.getStatut() != StatusReservation.ACCEPTÉE);
-            }
+if (isSlotReserved(slot, res)) {
+  slot.setReserved(true);
+  slot.setSelectable(res.getStatut() != StatusReservation.ACCEPTÉE);
+
+  // 1) Reservation title
+  slot.setIntituleAction(res.getIntituleAction());
+
+  // 2) Who decided
+  slot.setResponsableAction(res.getDecideePar());
+
+  // 3) Look up the Espace’s name by its ID
+  espaceRepo.findById(res.getEspaceId()).ifPresent(e ->
+    slot.setEspaceName(e.getNom())
+  );
+}
+
         }
     }
     
@@ -431,9 +453,25 @@ public class GoogleCalendarService {
    
 
 private boolean isSlotReserved(CalendarSlotDTO slot, Reservation res) {
-    return slot.getHeureDebut().equals(res.getHeureDebut()) 
-        && slot.getHeureFin().equals(res.getHeureFin());
-}   
+    // Convert both to Tunis local time
+    ZonedDateTime slotStart = slot.getHeureDebut()
+                                  .toInstant()
+                                  .atZone(TUNIS_ZONE);
+    ZonedDateTime slotEnd   = slot.getHeureFin()
+                                  .toInstant()
+                                  .atZone(TUNIS_ZONE);
+    ZonedDateTime resStart  = res.getHeureDebut()
+                                  .toInstant()
+                                  .atZone(TUNIS_ZONE);
+    ZonedDateTime resEnd    = res.getHeureFin()
+                                  .toInstant()
+                                  .atZone(TUNIS_ZONE);
+
+    // True if the slot is wholly inside the reservation window
+    return !slotStart.isBefore(resStart)  // slotStart >= resStart
+        && !slotEnd  .isAfter(resEnd);    // slotEnd   <= resEnd
+}
+
 
     // -------------------- Availability Check -------------------- //
     /**

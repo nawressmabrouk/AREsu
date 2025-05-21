@@ -3,11 +3,12 @@
   display: inline-block;
 
   .profile-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    background-color: #3f51b5;
+    background-color: hsl(213, 34%, 46%);
     color: white;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -17,7 +18,7 @@
     transition: all 0.3s ease;
 
     &:hover {
-      background-color: #2c387e;
+      background-color: hsl(213, 38%, 53%);
     }
   }
 
@@ -50,7 +51,7 @@
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        background-color: #3f51b5;
+        background-color: hsl(213, 38%, 53%);
         color: white;
         display: flex;
         align-items: center;

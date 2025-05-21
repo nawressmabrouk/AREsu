@@ -1,6 +1,6 @@
 
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild ,OnInit} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -51,6 +51,7 @@ import { AuthService } from '../services/auth/auth.service';
 import { RoomManagerService } from '../services/room-manager/room-manager.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
 import { Espace } from '../models/espace.model';
+import { UserService } from '../services/user/user.service';
 
 @Component({
   selector: 'app-room-manager',
@@ -65,9 +66,10 @@ import { Espace } from '../models/espace.model';
   templateUrl: './room-manager.component.html',
   styleUrls: ['./room-manager.component.scss']
 })
-export class RoomManagerComponent{
+export class RoomManagerComponent implements OnInit {
   @ViewChild('profileContainer', { static: true }) profileContainer!: ElementRef;
-  
+   @ViewChild(ReservationsCalendarComponent) calendarComponent!: ReservationsCalendarComponent;
+  etablissementId: string = '';
   // Font Awesome icons
   faHome = faHome; 
   faSearch = faSearch;
@@ -131,7 +133,7 @@ export class RoomManagerComponent{
   currentPageSubtitle: string = 'Validation et contrôle des réservations des espaces';
 
   searchTerm: string = '';
-  activeSection: 'access' | 'space' = 'access';
+ activeSection: 'access' | 'space' | 'calendar' = 'access'; // Ajout de 'calendar'
 approvedEquipment: { [reservationId: string]: string[] } = {};
   managedSpaces: Espace[] = [];
 currentSpace: Espace = {
@@ -184,7 +186,7 @@ rejectedCount: number = 0;
 
   editingIndex: number | null = null;
 
-  constructor(private router: Router, private authService: AuthService ,  private roomManagerService: RoomManagerService ) {}
+  constructor(private router: Router, private authService: AuthService ,  private roomManagerService: RoomManagerService , private userService: UserService) {}
 
   // User data
   currentUser = {
@@ -193,12 +195,41 @@ rejectedCount: number = 0;
     email: 'salle@universite.tn'
   };
 
- ngOnInit() {
-    // Précharger les données pour tous les statuts
+  ngOnInit() {
+    this.loadUserProfile();
+  }
+
+    private loadUserProfile(): void {
+    this.userService.getProfile().subscribe({
+      next: (profile: any) => {
+        console.log('Room Manager Profile:', profile);
+        
+        if (!profile.etablissementId) {
+          console.error('No etablissementId in profile!');
+          return;
+        }
+        
+        this.etablissementId = profile.etablissementId;
+        console.log('Using establishment ID:', this.etablissementId);
+        
+        // Load reservations after profile is loaded
+        this.loadAllReservations();
+      },
+      error: (err) => {
+        console.error('Error loading profile:', err);
+      }
+    });
+  }
+
+
+    private loadAllReservations(): void {
     this.statusTabs.forEach(tab => {
       this.loadReservations(tab.key);
     });
   }
+
+
+  
 
   @HostListener('document:click', ['$event'])
   onClick(event: MouseEvent) {
@@ -398,19 +429,26 @@ handleDecision(reservationId: string, accept: boolean): void {
   }
 
   // Navigation methods
-switchSection(section: 'access' | 'space'): void {
+switchSection(section: 'access' | 'space' | 'calendar'): void {
   this.activeSection = section;
   this.searchTerm = '';
 
-  if (section === 'access') {
-    this.currentPageTitle = 'Gestion des Réservations';
-    this.currentPageSubtitle = 'Validation et contrôle des accès utilisateurs';
-    this.currentStatus = StatusReservation.EN_ATTENTE;
-    this.loadReservations(this.currentStatus);
-  } else {
-    this.currentPageTitle = 'Gestion des Espaces';
-    this.currentPageSubtitle = 'Création et configuration des espaces';
-    this.loadManagedSpaces(); // Changed from loadSpaces()
+  switch(section) {
+    case 'access':
+      this.currentPageTitle = 'Gestion des Réservations';
+      this.currentPageSubtitle = 'Validation et contrôle des accès utilisateurs';
+      this.currentStatus = StatusReservation.EN_ATTENTE;
+      this.loadReservations(this.currentStatus);
+      break;
+    case 'space':
+      this.currentPageTitle = 'Gestion des Espaces';
+      this.currentPageSubtitle = 'Création et configuration des espaces';
+      this.loadManagedSpaces();
+      break;
+    case 'calendar':
+      this.currentPageTitle = 'Calendrier des Réservations';
+      this.currentPageSubtitle = 'Visualisation des réservations par calendrier';
+      break;
   }
 }
 
@@ -547,3 +585,5 @@ toggleEquipmentApproval(reservationId: string, equip: string): void {
   }
 }
 }
+
+

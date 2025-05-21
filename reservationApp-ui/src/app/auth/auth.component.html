@@ -6,9 +6,53 @@
       <div class="signin-container">
         <div class="signin-content">
           <div class="form-content">
-            <h2 class="register-title">Créer un Nouveau compte</h2>
+            <h2 class="register1-title"> Se connecter</h2>
             
-            <form class="form-grid" (ngSubmit)="onRegisterSubmit($event)">
+           <form class="form1-grid" (ngSubmit)="onLoginSubmit($event)">
+            <!-- Email -->
+            <div class="form-group">
+              <label>Email</label>
+              <div class="input-container">
+                <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
+                <input type="email" [(ngModel)]="loginData.email" name="loginEmail" placeholder="Entrez votre email" required>
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+              <label>Mot de passe</label>
+              <div class="input-container">
+                <fa-icon [icon]="faLock" class="icon"></fa-icon>
+                <input type="password" [(ngModel)]="loginData.password" name="loginPassword" placeholder="Entrez votre mot de passe" required>
+              </div>
+              <a routerLink="/navbar/id-oublie" class="forgot-password">Mot de passe oublié ?</a>
+            </div>
+
+            <!-- Error messages -->
+            <div *ngIf="loginErrorMessage" class="error-message">
+              {{ loginErrorMessage }}
+            </div>
+
+            <button type="submit" class="main-button" [disabled]="isLoading">
+              {{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}
+            </button>
+          </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIGN UP CONTAINER (LOGIN) -->
+    <div class="container account-container">
+
+      <div class="greeting-container">
+                
+      </div>
+      <div class="signup-content">
+        <div class="form-content">
+          <span class="register-title">Créer un Nouveau compte</span>
+
+                   <form class="form-grid" (ngSubmit)="onRegisterSubmit($event)">
               <!-- Nom et Prénom -->
               <div class="form-group">
                 <label>Nom</label>
@@ -118,50 +162,6 @@
                 {{ isLoading ? 'Inscription en cours...' : 'S\'inscrire' }}
               </button>
             </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SIGN UP CONTAINER (LOGIN) -->
-    <div class="container account-container">
-
-      <div class="greeting-container">
-                
-      </div>
-      <div class="signup-content">
-        <div class="form-content">
-          <span class="title">Se connecter</span>
-
-          <form (ngSubmit)="onLoginSubmit($event)">
-            <!-- Email -->
-            <div class="form-group">
-              <label>Email</label>
-              <div class="input-container">
-                <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
-                <input type="email" [(ngModel)]="loginData.email" name="loginEmail" placeholder="Entrez votre email" required>
-              </div>
-            </div>
-
-            <!-- Password -->
-            <div class="form-group">
-              <label>Mot de passe</label>
-              <div class="input-container">
-                <fa-icon [icon]="faLock" class="icon"></fa-icon>
-                <input type="password" [(ngModel)]="loginData.password" name="loginPassword" placeholder="Entrez votre mot de passe" required>
-              </div>
-              <a routerLink="/navbar/id-oublie" class="forgot-password">Mot de passe oublié ?</a>
-            </div>
-
-            <!-- Error messages -->
-            <div *ngIf="loginErrorMessage" class="error-message">
-              {{ loginErrorMessage }}
-            </div>
-
-            <button type="submit" class="main-button" [disabled]="isLoading">
-              {{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}
-            </button>
-          </form>
         </div>
       </div>
     </div>
@@ -170,24 +170,24 @@
     <div class="slide-shape">
       <div class="form-container">
         <div class="transparent-card">
-          <h2 class="welcome-title" [class.hidden]="isAccountPage">Bienvenue chez nous !</h2>
-          <h2 class="welcome-title" [class.hidden]="!isAccountPage">Ravis de vous retrouver!</h2>
+          <h2 class="welcome-title" [class.hidden]="isAccountPage">Ravis de vous retrouver!</h2>
+          <h2 class="welcome-title" [class.hidden]="!isAccountPage">Bienvenue chez nous !</h2>
 
           <div class="role-text-container">
             <span class="role-text" [class.hidden]="isAccountPage">
-              Déjà Inscrit ?
-            </span>
-            <span class="role-text1" [class.hidden]="!isAccountPage">
               <p class="titre">Nouveau parmi nous ? </p>
               <br>  
-              <p class="text">Créez votre compte en moins d'une minute !</p>
+              <p class="titre1">Créez votre compte en moins d'une minute !</p>
+            </span>
+            <span class="role-text1" [class.hidden]="!isAccountPage">
+              Déjà Inscrit ?
             </span>
           </div>
 
           <button (click)="toggleView()" class="signup-button">
             <div class="button-content">
-              <span class="sign-in" [class.hidden]="isAccountPage">SE CONNECTER</span>
-              <span class="sign-up" [class.hidden]="!isAccountPage">S'INSCRIRE</span>
+              <span class="sign-in" [class.hidden]="isAccountPage">S'INSCRIRE</span>
+              <span class="sign-up" [class.hidden]="!isAccountPage">SE CONNECTER</span>
             </div>
           </button>
         </div>

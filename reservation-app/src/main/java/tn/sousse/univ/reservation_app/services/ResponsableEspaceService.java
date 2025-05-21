@@ -1,5 +1,6 @@
 package tn.sousse.univ.reservation_app.services;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class ResponsableEspaceService {
     @Autowired
     private EmailService emailService;
 
-    private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleService.class);
+   private static final Logger logger = LoggerFactory.getLogger(ResponsableEspaceService.class);
 
     /*
      * public void processDecision(String reservationId, boolean accepted, String
@@ -115,51 +116,64 @@ public class ResponsableEspaceService {
      * }
      */
 
-    public void processDecision(String reservationId, boolean accepted,
-            List<String> approvedEquipments, String decidedBy) {
+    public void processDecision(String reservationId,
+                                boolean accepted,
+                                List<String> approvedEquipements,
+                                String decidedBy) {
+        // 1) load the reservation
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
-
-        // VERIFY ESTABLISHMENT
-        Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
-                .orElseThrow(() -> new RuntimeException("Etablissement not found"));
-
-        // STRICT CALENDAR CHECK
-        if (etab.getGoogleCalendarId() == null) {
-            throw new IllegalStateException("Establishment calendar not configured: " + etab.getNom());
+            .orElseThrow(() -> new RuntimeException("Réservation introuvable: " + reservationId));
+           // Ajoutez cette validation des équipements
+    if (accepted && approvedEquipements != null) {
+        if (!reservation.getEquipements().containsAll(approvedEquipements)) {
+            throw new IllegalArgumentException("Équipements approuvés non inclus dans la demande");
+        }
+        reservation.setApprovedEquipements(approvedEquipements); // ← Ligne manquante
+    } else {
+        reservation.setApprovedEquipements(Collections.emptyList());
+    }
+        // 2) ensure établissementId is populated
+        if (reservation.getEtablissementId() == null) {
+            Espace espace = espaceRepository.findById(reservation.getEspaceId())
+                .orElseThrow(() -> new RuntimeException("Espace introuvable: " + reservation.getEspaceId()));
+            reservation.setEtablissementId(espace.getEtablissementId());
+            reservationRepository.save(reservation);
         }
 
+        // 3) fetch the établissement’s calendar
+        Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
+            .orElseThrow(() -> new RuntimeException("Établissement introuvable: " + reservation.getEtablissementId()));
+        String calendarId = etab.getGoogleCalendarId();
+        if (calendarId == null || calendarId.isEmpty()) {
+            throw new IllegalStateException("Pas de calendrier Google configuré pour: " + etab.getNom());
+        }
+    if (accepted) {
+        if (approvedEquipements == null) {
+            approvedEquipements = Collections.emptyList();
+        }
+        reservation.setApprovedEquipements(approvedEquipements);
+    } else {
+        reservation.setApprovedEquipements(Collections.emptyList());
+    }
+        // 4) if accepted, push to Google Calendar & make visible
         if (accepted) {
             try {
-                Event event = new Event()
-                        .setSummary(reservation.getIntituleAction())
-                        .setDescription(reservation.getDescription())
-                        .setStart(new EventDateTime().setDateTime(new DateTime(reservation.getHeureDebut())))
-                        .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin())))
-                        // ADDED TRACKING
-                        .setExtendedProperties(new Event.ExtendedProperties()
-                                .setPrivate(Map.of("reservationId", reservationId)));
-
-                logger.info("Adding to calendar {} for {}", etab.getGoogleCalendarId(), etab.getNom());
-
-                Event createdEvent = googleCalendarService.getGoogleCalendarClient()
-                        .events()
-                        .insert(etab.getGoogleCalendarId(), event)
-                        .execute();
-
-                reservation.setGoogleEventId(createdEvent.getId());
+                googleCalendarService.confirmReservation(reservation.getId());
+                googleCalendarService.forceCalendarDisplay(calendarId);
             } catch (Exception e) {
-                logger.error("Calendar operation failed", e);
-                throw new RuntimeException("Failed to process reservation", e);
+                logger.error("Échec sync réservation {} → calendrier {}", reservationId, calendarId, e);
+                throw new RuntimeException("Erreur lors de l’ajout au calendrier Google", e);
             }
+            reservation.setStatut(StatusReservation.ACCEPTÉE);
+        } else {
+            reservation.setStatut(StatusReservation.REFUSÉE);
         }
 
-        reservation.setStatut(accepted ? StatusReservation.ACCEPTÉE : StatusReservation.REFUSÉE);
+        // 5) record who decided and save
+        reservation.setDecideePar(decidedBy);
         reservationRepository.save(reservation);
 
-        // In your reservation confirmation logic:
-        logger.info("Adding event to calendar {} for {}",
-                etab.getGoogleCalendarId(), etab.getNom());
+        sendNotificationsAndEmails(reservation, reservation.getStatut());
     }
 
     private void sendNotificationsAndEmails(Reservation reservation, StatusReservation status) {

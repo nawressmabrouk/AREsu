@@ -1,29 +1,60 @@
 <div class="auth-header">
   <div class="header-content">
     <div class="left-section">
-      <div class="logo">logo</div>
-      <div class="site-name">Université de Sousse</div>
+       <img src="/logo2.png" alt="Université de Sousse" class="logo-image" >
     </div>
     
     <div class="right-section">
+        
       <div class="nav-links">
         <a routerLink="/home" class="nav-link">Accueil</a>
         <a routerLink="/navbar/auth" class="nav-link">Se connecter</a>
         <a routerLink="/navbar/register" class="nav-link">S'inscrire</a>
-      
-      </div>
-      <app-chatbot></app-chatbot>
-      <div class="page-info">
-          <div class="breadcrumb">
-            <span>
-              <fa-icon [icon]="faHome" class="icon"></fa-icon> <!-- Icône Font Awesome -->
-                Accueil
-                </span>
-              
-                 
-</div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Conteneur principal avec l'image -->
+<div class="full-page-image">
+   
+  <div class="image-blur-wrapper">
+    <img src="/LUniversite-de-Sousse.png" alt="Université de Sousse" class="univ-image">
+    <div class="image-overlay">
+      
+      <div class="welcome-content">
+        <h1 class="welcome-title">
+
+Bienvenue sur notre plateforme de réservation des espaces universitaires au sein de l'université de Sousse et ses  établissements affiliés  :   <span class="etablissement" >
+  {{ currentEtablissement }}
+</span></h1>
+      
+        <h3 class="welcome-description">Simplifiez votre gestion des espaces académiques avec notre solution innovante. Réservez en quelques clics, gérez efficacement, et optimisez l'utilisation de vos infrastructures universitaires.</h3>
+        
+      </div>
+    </div>
+    
+  </div>
+ <div class="cta-button-wrapper">
+   
+  </div>
+
+
  
+
+</div>
+
+ <!-- Section Logos -->
+<div class="etablissements-section">
+  <h3 class="section-title">Nos établissements partenaires : </h3>
+  <div class="logos-wall">
+    <div *ngFor="let etab of etablissements" class="logo-card" 
+         (mouseenter)="currentEtablissement = etab"
+         (mouseleave)="resetCurrentEtablissement()">
+      <img [src]="'/' + getLogoPath(etab)" 
+     [alt]="etab" 
+     class="logo-img">
+      <div class="logo-tooltip">{{getShortName(etab)}}</div>
+    </div>
+  </div>
+</div>

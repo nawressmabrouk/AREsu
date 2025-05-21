@@ -7,6 +7,7 @@ export interface User {
   role: Role;
   fonction: string;
   nomEtablissement: string;
+   
   password?: string; // Optional as it shouldn't be exposed
   structure: string;
   linkedInLink: string;
@@ -14,6 +15,7 @@ export interface User {
   passwordChangeRequired?: boolean;
   isPartenaire?: boolean;
   espacesResponsables?: string[];
+   etablissementId: string;
 }
 
 export enum Role {

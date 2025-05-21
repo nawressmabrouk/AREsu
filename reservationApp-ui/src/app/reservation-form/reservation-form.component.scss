@@ -1,295 +1,7 @@
-.admin-header {
-    /* Conservez tous les styles existants inchangés */
-    padding: 3rem 5%;
-    height: 80px;
-    background-color: #2c3e50;
-    background: linear-gradient(135deg,#2c3e50,#152763 , #4a4793, #152763, #2c3e50 );
-    color: white;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    box-shadow: 
-      0 10px 25px rgba(0, 0, 0, 0.5),
-      0 5px 10px rgba(0, 0, 0, 0.6),
-      0 15px 35px rgba(0, 0, 0, 0.4);
-    transition: all 0.3s ease;
-  
-    &:hover {
-      box-shadow: 
-        0 15px 35px rgba(0, 0, 0, 0.6),
-        0 10px 20px rgba(0, 0, 0, 0.7),
-        0 20px 45px rgba(0, 0, 0, 0.5);
-      height: 85px;
-    }
-  
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 100%;
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      position: relative;
-    }
-  
-    .left-section {
-      position: absolute;
-      top: -20px;
-      left: -140px;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-right: auto;
-      padding-left: 0;
-    
-      .logo {
-        font-size: 1.6rem;
-        color: #17A2B8;
-      }
-      
-      .site-name {
-        font-size: 1.6rem;
-        font-weight: bold;
-        white-space: nowrap;
-      }
-    }
-  
-    .center-section {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      top: 5px;
-      color: white;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      
-      .page-title {
-        font-size: 1.8rem;
-        font-weight: bold;
-        margin-bottom: 0.2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.8rem;
-        transition: inherit;
-        
-        .page-icon {
-          font-size: 1.4rem;
-          color: #17A2B8;
-          transition: inherit;
-        }
-      }
-      
-      .page-subtitle {
-        font-size: 1.2rem;
-        color: white;
-        transition: inherit;
-      }
-    
-      &:hover {
-        top: 30px;
-        color: white;
-        
-        .page-subtitle {
-          color: rgba(255, 255, 255, 0.8);
-        }
-      }
-    }
-  
-    /* Nouveau style pour le breadcrumb à droite */
-    .right-section {
-      position: absolute;
-      left: 88%;
-    margin-left: auto; /* Push to far right */
-    
-    top:-30px;
-    
-    .breadcrumb {
-      font-size: 1.1rem;
-      color: rgba(255, 255, 255, 0.8);
-      white-space: nowrap;
-      
-      span:last-child {
-        color: white;
-        font-weight: 500;
-      }
-    }
-  }
-  }
-  .reservation-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding-top: 120px; // Pour éviter que le header ne cache le contenu
-  }
-  
-  .split-form-container {
-    display: flex;
-    height: 580px;
-    position: relative;
-    top: 80px;
-    box-shadow: 
-        0 10px 25px rgba(0, 0, 0, 0.5),
-        0 5px 10px rgba(0, 0, 0, 0.6),
-        0 15px 35px rgba(0, 0, 0, 0.4);
-    border-radius: 10px;
-    overflow: hidden;
-}
 
-.welcome-section {
-  flex: 1;
-  background: linear-gradient(135deg, #151a2b, #252352, #151a2b);
-  color: white;
-  padding: 60px 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  
-  .welcome-content {
-      max-width: 400px;
-      margin: 0 auto;
-      text-align: center;
-      
-      h2 {
-          font-size: 2.2rem;
-          margin-bottom: 20px;
-          color: wheat;
-      }
-      
-      .subtitle {
-          font-size: 1.2rem;
-          margin-bottom: 30px;
-          line-height: 1.5;
-      }
-      
-      .description {
-          font-size: 1rem;
-          margin-bottom: 50px;
-          opacity: 0.8;
-      }
-  }
-  
-  .form-actions {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      
-      button {
-          padding: 12px 30px;
-          border-radius: 25px;
-          font-weight: bold;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          border: 2px solid wheat;
-          
-          &:hover {
-              transform: translateY(-3px);
-          }
-      }
-      
-      .submit-btn {
-          background-color: wheat;
-          color: #151a2b;
-          
-          &:hover {
-              background-color: darken(wheat, 10%);
-          }
-          
-          &:disabled {
-              opacity: 0.6;
-              cursor: not-allowed;
-              background-color: #cccccc;
-              color: #666666;
-              
-              &:hover {
-                  transform: none;
-              }
-          }
-      }
-      
-      .cancel-btn {
-          background-color: transparent;
-          color: wheat;
-          
-          &:hover {
-              background-color: rgba(255, 255, 255, 0.1);
-          }
-      }
-  }
-}
 
-.form-section {
-  flex: 1;
-  background-color: white;
-  padding: 60px 40px;
-  overflow-y: auto;
-  
-  .reservation-form {
-      max-width: 400px;
-      margin: 0 auto;
-      position: relative;
-      top: -10px;
-      .form-row {
-          margin-bottom: 10px;
-      }
-      
-      .form-group {
-          position: relative;
-          
-          input, textarea {
-              width: 100%;
-              padding: 0px  ;
-              border: #000;
-              border-bottom: 1px solid #151a2b;
-              background-color: transparent;
-              color: #2b2015;
-              
-              &::placeholder {
-                  color: #000000;
-                  opacity: 2;
-                  font-weight: 600;
-              }
-              
-              &:focus {
-                  outline: none;
-              }
-          }
-          input[type="number"] {
-            /* Enlève les flèches dans Chrome, Safari, Edge, Opera */
-            &::-webkit-outer-spin-button,
-            &::-webkit-inner-spin-button {
-              -webkit-appearance: none;
-              margin: 0;
-            }
-            
-          }
-          .line {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%; /* Ligne pleine largeur par défaut */
-            height: 2px;
-            background: transparent; /* Invisible par défaut */
-            transition: all 0.3s ease;
-            transform: scaleX(0); /* Commence à 0 width */
-            transform-origin: left;
-          }
-    
-          
-           /* Effet hover et focus sur la ligne */
-      &:hover .line,
-      input:focus ~ .line,
-      textarea:focus ~ .line {
-        background: #1d105c; /* Couleur bleue */
-        transform: scaleX(1); /* Animation de la ligne */
-      }
-      }
-  }
-}
+
+
 /* Bouton "Ajouter équipement" principal */
 .add-equipment {
   padding: 8px 16px !important;
@@ -429,19 +141,20 @@
   font-weight: 150px;
   top: -50px;
   height: 10px;
-  right: -50px;
+  right: 100px;
 .addd-equipment {
-  padding: 16px 32px !important;
+  padding: 8px 15px !important;
   font-size: 1.1rem !important;
   max-width: 250px !important;
-  min-width: 200px !important;
+  min-width: 100px !important;
   height: 50px !important;
   border-radius: 28px !important;
   position: relative;
   top: -30px;
-  right: -120px;
-  background: linear-gradient(135deg, #151a2b, #252352, #151a2b);
-  color: white;
+  right: -200px;
+  background: #3b4f90;
+  color: rgb(228, 225, 225);
+
 }}
 /* Style pour l'input de la modale */
 .modal-content input {
@@ -479,46 +192,7 @@
       padding: 40px 20px;
   }
 }
-  .reservation-form {
-    width: 200%; // Réduire la largeur du formulaire
-    margin-left: 20px; // Aligner à droite
-    height: 100px;
-    padding-right: 0px;
-    .form-group.line-input {
-      position: relative;
-      margin-bottom: 25px;
-  
-      input, textarea {
-        background: transparent;
-        border: none;
-        border-radius: 0;
-        padding: 8px 0;
-        box-shadow: none;
-        border-bottom: 1px solid wheat; // Ligne noire
-        color: #060606;
-  
-        &::placeholder {
-          color: wheat;
-          opacity: 1;
-        }
-  
-        &:focus {
-          outline: none;
-          
-          &::placeholder {
-            color: wheat; // Garder la même couleur au focus
-            opacity: 0;
-            transition: opacity 0.3s ease;
-          }
-        }
-      }
-  
-  
-  
-    }
-  
-   
-  }
+ 
   /* Ajoutez ces styles à votre fichier SCSS existant */
 
 .full-width {
@@ -545,47 +219,14 @@
   position: relative;
   top: -50px;
   label {
-    color: #151a2b;
+    color: #000000;
     margin-bottom: 0px;
     font-size: 1.2rem;
     font-weight: 600;
   }
 }
 
-.checkbox-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
 
-  .checkbox-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    font-size: 0.95rem;
-    color: #151a2b;
-    position: relative;
-
-    .hidden-checkbox {
-      display: none;
-    }
-
-    .custom-checkbox {
-      &::before {
-        content: '☐';
-        margin-right: 8px;
-        font-size: 1.2rem;
-        vertical-align: middle;
-        color: #151a2b;
-      }
-    }
-
-    input:checked + .custom-checkbox::before {
-      content: '☑';
-      color: #094677;
-    }
-  }
-}
 
 
   .reservation-form {
@@ -593,7 +234,7 @@
     flex-direction: column;
     gap: 20px;
     position: relative;
-    top: 30px;
+    top: 40px;
     .form-row {
       display: flex;
       gap: 30px;
@@ -616,16 +257,17 @@
       label {
         margin-bottom: 8px;
         font-weight: bold;
-        color: #ceb7b7;
+        color: #010101;
       }
   
       input, textarea {
         padding: 12px 15px;
         border: 1px solid #ddd;
-        border-radius: 5px;
+        border-radius: 15px;
         font-size: 1rem;
         transition: border 0.3s ease;
-  
+        position: relative;
+        height: 20px;
         &:focus {
           border-color: #4a4793;
           outline: none;
@@ -637,7 +279,438 @@
         min-height: 100px;
       }
     }
+ 
+  }
+
+  /* Media Queries pour le responsive */
+
+
+
+
+
+
+
+
+
+
+  //nouveau desing 
+  .spaces-header {
   
+ 
+   background: linear-gradient(135deg, hsl(213, 66%, 83%) ,#3b4f90, #3b4f90  );
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    position: relative;
+    z-index: 1000;
+    height: 100px;
+    box-shadow: 
+     
+      0 5px 10px rgba(0, 0, 0, 0.6);
+      
+    transition: box-shadow 0.3s ease;
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 
+ 
+    0 5px 10px rgba(0, 0, 0, 0.6),
+    0 15px 35px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+
+
+}
+
+
+
+.profile-icon
+{
+  position: relative;
+  right: -1900px;
+  top: -200px;
+
+}
+
+  .page-subtitle {
+    font-size: 1.2rem;
+    position: relative;
+   left: 780px;
+   top: -125px;
+    color: rgb(252, 247, 247);
+    transition: inherit;
+  }
+ .page-title {
+  font-size: 1.9rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  right: 0px;
+  top: -115px;
+  color: #fdf9f9; /* Couleur de texte profonde */
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.526); /* Ombre subtile */
+  letter-spacing: 0.5px; /* Espacement des lettres */
+  margin: 0.5em 0; /* Marge améliorée */
+  position: relative; /* Pour les effets optionnels */
+
+
+  &:hover {
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée au survol */
+    
+    &::after {
+      width: 80px; /* Animation du soulignement au survol */
+    }
+  }
+
+}
+
+
+
+
+  .logo-image {
+  max-width: 110px; /* 15% de la largeur de l'écran */
+  height: auto;
+  right: -90px;
+  position: relative;
+  top: -8px;
+}
+
+
+
+
+
+.reservation-container {
+  max-width: 800px;
+  margin: 0 auto;
+ padding: 150px 20px 40px;
+}
+
+.form-container {
+  background-color: rgb(237, 233, 233);
+  border-radius: 18px;
+position: relative;
+  width: 100%; // Utilisez un pourcentage au lieu d'une valeur fixe
+  min-width: 1000px; // Largeur minimale
+  max-width: 2000px; // Largeur maximale si vous voulez limiter
+   z-index: 1;
+  padding: 30px; // Réduire un peu le padding si nécessaire
+  margin: 0 auto; // Centrer le conteneur
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.451);
+  right: 200px;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+  label {
+    font-weight: 600;
+    color: #040404;
+  }
+  
+  input, textarea {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+     position: relative;
+        height: 20px;
+    &:focus {
+      outline: none;
+      border-color: #3b4f90;
+      box-shadow: 0 0 0 2px rgba(59, 79, 144, 0.2);
+    }
+  }
+  
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+  
+  .half-width {
+    flex: 1;
+  }
+}
+
+.error-message {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+.equipment-section {
+  margin: 25px 0;
+  
+  label {
+    display: block;
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: #000000;
+  }
+}
+
+.checkbox-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.hidden-checkbox {
+  display: none;
+}
+
+.custom-checkbox {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #3b4f90;
+  border-radius: 4px;
+  position: relative;
+  
+  .hidden-checkbox:checked + & {
+    background-color: #3b4f90;
+    
+    &::after {
+      content: "✓";
+      position: absolute;
+      color: white;
+      font-size: 12px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+}
+
+
+
+
+/* Modal styles remain the same as before */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  
+  h3 {
+    margin-top: 0;
+    color: #3b4f90;
+    text-align: center;
+  }
+  
+  input {
+     position: relative;
+        height: 20px;
+    width: 50px;
+    padding: 10px;
+    margin: 15px 0;
+    border: 1px solid #ddd;
+    border-radius: 15px;
+  }
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  
+  button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    
+    &:first-child {
+      background-color: #3b4f90;
+      color: white;
+      border: none;
+    }
+    
+    &:last-child {
+      background-color: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+  }
+}
+
+
+
+
+
+/* Réduire la taille des inputs */
+.reservation-form {
+  .form-group {
+    input, textarea {
+      padding: 8px 12px; /* Réduire le padding */
+      font-size: 0.9rem; /* Réduire la taille de police */
+      height: 80px; /* Fixer une hauteur */
+       position: relative;
+        height: 25px;
+        border: 1px solid black;
+    }
+
+    textarea {
+      height: auto; /* Laisser la hauteur flexible pour les textarea */
+      min-height: 80px; /* Réduire la hauteur minimale */
+    }
+  }
+
+  .form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .half-width {
+      flex: 1;
+      min-width: 0; /* Empêcher le débordement */
+    }
+  }
+}
+
+
+
+/* Ajuster la taille des labels */
+.form-group label {
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+/* Ajuster les messages d'erreur */
+.error-message {
+  font-size: 0.75rem;
+  margin-top: 3px;
+}
+
+
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+  top: -80px;
+  position: relative;
+  right: 80px;
+  button {
+    padding: 12px 24px;
+    border-radius: 25px; 
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Ombre légère */
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée au hover */
+    }
+    
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1); /* Effet d'enfoncement */
+    }
+  }
+  
+  .cancel-btn {
+    background-color: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+    
+    &:hover {
+      background-color: #e0e0e0;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  .submit-btn {
+    background-color: #3b4f90;
+    color: white;
+    border: none;
+    
+    &:hover {
+      background-color: #2c3e70;
+      box-shadow: 0 4px 8px rgba(41, 63, 143, 0.3); /* Ombre colorée */
+    }
+    
+    &:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+  }
+}
+
+
+
+
     .form-actions.reversed {
         display: flex;
         gap: 20px;
@@ -683,290 +756,31 @@
           }
         }
       }
-  }
 
-  /* Media Queries pour le responsive */
 
-@media (max-width: 1200px) {
-  .reservation-container {
-    padding-top: 110px;
-  }
-  
-  .split-form-container {
-    max-width: 95%;
-  }
-  
-  .admin-header .right-section {
-    left: 85%;
-  }
-}
-
-@media (max-width: 992px) {
-  .admin-header {
-    height: auto;
-    padding: 1.5rem;
+/* Styles pour les inputs avec icônes */
+.with-icon {
+  .input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
     
-    .header-content {
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-    
-    .left-section {
-      position: static;
-      order: 1;
-      width: 100%;
-      justify-content: center;
-      padding-left: 0;
-    }
-    
-    .center-section {
-      position: static;
-      order: 3;
-      width: 100%;
-      transform: none;
-      text-align: center;
-      margin-top: 10px;
-      
-      &:hover {
-        top: 0;
-      }
-    }
-    
-    .right-section {
-      position: static;
-      order: 2;
-      width: auto;
-      margin-left: auto;
-    }
-  }
-  
-  .split-form-container {
-    flex-direction: column;
-    height: auto;
-    top: 40px;
-  }
-  
-  .welcome-section, 
-  .form-section {
-    flex: none;
-    width: 100%;
-  }
-  
-  .welcome-section {
-    padding: 40px 20px;
-    
-    .welcome-content {
-      max-width: 100%;
-    }
-  }
-  
-  .form-section {
-    padding: 40px 20px;
-    
-    .reservation-form {
-      max-width: 100%;
-      margin-left: 0;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .reservation-container {
-    padding-top: 150px;
-  }
-  
-  .admin-header {
-    .left-section {
-      flex-direction: column;
-      gap: 5px;
-      
-      .logo, .site-name {
-        font-size: 1.4rem;
-      }
-    }
-    
-    .center-section {
-      .page-title {
-        font-size: 1.5rem;
-      }
-      
-      .page-subtitle {
-        font-size: 1rem;
-      }
-    }
-  }
-  
-  .welcome-section {
-    padding: 30px 15px;
-    
-    h2 {
-      font-size: 1.8rem;
-    }
-    
-    .subtitle {
+    .input-icon {
+      position: absolute;
+      left: 12px;
+      color: #0f0f0f;
       font-size: 1rem;
-    }
-  }
-  
-  .form-section {
-    padding: 30px 15px;
-    
-    .reservation-form {
-      .form-row {
-        flex-direction: column;
-        gap: 15px;
-      }
-      
-      .form-actions.reversed {
-        flex-direction: column-reverse;
-        gap: 15px;
-        
-        button {
-          width: 100%;
-          left: 0;
-          top: 0;
-        }
-      }
-    }
-  }
-  
-  .add-button {
-    right: 0;
-    top: -30px;
-    
-    .addd-equipment {
-      width: 100%;
-      max-width: none;
-      right: 0;
-    }
-  }
-}
-
-@media (max-width: 576px) {
-  .admin-header {
-    padding: 1rem;
-    
-    .left-section {
-      .logo, .site-name {
-        font-size: 1.2rem;
-      }
+      z-index: 2;
     }
     
-    .center-section {
-      .page-title {
-        font-size: 1.3rem;
-      }
-      
-      .page-subtitle {
-        font-size: 0.9rem;
-      }
-    }
-    
-    .right-section .breadcrumb {
-      font-size: 0.9rem;
-    }
-  }
-  
-  .welcome-section {
-    padding: 25px 10px;
-    
-    h2 {
-      font-size: 1.5rem;
-    }
-    
-    .form-actions {
-      flex-direction: column;
-      gap: 10px;
-      
-      button {
-        width: 100%;
-      }
-    }
-  }
-  
-  .form-section {
-    padding: 25px 10px;
-    
-    .reservation-form {
-      .form-group {
-        input, textarea {
-          padding: 10px 12px;
-          font-size: 0.9rem;
-        }
-      }
-    }
-  }
-  
-  .modal-content {
-    width: 95%;
-    padding: 20px 15px;
-    
-    input {
+    input, textarea {
+      padding-left: 40px !important; // Faire de la place pour l'icône
       width: 100%;
     }
     
-    .modal-actions {
-      flex-direction: column;
-      gap: 10px;
-      
-      button {
-        width: 100%;
-      }
+    textarea {
+      padding-top: 10px; // Ajustement supplémentaire pour textarea
     }
   }
-}
+} 
 
-@media (max-width: 400px) {
-  .admin-header {
-    .center-section {
-      .page-title {
-        font-size: 1.1rem;
-      }
-    }
-  }
-  
-  .welcome-section {
-    h2 {
-      font-size: 1.3rem;
-    }
-    
-    .subtitle {
-      font-size: 0.9rem;
-    }
-    
-    .description {
-      font-size: 0.8rem;
-    }
-  }
-  
-  .checkbox-container {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-/* Correction pour les petits écrans en hauteur */
-@media (max-height: 700px) {
-  .reservation-container {
-    padding-top: 100px;
-  }
-  
-  .split-form-container {
-    height: auto;
-  }
-}
-
-/* Amélioration de la visibilité sur mobile */
-@media (hover: none) {
-  .admin-header:hover {
-    height: auto;
-    box-shadow: 
-      0 10px 25px rgba(0, 0, 0, 0.5),
-      0 5px 10px rgba(0, 0, 0, 0.6),
-      0 15px 35px rgba(0, 0, 0, 0.4);
-  }
-  
-  button:hover {
-    transform: none !important;
-  }
-}

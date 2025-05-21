@@ -3,6 +3,7 @@ package tn.sousse.univ.reservation_app.models;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.AllArgsConstructor;
@@ -30,11 +31,13 @@ public class User {
     private String password;
     private String structure;
     private String linkedInLink;
-
+ // Reference to establishment
     private boolean enabled = false;
     private boolean passwordChangeRequired;
     private boolean isPartenaire;
 
     private List<String> espacesResponsables;
+    private String etablissementId;
+    
 
 }

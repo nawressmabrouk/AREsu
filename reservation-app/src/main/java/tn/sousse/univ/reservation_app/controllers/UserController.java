@@ -114,15 +114,32 @@ private boolean isDemandeur(Role role) {
     return role == Role.DEMANDEUR_INTERNE || role == Role.DEMANDEUR_EXTERNE;
 }
 
-    @GetMapping("/voirProfil")
-    public ResponseEntity<UserDTO> voirProfilConnecte(Authentication authentication) {
-        String email = authentication.getName();
-        User user = userService.getUserByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+@GetMapping("/voirProfil")
+public ResponseEntity<UserDTO> voirProfilConnecte(Authentication authentication) {
+    String email = authentication.getName();
+    User user = userService.getUserByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    
+    // Debug logging
+    System.out.println("User entity etablissementId: " + user.getEtablissementId());
+    
+    UserDTO dto = UserMapper.toDTO(user);
+    
+    // Debug logging
+    System.out.println("DTO etablissementId: " + dto.getEtablissementId());
+    
+    return ResponseEntity.ok(dto);
+}
 
-        return ResponseEntity.ok(UserMapper.toDTO(user));
-    }
-
+private String resolveEtablissementId(String nomEtablissement) {
+    // Implement logic to get ID from establishment name
+    // This could be a database lookup or a mapping
+    Map<String, String> mapping = Map.of(
+        "ESSTHS", "65d1c10affaf1bf00fe3faab4",
+        "FSS", "another_id_here"
+    );
+    return mapping.getOrDefault(nomEtablissement, "");
+}
     @PostMapping("/changer-mot-de-passe")
     public ResponseEntity<?> changerMotDePasse(
             @RequestBody Map<String, String> requestBody,

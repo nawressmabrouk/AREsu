@@ -1,34 +1,21 @@
-<div class="admin-header">
+ <header class="spaces-header">
   <div class="header-content">
-    <!-- Partie gauche - Logo -->
-    <div class="left-section">
-      <div class="logo">logo</div>
-      <div class="site-name">Université de Sousse</div>
-    </div>
-    
-    <!-- Partie centrale - Titre et sous-titre -->
-    <div class="center-section">
-      <div class="page-title">Console Administrative</div>
-      <div class="page-subtitle">
-        Gestion des sous-administrateurs et des espaces
-      </div>
+    <div class="header-brand">
+      <img src="/logo2.png" alt="Université de Sousse" class="logo-image" >
+     
     </div>
 
-    <div class="right-section">
-      <div class="breadcrumb">
-        <span>
-          <fa-icon [icon]="faHome" class="icon"></fa-icon>
-          Accueil
-        </span>
-        <span>
-          <fa-icon [icon]="faPageIcon" class="icon"></fa-icon>
-          Console Administrative
-        </span>
-      </div>
-      <app-profile [user]="currentUser"></app-profile>
-    </div>
+ <h1 class="page-title">
+     Console Administrative
+      </h1>
+        <p class="page-subtitle">
+        Gestion des sous-administrateurs et des espaces
+      </p>
+
+    <app-profile   class="profile-icon" [user]="currentUser"></app-profile>
   </div>
-</div>
+   
+</header>
 
 <!-- Contenu principal -->
 <div class="main-content">
@@ -55,7 +42,7 @@
           <div *ngIf="showSousAdminOptions" class="sub-buttons-container">
             <div class="sub-buttons-row">
               <div class="icon-wrapper">
-                <span class="icon-circle small">
+                <span class="icon-circle smallA">
                   <fa-icon [icon]="faPlusCircle" class="btn-icon"></fa-icon>
                 </span>
                 <button class="sub-btn" 
@@ -64,7 +51,7 @@
                 </button>
               </div>
               <div class="icon-wrapper">
-                <span class="icon-circle small">
+                <span class="icon-circle smallA">
                   <fa-icon [icon]="faTasks" class="btn-icon"></fa-icon>
                 </span>
                 <button class="sub-btn" 

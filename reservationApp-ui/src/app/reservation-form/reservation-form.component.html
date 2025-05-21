@@ -1,229 +1,225 @@
 <div class="reservation-container">
-    <div class="admin-header">
-      <div class="header-content">
-        <!-- Left Section - Logo -->
-        <div class="left-section">
-          <div class="logo">logo</div>
-          <div class="site-name">Université de Sousse</div>
-        </div>
-        
-        <!-- Center Section - Title -->
-        <div class="center-section">
-          <div class="page-title">Réservation d'Espace Universitaire</div>
-          <div class="page-subtitle">Complétez ce formulaire pour réserver votre espace</div>
-        </div>
-        
-        <!-- Right Section - Breadcrumb -->
-        <div class="right-section">
-          <div class="breadcrumb">
-            <span>
-              <fa-icon [icon]="faHome" class="icon"></fa-icon>
-              Accueil
-            </span>
-            <span>
-              <fa-icon [icon]="faPageIcon" class="icon"></fa-icon>
-              Formulaire de Réservation
-            </span>
-          </div>
-        </div>
+  <header class="spaces-header">
+    <div class="header-content">
+      <div class="header-brand">
+        <img src="/logo2.png" alt="Université de Sousse" class="logo-image">
       </div>
+
+      <h1 class="page-title">
+        Formulaire de Réservation
+      </h1>
+      <p class="page-subtitle">
+        Complétez les informations nécessaires pour votre événement
+      </p>
+
+      <app-profile class="profile-icon" [user]="currentUser"></app-profile>
     </div>
-  
-    <div class="split-form-container">
-      <!-- Left Section - Welcome -->
-      <div class="welcome-section">
-        <div class="welcome-content">
-          <h2>Réservation d'Espace Universitaire</h2>
-          <p class="subtitle">Complétez ce formulaire pour réserver votre espace</p>
-          <p class="description">Tous les champs sont obligatoires pour soumettre votre demande.</p>
-          
-         
+  </header>
+
+<div class="form-container">
+   <form class="reservation-form" #reservationForm="ngForm" (ngSubmit)="onSubmit(reservationForm)">
+    <!-- Première ligne : Responsable + Email -->
+    <div class="form-row">
+      <div class="form-group half-width with-icon">
+        <label for="responsableAction">Responsable de l'action</label>
+        <div class="input-container">
+          <fa-icon [icon]="faUser" class="input-icon"></fa-icon>
+          <input type="text" id="responsableAction" name="responsableAction" 
+                 [(ngModel)]="reservation.responsableAction" required>
+        </div>
+        <div *ngIf="showError('responsableAction')" class="error-message">
+          Ce champ est requis
         </div>
       </div>
       
-      <!-- Right Section - Form -->
-      <div class="form-section">
-        <form class="reservation-form" #reservationForm="ngForm" (ngSubmit)="onSubmit(reservationForm)">
-          <!-- Responsable Action -->
-          <div class="form-row">
-            <div class="form-group line-input full-width">
-              <input type="text" id="responsableAction" name="responsableAction" 
-                     [(ngModel)]="reservation.responsableAction" required 
-                     placeholder="Responsable de l'action">
-              <span class="line"></span>
-              <div *ngIf="showError('responsableAction')" class="error-message">
-                Ce champ est requis
-              </div>
-            </div>
-            <div class="form-group line-input full-width">
-              <input type="email" id="emailR" name="emailR" 
-                     [(ngModel)]="reservation.emailR" required 
-                     placeholder="Email de responsable action">
-              <span class="line"></span>
-              <div *ngIf="showError('emailR')" class="error-message">
-                Veuillez entrer un email valide 
-              </div>
-            </div>
-          </div>
-        
-          <!-- Fonction et Structure -->
-          <div class="form-row">
-            <div class="form-group line-input half-width">
-              <input type="text" id="fonctionR" name="fonctionR" 
-                     [(ngModel)]="reservation.fonctionR" required 
-                     placeholder="Fonction de responsable action">
-              <span class="line"></span>
-              <div *ngIf="showError('fonctionR')" class="error-message">
-                Ce champ est requis
-              </div>
-            </div>
-            
-            <div class="form-group line-input half-width">
-              <input type="text" id="structure" name="structure" 
-                     [(ngModel)]="reservation.structure" required 
-                     placeholder="Structure de responsable action">
-              <span class="line"></span>
-              <div *ngIf="showError('structure')" class="error-message">
-                Ce champ est requis
-              </div>
-            </div>
-          </div>
-          
-          <!-- Intitulé et Participants -->
-          <div class="form-row">
-            <div class="form-group line-input half-width">
-              <input type="text" id="intituleAction" name="intituleAction" 
-                     [(ngModel)]="reservation.intituleAction" required 
-                     placeholder="Intitulé de l'action">
-              <span class="line"></span>
-              <div *ngIf="showError('intituleAction')" class="error-message">
-                Ce champ est requis
-              </div>
-            </div>
-            
-            <div class="form-group line-input half-width">
-              <input type="number" id="nbrParticipant" name="nbrParticipant" 
-                     [(ngModel)]="reservation.nbrParticipant" required 
-                     placeholder="Nombre de participants"
-                     min="1">
-              <span class="line"></span>
-              <div *ngIf="showError('nbrParticipant')" class="error-message">
-                Doit être supérieur à 0
-              </div>
-            </div>
-          </div>
-          
-          <!-- Cible et LinkedIn -->
-          <div class="form-row">
-            <div class="form-group line-input half-width">
-              <input type="text" id="cible" name="cible" 
-                     [(ngModel)]="reservation.cible" required 
-                     placeholder="Cible">
-              <span class="line"></span>
-              <div *ngIf="showError('cible')" class="error-message">
-                Ce champ est requis
-              </div>
-            </div>
-            
-            <div class="form-group line-input half-width">
-              <input type="url" id="lienLinkedInR" name="lienLinkedInR" 
-                     [(ngModel)]="reservation.lienLinkedInR" required 
-                     placeholder="Profil LinkedIn (URL complet)">
-              <span class="line"></span>
-              <div *ngIf="showError('lienLinkedInR')" class="error-message">
-                Veuillez entrer une URL valide (https://...)
-              </div>
-            </div>
-          </div>
-          
-          <!-- Description -->
-          <div class="form-row">
-            <div class="form-group line-input full-width">
-              <textarea id="description" name="description" rows="3"
-                        [(ngModel)]="reservation.description" required 
-                        placeholder="Description de la réservation"></textarea>
-              <span class="line"></span>
-              <div *ngIf="showError('description')" class="error-message">
-                Ce champ est requis
-              </div>
-            </div>
-          </div>
-          
-          <!-- Equipment Section -->
-          <div class="equipment-section">
-            <label>Équipements</label>
-            
-            <div class="checkbox-container">
-                <label class="checkbox-label" *ngFor="let eq of equipmentsList">
-                  <input 
-                    type="checkbox" 
-                    [checked]="isEquipmentSelected(eq)"
-                    (change)="toggleEquipmentSelection(eq)"
-                    class="hidden-checkbox">
-                  <span class="custom-checkbox"></span>
-                  {{eq}}
-                </label>
-              </div>
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-          </div>
-          
-          <!-- Add Equipment Button -->
-        <!-- Modify the add equipment button -->
-<div class="add-button">
-    <button 
-        type="button" 
-        class="addd-equipment" 
-        (click)="showAddEquipmentModal()"
-        [disabled]="!canAddEquipment"
-        [class.disabled]="!canAddEquipment"
-        [title]="!canAddEquipment ? 'Seuls les demandeurs internes peuvent ajouter des équipements' : ''">
-        <fa-icon [icon]="faPlus" class="add-icon"></fa-icon>
-        Ajouter équipement
-    </button> 
-</div>
-          
-          <!-- Add Equipment Modal -->
-          <div class="modal-overlay" *ngIf="showEquipmentModal">
-            <div class="modal-content">
-              <h3>Ajouter un nouvel équipement</h3>
-              <input type="text" 
-                    [(ngModel)]="customEquipment" 
-                    name="customEquipment"
-                    placeholder="Nom de l'équipement"
-                    (keyup.enter)="addCustomEquipment()">
-              
-              <div class="modal-actions">
-                <button type="button" (click)="addCustomEquipment()" >
-                  <span *ngIf="!isLoading">Ajouter</span>
-                  <span *ngIf="isLoading">
-                    <i class="fa fa-spinner fa-spin"></i> Processing...
-                  </span>
-                </button>
-                <button type="button" (click)="cancelAddEquipment()">Annuler</button>
-              </div>
-            </div>
-          </div>
-          <!-- Submit Button Section -->
-<div class="form-actions">
-  <button type="button" class="cancel-btn" (click)="goBack()">Annuler</button>
-  <button type="submit" class="submit-btn">
-    <span *ngIf="!isLoading">Envoyer</span>
-    <span *ngIf="isLoading">
-      <i class="fa fa-spinner fa-spin"></i> Envoi en cours...
-    </span>
-  </button>
-</div>
-        </form>
+      <div class="form-group half-width with-icon">
+        <label for="emailR">Email de responsable</label>
+        <div class="input-container">
+          <fa-icon [icon]="faEnvelope" class="input-icon"></fa-icon>
+          <input type="email" id="emailR" name="emailR" 
+                 [(ngModel)]="reservation.emailR" required>
+        </div>
+        <div *ngIf="showError('emailR')" class="error-message">
+          Veuillez entrer un email valide
+        </div>
       </div>
     </div>
-  </div>
+
+    <!-- Deuxième ligne : Fonction + Structure -->
+    <div class="form-row">
+      <div class="form-group half-width with-icon">
+        <label for="fonctionR">Fonction de responsable </label>
+        <div class="input-container">
+          <fa-icon [icon]="faBriefcase" class="input-icon"></fa-icon>
+          <input type="text" id="fonctionR" name="fonctionR" 
+                 [(ngModel)]="reservation.fonctionR" required>
+        </div>
+        <div *ngIf="showError('fonctionR')" class="error-message">
+          Ce champ est requis
+        </div>
+      </div>
+      
+      <div class="form-group half-width with-icon">
+        <label for="structure">Structure de responsable</label>
+        <div class="input-container">
+          <fa-icon [icon]="faBuilding" class="input-icon"></fa-icon>
+          <input type="text" id="structure" name="structure" 
+                 [(ngModel)]="reservation.structure" required>
+        </div>
+        <div *ngIf="showError('structure')" class="error-message">
+          Ce champ est requis
+        </div>
+      </div>
+    </div>
+
+    <!-- Troisième ligne : Téléphone + LinkedIn -->
+    <div class="form-row">
+      <div class="form-group half-width with-icon">
+        <label for="numTelR">Numéro de téléphone de responsable</label>
+        <div class="input-container">
+          <fa-icon [icon]="faPhone" class="input-icon"></fa-icon>
+          <input type="tel" id="numTelR" name="numTelR" 
+                 [(ngModel)]="reservation.numTelR" required>
+        </div>
+        <div *ngIf="showError('numTelR')" class="error-message">
+          Ce champ est requis
+        </div>
+      </div>
+      
+      <div class="form-group half-width with-icon">
+        <label for="lienLinkedInR">Profil LinkedIn de responsable</label>
+        <div class="input-container">
+          <fa-icon [icon]="faLink" class="input-icon"></fa-icon>
+          <input type="url" id="lienLinkedInR" name="lienLinkedInR" 
+                 [(ngModel)]="reservation.lienLinkedInR" required 
+                 placeholder="https://...">
+        </div>
+        <div *ngIf="showError('lienLinkedInR')" class="error-message">
+          Veuillez entrer une URL valide
+        </div>
+      </div>
+    </div>
+
+    <!-- Quatrième ligne : Intitulé + Participants -->
+    <div class="form-row">
+      <div class="form-group half-width with-icon">
+        <label for="intituleAction">Intitulé de l'action</label>
+        <div class="input-container">
+          <fa-icon [icon]="faClipboard" class="input-icon"></fa-icon>
+          <input type="text" id="intituleAction" name="intituleAction" 
+                 [(ngModel)]="reservation.intituleAction" required>
+        </div>
+        <div *ngIf="showError('intituleAction')" class="error-message">
+          Ce champ est requis
+        </div>
+      </div>
+      
+      <div class="form-group half-width with-icon">
+        <label for="nbrParticipant">Nombre de participants</label>
+        <div class="input-container">
+          <fa-icon [icon]="faUsers" class="input-icon"></fa-icon>
+          <input type="number" id="nbrParticipant" name="nbrParticipant" 
+                 [(ngModel)]="reservation.nbrParticipant" required
+                 min="1">
+        </div>
+        <div *ngIf="showError('nbrParticipant')" class="error-message">
+          Doit être supérieur à 0
+        </div>
+      </div>
+    </div>
+
+    <!-- Cinquième ligne : Cible + Description -->
+    <div class="form-row">
+      <div class="form-group half-width with-icon">
+        <label for="cible">Cible</label>
+        <div class="input-container">
+          <fa-icon [icon]="faUserTag" class="input-icon"></fa-icon>
+          <input type="text" id="cible" name="cible" 
+                 [(ngModel)]="reservation.cible" required>
+        </div>
+        <div *ngIf="showError('cible')" class="error-message">
+          Ce champ est requis
+        </div>
+      </div>
+        
+      <div class="form-group half-width with-icon">
+        <label for="description">Description</label>
+        <div class="input-container">
+          <fa-icon [icon]="faAlignLeft" class="input-icon"></fa-icon>
+          <input id="description" name="description" rows="4"
+                    [(ngModel)]="reservation.description" required>
+        </div>
+        <div *ngIf="showError('description')" class="error-message">
+          Ce champ est requis
+        </div>
+      </div>
+    </div>
+
+        <!-- Equipment Section -->
+      <div class="equipment-section">
+        <label>Équipements</label>
+        
+        <div class="checkbox-container">
+          <label class="checkbox-label" *ngFor="let eq of equipmentsList">
+            <input 
+              type="checkbox" 
+              [checked]="isEquipmentSelected(eq)"
+              (change)="toggleEquipmentSelection(eq)"
+              class="hidden-checkbox">
+            <span class="custom-checkbox"></span>
+            {{eq}}
+          </label>
+        </div>
+      </div>
+      
+      <!-- Add Equipment Button -->
+<!-- Add Equipment Button -->
+<div class="add-button" *ngIf="canAddEquipment">
+  <button 
+      type="button" 
+      class="addd-equipment" 
+      (click)="showAddEquipmentModal()">
+      <fa-icon [icon]="faPlus" class="add-icon"></fa-icon>
+      Ajouter équipement
+  </button> 
+</div>
+      
+      <!-- Add Equipment Modal -->
+      <div class="modal-overlay" *ngIf="showEquipmentModal">
+        <div class="modal-content">
+          <h3>Ajouter un Logistique</h3>
+          <input type="text" 
+                [(ngModel)]="customEquipment" 
+                name="customEquipment"
+                placeholder="Nom de l'équipement"
+                (keyup.enter)="addCustomEquipment()">
+          
+          <div class="modal-actions">
+            <button type="button" (click)="addCustomEquipment()">
+              <span *ngIf="!isLoading">Ajouter</span>
+              <span *ngIf="isLoading">
+                <i class="fa fa-spinner fa-spin"></i> Processing...
+              </span>
+            </button>
+            <button type="button" (click)="cancelAddEquipment()">Annuler</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Submit Button Section -->
+    <div class="form-actions">
+        <button type="button" class="cancel-btn" (click)="goBack()">Annuler</button>
+        <button type="submit" class="submit-btn">
+          <span *ngIf="!isLoading">Envoyer</span>
+          <span *ngIf="isLoading">
+            <i class="fa fa-spinner fa-spin"></i> Envoi en cours...
+          </span>
+        </button>
+      </div>
+  </form>
+</div>
+</div>
+
+
+
+  

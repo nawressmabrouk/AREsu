@@ -4,11 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { 
-  faBriefcase, faBuilding, faEnvelope, 
-  faLink, faLock, faPhone, faUniversity, faUser 
+  faKey, faSignInAlt, faUser, faUserPlus,
+  faEnvelope, faBriefcase, faPhone, faBuilding,
+  faUniversity, faDoorOpen, faLock, faLink 
 } from '@fortawesome/free-solid-svg-icons';
+import { AuthService } from '../services/auth/auth.service';
 import { RegistrationService } from '../services/auth/register.service';
-
+import { NotificationComponent } from '../alert-notif/notification.component';
+import { NotificationService } from '../services/alert-notif/notification.service';
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -16,108 +19,194 @@ import { RegistrationService } from '../services/auth/register.service';
     CommonModule,    // Required for *ngIf and other common directives
     FormsModule,     // Required for template-driven forms
     RouterModule,    // Required for routerLink
-    FontAwesomeModule
+    FontAwesomeModule , NotificationComponent
   ],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss']
 })
 export class RegisterComponent {
   // Icons
+  faKey = faKey;
+  faDoorOpen = faDoorOpen;
   faUser = faUser;
+  faSignInAlt = faSignInAlt;
+  faUserPlus = faUserPlus;
   faEnvelope = faEnvelope;
   faBriefcase = faBriefcase;
   faPhone = faPhone;
+  faBuilding = faBuilding;
   faUniversity = faUniversity;
   faLink = faLink;
-  faBuilding = faBuilding;
   faLock = faLock;
 
-  // Form state
-  isLoading = false;
+  // Form states
+  isAccountPage: boolean = false;
+  isLoading: boolean = false;
   errorMessage: string | null = null;
+  loginErrorMessage: string | null = null;
+  confirmPassword: string = '';
+
+  // Form data models
+  registerData = {
+    nom: '',
+    prenom: '',
+    email: '',
+    fonction: '',
+    numTel: '',
+    nomEtablissement: '',
+    linkedin: '',
+    structure: '',
+    role: '',
+    password: ''
+  };
+
+  loginData = {
+    email: '',
+    password: ''
+  };
 
   constructor(
     private router: Router,
-    private registrationService: RegistrationService
+    private authService: AuthService,
+    private registrationService: RegistrationService,
+    private notificationService: NotificationService
   ) {}
 
-  onSubmit(
-    lastName: string,
-    firstName: string,
-    email: string,
-    fonction: string,
-    numTel: string,
-    nomEtablissement: string,
-    linkedInLink: string,
-    structure: string,
-    isInterne: boolean,
-    isExterne: boolean,
-    password: string,
-    confirmPassword: string | undefined,
-    event: Event
-  ) {
-    event.preventDefault();
+  toggleView() {
+    this.isAccountPage = !this.isAccountPage;
+    this.resetFormStates();
+  }
+
+  private resetFormStates() {
     this.errorMessage = null;
+    this.loginErrorMessage = null;
+    this.isLoading = false;
+  }
 
-    // Validate form
-    if (!confirmPassword) {
-      this.errorMessage = 'Veuillez confirmer votre mot de passe';
-      return;
-    }
+  // Login Submit
+  onLoginSubmit(event: Event) {
+    event.preventDefault();
+    this.loginErrorMessage = null;
 
-    if (!this.passwordsMatch(password, confirmPassword)) {
-      this.errorMessage = 'Les mots de passe ne correspondent pas';
-      return;
-    }
-
-    if (!this.isPasswordStrong(password)) {
-      this.errorMessage = 'Le mot de passe doit contenir au moins 8 caractères, dont une majuscule, un chiffre et un symbole';
-      return;
-    }
-
-    if (!firstName || !lastName || !email || !fonction || !numTel || 
-        !nomEtablissement || !linkedInLink || !structure || 
-        (!isInterne && !isExterne) || !password) {
-      this.errorMessage = 'Veuillez remplir tous les champs obligatoires';
-      return;
-    }
+    if (!this.validateLogin()) return;
 
     this.isLoading = true;
 
-    const userData = {
-      nom: lastName,
-      prenom: firstName,
-      email: email,
-      numTel: numTel,
-      role: isInterne ? 'DEMANDEUR_INTERNE' : 'DEMANDEUR_EXTERNE',
-      fonction: fonction,
-      nomEtablissement: nomEtablissement,
-      password: password,
-      structure: structure,
-      linkedin: linkedInLink,
-    };
-
-    this.registrationService.register(userData).subscribe({
-      next: () => {
+    this.authService.login(this.loginData.email, this.loginData.password).subscribe({
+      next: (response) => {
         this.isLoading = false;
-        alert('Inscription réussie !');
-        this.router.navigate(['/auth/login']);
+        this.handleLoginSuccess();
       },
-      error: (error) => {
-        this.isLoading = false;
-        console.error('Registration error:', error);
-        
-        if (error?.error?.includes?.('email')) {
-          this.errorMessage = 'Cet email existe déjà. Veuillez utiliser un autre email.';
-        } else {
-          this.errorMessage = error?.error?.message || 'Erreur lors de l\'inscription. Veuillez réessayer.';
-        }
+      error: (err) => {
+        this.handleLoginError(err);
       }
     });
   }
 
-  private passwordsMatch(password: string, confirmPassword: string): boolean {
-    return password === confirmPassword;
+  private validateLogin(): boolean {
+    if (!this.loginData.email || !this.loginData.password) {
+      this.notificationService.showError('Veuillez remplir tous les champs');
+      return false;
+    }
+
+    if (!this.isValidEmail(this.loginData.email)) {
+      this.notificationService.showError('Veuillez entrer une adresse email valide');
+      return false;
+    }
+
+    return true;
+  }
+
+  private handleLoginSuccess() {
+    const token = this.authService.getToken();
+    if (token) {
+      const decoded = this.authService.decodeToken(token);
+      this.redirectUserByRole(decoded?.roles);
+    } else {
+      this.notificationService.showError('Erreur d\'authentification : jeton non reçu');
+    }
+  }
+
+  private handleLoginError(err: any) {
+    this.isLoading = false;
+    if (err.status === 401) {
+      this.notificationService.showError('Email ou mot de passe incorrect');
+    } else if (err.status === 0) {
+      this.notificationService.showError('Impossible de se connecter au serveur');
+    } else {
+      this.notificationService.showError('Erreur lors de la connexion');
+    }
+  }
+
+  // Registration Submit
+  onRegisterSubmit(event: Event) {
+    event.preventDefault();
+    this.errorMessage = null;
+
+    if (!this.validateRegistration()) return;
+
+    this.isLoading = true;
+
+    this.registrationService.register(this.registerData).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.notificationService.showSuccess('Inscription réussie !');
+        this.toggleView();
+      },
+      error: (error) => {
+        this.handleRegistrationError(error);
+      }
+    });
+  }
+
+  private validateRegistration(): boolean {
+    if (Object.values(this.registerData).some(value => !value)) {
+      this.notificationService.showError('Veuillez remplir tous les champs obligatoires');
+      return false;
+    }
+
+    if (!this.isValidEmail(this.registerData.email)) {
+      this.notificationService.showError('Veuillez entrer une adresse email valide');
+      return false;
+    }
+
+    if (this.registerData.linkedin && !this.isValidLinkedInUrl(this.registerData.linkedin)) {
+      this.notificationService.showError('Veuillez entrer une URL LinkedIn valide');
+      return false;
+    }
+
+    if (this.registerData.password !== this.confirmPassword) {
+      this.notificationService.showError('Les mots de passe ne correspondent pas');
+      return false;
+    }
+
+    if (!this.isPasswordStrong(this.registerData.password)) {
+      this.notificationService.showError('Le mot de passe doit contenir au moins 8 caractères avec majuscule, chiffre et symbole');
+      return false;
+    }
+
+    return true;
+  }
+
+  private handleRegistrationError(error: any) {
+    this.isLoading = false;
+    if (error?.error?.includes('email')) {
+      this.notificationService.showError('Cet email existe déjà');
+    } else {
+      this.notificationService.showError('Erreur lors de l\'inscription');
+    }
+  }
+
+  // Validation helpers
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  }
+
+  private isValidLinkedInUrl(url: string): boolean {
+    if (!url) return true;
+    const linkedInRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9-]+\/?$/;
+    return linkedInRegex.test(url);
   }
 
   private isPasswordStrong(password: string): boolean {
@@ -127,15 +216,36 @@ export class RegisterComponent {
            this.hasSymbol(password);
   }
 
-  public hasUpperCase(text: string): boolean {
+  private hasUpperCase(text: string): boolean {
     return /[A-Z]/.test(text);
   }
 
-  public hasNumber(text: string): boolean {
+  private hasNumber(text: string): boolean {
     return /[0-9]/.test(text);
   }
 
-  public hasSymbol(text: string): boolean {
+  private hasSymbol(text: string): boolean {
     return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(text);
+  }
+
+  private redirectUserByRole(roles: any): void {
+    let normalizedRole = '';
+    
+    if (Array.isArray(roles)) {
+      normalizedRole = roles[0].replace('ROLE_', '').toLowerCase();
+    } else if (typeof roles === 'string') {
+      normalizedRole = roles.replace('ROLE_', '').toLowerCase();
+    }
+
+    const roleRoutes: { [key: string]: string } = {
+      'demandeur_interne': '/spaces',
+      'demandeur_externe': '/spaces',
+      'secretaire_generale': '/secretary',
+      'admin': '/admin',
+      'responsable_salle': '/room-manager'
+    };
+
+    const targetRoute = roleRoutes[normalizedRole] || '/unauthorized';
+    this.router.navigate([targetRoute]);
   }
 }

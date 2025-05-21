@@ -176,17 +176,24 @@
 }
 
 .slot.confirmed {
-  background: #f0fff4;
-  border-left-color: #48bb78;
-  color: #2f855a;
+  background: rgba(72, 187, 120, 0.15) !important;
+  border-left: 3px solid #48bb78 !important;
+  color: #2f855a !important;
+  
+  &:hover {
+    background: rgba(72, 187, 120, 0.25) !important;
+  }
 }
 
 .slot.unconfirmed {
-  background: #fffaf0;
-  border-left-color: #ed8936;
-  color: #c05621;
+  background: rgba(237, 137, 54, 0.15) !important;
+  border-left: 3px solid #ed8936 !important;
+  color: #c05621 !important;
+  
+  &:hover {
+    background: rgba(237, 137, 54, 0.25) !important;
+  }
 }
-
 .more-slots {
   font-size: 0.8rem;
   color: #718096;
@@ -297,6 +304,26 @@
   flex-direction: column;
   gap: 12px;
 }
+
+.day.has-confirmed {
+  background: #f0fff4;
+  border-color: #c6f6d5;
+  
+  .day-number {
+    color: #38a169;
+    font-weight: bold;
+  }
+}
+
+.day.has-pending {
+  background: #fffaf0;
+  border-color: #fed7aa;
+  
+  .day-number {
+    color: #dd6b20;
+  }
+}
+
 
 .slot-list-item {
   display: flex;

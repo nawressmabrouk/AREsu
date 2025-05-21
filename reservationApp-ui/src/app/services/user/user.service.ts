@@ -38,29 +38,38 @@ export class UserService {
   }
 
   // Get user profile
-  getProfile(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/utilisateurs/voirProfil`, { 
-      headers: this.getAuthHeaders() 
-    }).pipe(
-      map((response: any) => {
-        // Check if response exists
-        if (!response) {
-          throw new Error('Aucune donnée reçue');
-        }
-        return {
-          nom: response.nom || '',
-          prenom: response.prenom || '',
-          email: response.email || '',
-          numTel: response.numTel || '',
-          fonction: response.fonction || '',
-          nomEtablissement: response.nomEtablissement || '',
-          structure: response.structure || '',
-          linkedInLink: response.linkedInLink || '',
-          role: response.role || ''
-        };
-      })
-    );
-  }
+getProfile(): Observable<User> {
+  return this.http.get(`${this.apiUrl}/utilisateurs/voirProfil`, { 
+    headers: this.getAuthHeaders() 
+  }).pipe(
+    map((response: any) => {
+      if (!response) {
+        throw new Error('Aucune donnée reçue');
+      }
+      
+      // Debug: Log the raw response
+      console.log('Raw profile response:', response);
+      
+      return {
+        id: response._id || response.id || '', // Handle both _id (Mongo) and id
+        nom: response.nom || '',
+        prenom: response.prenom || '',
+        email: response.email || '',
+        numTel: response.numTel || '',
+        role: response.role as Role,
+        fonction: response.fonction || '',
+        nomEtablissement: response.nomEtablissement || '',
+        etablissementId: response.etablissementId || '', // Don't override if exists
+        structure: response.structure || '',
+        linkedInLink: response.linkedInLink || '',
+        enabled: response.enabled || false,
+        passwordChangeRequired: response.passwordChangeRequired || false,
+        isPartenaire: response.isPartenaire || false,
+        espacesResponsables: response.espacesResponsables || []
+      };
+    })
+  );
+}
 
 
 

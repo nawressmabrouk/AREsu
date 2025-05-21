@@ -1,28 +1,36 @@
 <div class="spaces-container">
   <!-- Header -->
   <header class="spaces-header">
-    <div class="header-content">
-      <div class="header-brand">
-        <div class="logo">logo</div>
-        <div class="site-name">Université de Sousse</div>
-      </div>
-
-      <div class="header-title">
-        <h1 class="page-title">Etablissement Disponibles</h1>
-        <p class="page-subtitle" *ngIf="!selectedEtablissement">
-          Sélectionnez un établissement et réservez l'espace qui vous convient
-        </p>
-        <p class="page-subtitle" *ngIf="selectedEtablissement">
-          Espaces disponibles pour {{ selectedEtablissement.nom }}
-        </p>
-      </div>
-
+  <div class="header-content">
+    <div class="header-brand">
+      <img src="/logo2.png" alt="Université de Sousse" class="logo-image" >
      
-        <app-profile [user]="currentUser"></app-profile>
- 
     </div>
-  </header>
 
+ <h1 class="page-title">
+        {{ selectedEtablissement ? 'Espaces Disponibles' : 'Établissements disponibles' }}
+      </h1>
+        <p class="page-subtitle">
+        {{ selectedEtablissement 
+           ? 'Sélectionnez un espace dans ' + selectedEtablissement.nom 
+           : 'Sélectionnez un établissement et réservez l\'espace qui vous convient' }}
+      </p>
+
+    <app-profile   class="profile-icon" [user]="currentUser"></app-profile>
+  </div>
+   
+</header>
+
+
+
+    <div class="header-title">
+    
+    
+    </div>
+
+
+
+    
   <!-- Establishment Filters -->
   <section class="filters-section" *ngIf="!selectedEtablissement">
     <div class="filter-controls">
@@ -97,27 +105,33 @@
         <fa-icon [icon]="faArrowLeft"></fa-icon> Retour aux établissements
       </button>
       
-      <div class="space-filters">
-        <div class="filter-group">
-          <label class="filter-label">Catégorie :</label>
-          <select class="filter-select" [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
-            <option [ngValue]="null">Toutes les catégories</option>
-            <option *ngFor="let category of categories" [ngValue]="category">
-              {{category.label}}
-            </option>
-          </select>
-        </div>
-      
-        <div class="filter-group" *ngIf="selectedCategory">
-          <label class="filter-label">Type d'espace :</label>
-          <select class="filter-select" [(ngModel)]="selectedSubcategory" (change)="filterSpaces()">
-            <option [ngValue]="null">Tous les types</option>
-            <option *ngFor="let type of selectedCategory?.types" [value]="type">
-              {{type}}
-            </option>
-          </select>
-        </div>
-      </div>
+<div class="space-filters">
+  <div class="filter-controls">
+    <div class="filter-group">
+      <label class="filter-label">Catégorie :</label>
+      <select class="filter-select" [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
+        <option [ngValue]="null">Toutes les catégories</option>
+        <option *ngFor="let category of categories" [ngValue]="category">
+          {{category.label}}
+        </option>
+      </select>
+    </div>
+  
+    <div class="filter-group" *ngIf="selectedCategory">
+      <label class="filter-label">Type d'espace :</label>
+      <select class="filter-select" [(ngModel)]="selectedSubcategory" (change)="filterSpaces()">
+        <option [ngValue]="null">Tous les types</option>
+        <option *ngFor="let type of selectedCategory?.types" [value]="type">
+          {{type}}
+        </option>
+      </select>
+    </div>
+
+    <button class="btn reset-btn" (click)="resetSpaceFilters()" *ngIf="selectedCategory">
+      <fa-icon [icon]="faSyncAlt"></fa-icon> Réinitialiser
+    </button>
+  </div>
+</div>
     
       <div class="espaces-grid" *ngIf="filteredEspaces.length > 0; else noEspaces">
         <article *ngFor="let espace of filteredEspaces" class="espace-card" (click)="navigateToSelectionCalendar(espace)">
@@ -142,9 +156,7 @@
         <div class="no-results-message">
           <fa-icon [icon]="faInfoCircle" size="2x"></fa-icon>
           <p>Aucun espace ne correspond à ce filtre.</p>
-          <button class="btn reset-btn" (click)="resetSpaceFilters()">
-            <fa-icon [icon]="faSyncAlt"></fa-icon> Réinitialiser les filtres
-          </button>
+          
         </div>
       </ng-template>
     </section>

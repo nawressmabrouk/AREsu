@@ -20,6 +20,7 @@ public class UserMapper {
         dto.setNomEtablissement(user.getNomEtablissement());
         dto.setStructure(user.getStructure());
         dto.setLinkedInLink(user.getLinkedInLink());
+          dto.setEtablissementId(user.getEtablissementId());
         return dto;
     }
 
@@ -38,6 +39,7 @@ public class UserMapper {
         user.setPassword(dto.getPassword());
         user.setStructure(dto.getStructure());
         user.setLinkedInLink(dto.getLinkedInLink());
+        user.setEtablissementId(dto.getEtablissementId());
         return user;
     }
 }

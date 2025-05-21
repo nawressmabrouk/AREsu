@@ -1,5 +1,7 @@
 package tn.sousse.univ.reservation_app.services;
 
+import java.security.GeneralSecurityException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -28,15 +30,17 @@ import tn.sousse.univ.reservation_app.repositories.UserRepository;
 @Service
 public class SecretaireGeneraleService {
 
-    private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleService.class);
+
 
     @Autowired
     private ReservationRepository reservationRepository;
 
 
- @Autowired
+    @Autowired
     private UserRepository userRepository; 
     
+
+
     
     @Autowired
     private NotificationService notificationService;
@@ -53,7 +57,7 @@ public class SecretaireGeneraleService {
 
     @Autowired
 private EtablissementRepository etablissementRepository;
-    
+    private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleService.class);
     // Getter methods
     public List<Reservation> getReservationsViewedBySG() {
         return reservationRepository.findAll().stream()
@@ -206,58 +210,68 @@ public void ensureEtablissementIdExists(Reservation reservation) {
         reservationRepository.save(reservation);
     }
 }
-    public void processDecision(String reservationId, boolean accepted, 
-                             List<String> approvedEquipments, String decidedBy) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
-
-        // ENSURE ESTABLISHMENT ID EXISTS
-        ensureEtablissementIdExists(reservation);
-
-        Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
-                .orElseThrow(() -> new RuntimeException("Etablissement not found"));
-        
-        // STRICT CALENDAR VALIDATION
-        if (etab.getGoogleCalendarId() == null) {
-            throw new IllegalStateException("No calendar ID configured for establishment: " + etab.getNom());
+public void processDecision(String reservationId,
+                            boolean accepted,
+                            List<String> approvedEquipements,
+                            String decidedBy) {
+    // 1) Load the reservation
+    Reservation reservation = reservationRepository.findById(reservationId)
+        .orElseThrow(() -> new RuntimeException("Reservation not found: " + reservationId));
+  if (accepted && approvedEquipements != null) {
+        if (!reservation.getEquipements().containsAll(approvedEquipements)) {
+            throw new IllegalArgumentException("Équipements approuvés non inclus dans la demande");
         }
-
-        if (accepted) {
-            try {
-                Event event = new Event()
-                        .setSummary(reservation.getIntituleAction())
-                        .setDescription(reservation.getDescription())
-                        .setStart(new EventDateTime().setDateTime(new DateTime(reservation.getHeureDebut())))
-                        .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin())))
-                        // ADDED RESERVATION TRACKING
-                        .setExtendedProperties(new Event.ExtendedProperties()
-                                .setPrivate(Map.of("reservationId", reservationId)));
-
-                logger.info("Creating event in calendar {} for establishment {}", 
-                    etab.getGoogleCalendarId(), etab.getNom());
-
-                Event createdEvent = googleCalendarService.getGoogleCalendarClient()
-                        .events()
-                        .insert(etab.getGoogleCalendarId(), event)
-                        .execute();
-
-                reservation.setStatut(StatusReservation.ACCEPTÉE);
-                reservation.setGoogleEventId(createdEvent.getId());
-            } catch (Exception e) {
-                logger.error("Failed to create calendar event", e);
-                throw new RuntimeException("Failed to process reservation acceptance", e);
-            }
-        } else {
-            reservation.setStatut(StatusReservation.REFUSÉE);
-        }
-
-        reservation.setDecideePar(decidedBy);
-        reservationRepository.save(reservation);
-        
-        // In your reservation confirmation logic:
-logger.info("Adding event to calendar {} for {}", 
-    etab.getGoogleCalendarId(), etab.getNom());
+        reservation.setApprovedEquipements(approvedEquipements); // ← Ligne manquante
+    } else {
+        reservation.setApprovedEquipements(Collections.emptyList());
     }
+
+
+    // 2) Ensure the établissementId is set on the reservation
+    if (reservation.getEtablissementId() == null) {
+        Espace espace = espaceRepository.findById(reservation.getEspaceId())
+            .orElseThrow(() -> new RuntimeException("Espace not found: " + reservation.getEspaceId()));
+        reservation.setEtablissementId(espace.getEtablissementId());
+        reservationRepository.save(reservation);
+    }
+
+    // 3) Load the établissement and its Google Calendar ID
+    Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
+        .orElseThrow(() -> new RuntimeException("Etablissement not found: " + reservation.getEtablissementId()));
+    String calendarId = etab.getGoogleCalendarId();
+    if (calendarId == null || calendarId.isEmpty()) {
+        throw new IllegalStateException("No Google Calendar configured for établissement: " + etab.getNom());
+    }
+    if (accepted) {
+        if (approvedEquipements == null) {
+            approvedEquipements = Collections.emptyList();
+        }
+        reservation.setApprovedEquipements(approvedEquipements);
+    } else {
+        reservation.setApprovedEquipements(Collections.emptyList());
+    }
+    // 4) If accepted, push into the calendar and make it visible
+    if (accepted) {
+        try {
+            // confirmReservation will wrap any checked exceptions in a RuntimeException
+            googleCalendarService.confirmReservation(reservation.getId());
+            // forceCalendarDisplay may throw checked exceptions internally—caught below
+            googleCalendarService.forceCalendarDisplay(calendarId);
+        } catch (Exception e) {
+            logger.error("Failed to sync reservation {} into Google Calendar {}", reservationId, calendarId, e);
+            throw new RuntimeException("Error while pushing to Google Calendar", e);
+        }
+        reservation.setStatut(StatusReservation.ACCEPTÉE);
+    } else {
+        reservation.setStatut(StatusReservation.REFUSÉE);
+    }
+
+    // 5) Record the decision and save
+    reservation.setDecideePar(decidedBy);
+    reservationRepository.save(reservation);
+
+    // 6) (Optional) send out your notifications / emails here…
+}
 
     
 private void sendNotificationsAndEmails(Reservation reservation, StatusReservation status) {

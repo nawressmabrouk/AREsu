@@ -1,27 +1,21 @@
-/*export interface CalendarSlotDTO {
-  id: string;
-  heureDebut: string | Date;  // Can be either string or Date
-  heureFin: string | Date;    // Can be either string or Date
-  reserved: boolean;
-   date: string;
-  // Add any other properties your API returns
-  [key: string]: any; // For additional dynamic properties
-}
-*/
+// src/app/shared/interfaces/calendar-slot.dto.ts
+
+import { StatusReservation } from '../../models/reservation.model';
 
 export interface CalendarSlotDTO {
-  selectable: boolean;
   id: string;
-  heureDebut: Date;
-  heureFin: Date;
-  espaceId: string;
+  heureDebut:  Date;
+  heureFin:   Date;
   etablissementId: string;
-  reserved: boolean;
-  statut: 'ACCEPTÉE' | 'EN_ATTENTE' | 'ANNULÉE';
+  espaceId:       string;
   intituleAction?: string;
-  description?: string;
+  description?:    string;
+  
 
+  // <— instead of `"ACCEPTÉE" | "EN_ATTENTE" | "ANNULÉE"`
+  statut: StatusReservation;
+
+  // your extra UI flags
+  reserved:   boolean;
+  selectable: boolean;
 }
-
-
-

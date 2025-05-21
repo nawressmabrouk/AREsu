@@ -321,7 +321,7 @@ public class UserService {
         currentUser.setNomEtablissement(updatedData.getNomEtablissement());
         currentUser.setStructure(updatedData.getStructure());
         currentUser.setLinkedInLink(updatedData.getLinkedInLink());
-       
+        currentUser.setEtablissementId(updatedData.getEtablissementId());
         // Handle role change only for demandeurs
     if (updatedData.getRole() != null) {
         Role currentRole = currentUser.getRole();

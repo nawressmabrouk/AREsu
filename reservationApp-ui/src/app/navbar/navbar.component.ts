@@ -16,6 +16,8 @@ import { faHome, faSignInAlt, faUserPlus } from '@fortawesome/free-solid-svg-ico
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent {
+  pageName: string = '';
+   currentRoute: string = '';
   // Icons
   faHome = faHome;
   faSignInAlt = faSignInAlt;
@@ -23,13 +25,38 @@ export class NavbarComponent {
   faPageIcon = faSignInAlt; // You can change this to the appropriate icon
 
   // Page info
-  pageName = 'Authentication';
-  currentRoute = false; // You should set this based on actual route
+  updatePageName() {
+    switch (this.currentRoute) {
+      case 'auth':
+        this.pageName = 'Se connecter';
+        break;
+      case 'register':
+        this.pageName = 'S\'inscrire';
+        break;
+      case 'id-oublie':
+        this.pageName = 'password oublié';
+        break;
+      case 'spaces':
+        this.pageName = 'Espaces';
+        break;
+      
+      default:
+        this.pageName = 'Accueil';
+    }
+  }
 
-  constructor(private router: Router) {
-    // Example of setting currentRoute based on navigation
+
+
+
+constructor(private router: Router) {
+    // Surveiller les changements de route
     this.router.events.subscribe(() => {
-      this.currentRoute = this.router.url !== '/home';
+      this.currentRoute = this.router.url.split('?')[0].split('/').pop() || '';
+
+
+      this.updatePageName();
     });
   }
 }
+
+

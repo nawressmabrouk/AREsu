@@ -1,6 +1,6 @@
 
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ViewChild  } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -14,7 +14,7 @@ import {
   faHome,
   faKey,
   faSearch, faSpinner,
-  faTimesCircle
+  faTimesCircle , faCalendarAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { finalize, forkJoin } from 'rxjs';
 import { Reservation, StatusReservation } from '../models/reservation.model';
@@ -22,7 +22,8 @@ import { ReservationsCalendarComponent } from '../reservations-calendar/reservat
 import { AuthService } from '../services/auth/auth.service';
 import { SecretaryService } from '../services/secretary/secretary.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
-
+import { UserService } from '../services/user/user.service';
+import { User } from '../shared/interfaces/user.model';
 @Component({
   selector: 'app-secretary',
   standalone: true,
@@ -37,9 +38,10 @@ import { ProfileComponent } from '../shared/components/profile/profile.component
   styleUrls: ['./secretary.component.scss']
 })
 export class SecretaryComponent implements OnInit {
+     @ViewChild(ReservationsCalendarComponent) calendarComponent!: ReservationsCalendarComponent;
   // Expose enum to template
   StatusReservation = StatusReservation;
-
+ etablissementId: string = '';
   // Font Awesome icons
   faHome = faHome;
   faSearch = faSearch;
@@ -52,15 +54,15 @@ export class SecretaryComponent implements OnInit {
   faEyeSlash = faEyeSlash;
   faBars = faBars;
   faSpinner = faSpinner;
-
+faCalendarAlt = faCalendarAlt ;
   // UI states
  activeTab: StatusReservation = StatusReservation.EN_ATTENTE;
   searchTerm = '';
   currentPageTitle = 'Gestion des Réservations';
   currentPageSubtitle = 'Validation et contrôle des réservations des espaces';
-  activeSection: 'access' | 'unseen' | 'seen' = 'access';
+  activeSection: 'access' | 'unseen' | 'seen' | 'calendar' = 'access';
   isSidebarExpanded = false;
-
+  
   // User data
   currentUser = {
     role: 'secretaire',
@@ -102,22 +104,44 @@ loading: {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private secretaryService: SecretaryService
+    private secretaryService: SecretaryService , private userSvc :UserService
   ) {}
 
   ngOnInit(): void {
+    
     this.loadInitialData();
   }
 
-  private loadInitialData(): void {
-    this.loadToHandleReservations();
-    this.loadToViewReservations();
-    this.loadViewedReservations();
-    this.loadApprovedReservations();
-    this.loadRejectedReservations();
-     this.loadAcceptedReservations(); 
-   this.loadRefusedReservations();  
-  }
+private loadInitialData(): void {
+  this.userSvc.getProfile().subscribe({
+    next: (profile: User) => {
+      console.log('Full profile structure:', profile);
+      
+      // Temporary fallback - remove after backend fix
+      const effectiveEtabId = profile.etablissementId || '68036ba5bea561813e4008f7';
+      
+      if (!effectiveEtabId) {
+        console.error('No etablissementId available');
+        alert('Votre compte n\'est pas associé à un établissement');
+        return;
+      }
+      
+      this.etablissementId = effectiveEtabId;
+      console.log('Using establishment ID:', this.etablissementId);
+      
+      // Load reservation data
+      forkJoin([
+        this.loadToHandleReservations(),
+        this.loadToViewReservations(),
+        this.loadViewedReservations()
+      ]).subscribe();
+    },
+    error: (err) => {
+      console.error('Error loading profile:', err);
+      alert('Erreur de chargement du profil');
+    }
+  });
+}
 
 
 
@@ -248,19 +272,13 @@ approveRequest(reservation: Reservation): void {
     }
   }
 
-  // Create the request payload
-  const payload = {
-    accepted: true,
-    approvedEquipements: approvedEquipments
-  };
-
   // Show loading state
   this.loading['approving_' + reservation.id] = true;
 
   this.secretaryService.makeDecision(
     reservation.id, 
-    true, // accepted parameter
-    approvedEquipments // equipment list
+    true,
+    approvedEquipments
   ).pipe(
     finalize(() => {
       delete this.loading['approving_' + reservation.id];
@@ -270,26 +288,26 @@ approveRequest(reservation: Reservation): void {
       // Clean up and refresh data
       delete this.approvedEquipment[reservation.id];
       
-      // Refresh all relevant lists
+      // Refresh all relevant lists AND the calendar
       forkJoin([
         this.loadToHandleReservations(),
         this.loadApprovedReservations(),
         this.loadViewedReservations()
-      ]).subscribe();
+      ]).subscribe(() => {
+        // Refresh the calendar after lists are loaded
+        this.calendarComponent?.loadSlots();
+      });
       
       // Show success message
       alert('Réservation approuvée avec succès');
     },
     error: (err) => {
       console.error('Erreur lors de l\'approbation:', err);
-      
-      // Show detailed error message if available
       const errorMsg = err.error?.erreur || err.message || 'Une erreur est survenue';
       alert(`Échec de l'approbation: ${errorMsg}`);
     }
   });
 }
-
 rejectRequest(reservation: Reservation): void {
   this.secretaryService.makeDecision(reservation.id, false).subscribe({
     next: () => {
@@ -301,24 +319,29 @@ rejectRequest(reservation: Reservation): void {
     error: (err) => console.error('Error rejecting reservation:', err)
   });
 }
-  switchSection(section: 'access' | 'unseen' | 'seen'): void {
-    this.activeSection = section;
-    this.searchTerm = '';
-    
-    switch (section) {
-      case 'access':
-        this.currentPageTitle = 'Gestion des Réservations';
-        this.currentPageSubtitle = 'Validation et contrôle des accès utilisateurs';
-        break;
-      case 'unseen':
-        this.currentPageTitle = 'Demandes non vues';
-        this.currentPageSubtitle = 'Liste des demandes non encore consultées';
-        break;
-      default:
-        this.currentPageTitle = 'Demandes vues';
-        this.currentPageSubtitle = 'Liste des demandes déjà consultées';
-    }
+switchSection(section: 'access' | 'unseen' | 'seen' | 'calendar'): void {
+  this.activeSection = section;
+  this.searchTerm = '';
+  
+  switch (section) {
+    case 'access':
+      this.currentPageTitle = 'Gestion des Réservations';
+      this.currentPageSubtitle = 'Validation et contrôle des réservations des espaces';
+      break;
+    case 'unseen':
+      this.currentPageTitle = 'Demandes non vues';
+      this.currentPageSubtitle = 'Liste des demandes des espaces non encore consultées';
+      break;
+    case 'seen':
+      this.currentPageTitle = 'Demandes déjà vues';
+      this.currentPageSubtitle = 'Liste des demandes des espaces déjà consultées';
+      break;
+    case 'calendar':
+      this.currentPageTitle = 'Calendrier des Réservations';
+      this.currentPageSubtitle = 'Visualisation des réservations par calendrier';
+      break;
   }
+}
 
   toggleEquipment(reservation: Reservation, equipment: string): void {
     const index = reservation.equipements.indexOf(equipment);
@@ -422,7 +445,10 @@ handleCancel(reservation: Reservation): void {
           this.loadApprovedReservations(),
           this.loadRejectedReservations(),
           this.loadViewedReservations()
-        ]).subscribe();
+        ]).subscribe(() => {
+          // Refresh the calendar after lists are loaded
+          this.calendarComponent?.loadSlots();
+        });
       },
       error: (err) => {
         console.error('Erreur lors de l\'annulation:', err);
