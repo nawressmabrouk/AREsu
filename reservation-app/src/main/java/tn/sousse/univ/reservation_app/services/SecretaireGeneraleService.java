@@ -270,7 +270,7 @@ public void processDecision(String reservationId,
     reservation.setDecideePar(decidedBy);
     reservationRepository.save(reservation);
 
-    // 6) (Optional) send out your notifications / emails here…
+  senNotificationsAndEmails( reservation ,reservation.getStatus())
 }
 
     

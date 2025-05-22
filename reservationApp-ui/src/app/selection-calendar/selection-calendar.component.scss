@@ -519,11 +519,11 @@ border: 1px solid white;}
 
 // nouveau design 
      .logo-image {
-  max-width: 120px; /* 15% de la largeur de l'écran */
+  max-width: 160px; /* 15% de la largeur de l'écran */
   height: auto;
  
   position: relative;
-  top: -10px;
+  top: -20px;
   right: -60px;
 }
 
@@ -571,7 +571,7 @@ border: 1px solid white;}
   height: auto;
  
   position: relative;
-  top: -170px;
+  top: -210px;
   right: -2200px;
 
 
@@ -595,7 +595,7 @@ border: 1px solid white;}
   justify-content: center;
   transition: all 0.3s ease;
  
-  top: -130px;
+  top: -170px;
   color: #ffffff; /* Couleur de texte profonde */
   text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.526); /* Ombre subtile */
   letter-spacing: 0.5px; /* Espacement des lettres */
