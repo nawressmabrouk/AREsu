@@ -1,29 +1,32 @@
-// notification.service.ts
+// Dans votre notification.service.ts
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
-  private notification = new BehaviorSubject<{type: string, message: string} | null>(null);
-  notification$ = this.notification.asObservable();
+  private notificationSubject = new Subject<any>();
+  notification$ = this.notificationSubject.asObservable();
+  
+  // Durée d'affichage en millisecondes (5 secondes au lieu de la valeur par défaut)
+  private displayDuration = 5000; 
 
   showSuccess(message: string) {
-    this.notification.next({ type: 'success', message });
-    this.clearAfterDelay();
+    this.notificationSubject.next({ type: 'success', message });
+    this.autoClear();
   }
 
   showError(message: string) {
-    this.notification.next({ type: 'error', message });
-    this.clearAfterDelay();
+    this.notificationSubject.next({ type: 'error', message });
+    this.autoClear();
   }
 
   clear() {
-    this.notification.next(null);
+    this.notificationSubject.next(null);
   }
 
-  private clearAfterDelay(delay: number = 5000) {
-    setTimeout(() => this.clear(), delay);
+  private autoClear() {
+    setTimeout(() => this.clear(), this.displayDuration);
   }
 }

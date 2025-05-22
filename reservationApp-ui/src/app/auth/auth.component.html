@@ -122,7 +122,7 @@
               </div>
 
               <!-- Type d'utilisateur -->
-              <div class="form-group full-width">
+              <div class="form-group ">
                 <label>Type d'utilisateur</label>
                 <div class="radio-group">
                   <label>
@@ -135,7 +135,17 @@
                   </label>
                 </div>
               </div>
-
+              <div class="form-group ">
+  <label>Êtes-vous partenaire avec l'établissement ?</label>
+  <div class="radio-group">
+    <label>
+      <input type="radio" name="is-partenaire" [(ngModel)]="registerData.isPartenaire" [value]="true" required> Oui
+    </label>
+    <label>
+      <input type="radio" name="is-partenaire" [(ngModel)]="registerData.isPartenaire" [value]="false" required> Non
+    </label>
+  </div>
+</div>
               <!-- Mot de passe -->
               <div class="form-group">
                 <label>Mot de passe</label>

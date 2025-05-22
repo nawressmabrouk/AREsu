@@ -57,7 +57,9 @@ export class RegisterComponent {
     linkedin: '',
     structure: '',
     role: '',
-    password: ''
+    password: '', 
+     isPartenaire: null  
+
   };
 
   loginData = {
@@ -139,25 +141,27 @@ export class RegisterComponent {
   }
 
   // Registration Submit
-  onRegisterSubmit(event: Event) {
-    event.preventDefault();
-    this.errorMessage = null;
+onRegisterSubmit(event: Event) {
+  event.preventDefault();
+  this.errorMessage = null;
 
-    if (!this.validateRegistration()) return;
+  if (!this.validateRegistration()) return;
 
-    this.isLoading = true;
+  this.isLoading = true;
 
-    this.registrationService.register(this.registerData).subscribe({
-      next: () => {
-        this.isLoading = false;
-        this.notificationService.showSuccess('Inscription réussie !');
-        this.toggleView();
-      },
-      error: (error) => {
-        this.handleRegistrationError(error);
-      }
-    });
-  }
+  this.registrationService.register(this.registerData).subscribe({
+    next: () => {
+      this.isLoading = false;
+      this.notificationService.showSuccess(
+        'Inscription réussie ! Veuillez vérifier votre email pour activer votre compte.'
+      );
+      this.toggleView();
+    },
+    error: (error) => {
+      this.handleRegistrationError(error);
+    }
+  });
+}
 
   private validateRegistration(): boolean {
     if (Object.values(this.registerData).some(value => !value)) {
