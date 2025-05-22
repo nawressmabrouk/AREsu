@@ -1,6 +1,7 @@
 package tn.sousse.univ.reservation_app.repositories;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -19,4 +20,5 @@ public interface EtablissementRepository extends MongoRepository<Etablissement, 
     List<Etablissement> findByGoogleCalendarIdIsNull();
 
     Etablissement findByGoogleCalendarId(String calendarId);
+     Optional<Etablissement> findByAdminId(String adminId);
 }

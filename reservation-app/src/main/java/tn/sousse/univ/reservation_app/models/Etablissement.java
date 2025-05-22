@@ -23,6 +23,7 @@ public class Etablissement {
     private String adresse;
     private Zone zone; // CHOTT_MERIEM SAHLOUL_HAMMAM_SOUSSE CENTRE_VILLE_CITE_RIADH
     private TypeEtablissement type; // INSTITUT ECOLE FACULTE
+    private String adminId;
 
     private String secretaireGeneraleId;
     private String logo; // base64 string

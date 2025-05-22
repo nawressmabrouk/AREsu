@@ -4,13 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import tn.sousse.univ.reservation_app.models.Espace;
+import tn.sousse.univ.reservation_app.models.Etablissement;
 import tn.sousse.univ.reservation_app.models.Role;
 import tn.sousse.univ.reservation_app.models.User;
 import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
+import tn.sousse.univ.reservation_app.repositories.EtablissementRepository;
 import tn.sousse.univ.reservation_app.repositories.UserRepository;
+import tn.sousse.univ.reservation_app.security.CustomUserDetails;
 
 @Service
 public class AdminService {
@@ -21,38 +26,56 @@ public class AdminService {
     @Autowired
     private EspaceRepository espaceRepository;
 
-    /*
-     * @Autowired
-     * private EmailService emailService;
-     */
+    @Autowired
+    private EtablissementRepository etablissementRepository;
 
-    // Ajouter un nouvel espace
-    public Espace ajouterEspace(String responsableId, Espace espace) {
-        User user = userRepository.findById(responsableId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-    
-        // Modifier la vérification du rôle
-        if (user.getRole() != Role.RESPONSABLE_SALLE && user.getRole() != Role.SECRETAIRE_GENERALE) {
-            throw new RuntimeException("L'utilisateur doit être un Responsable Salle ou Secrétaire Générale");
-        }
-    
-        espace.setResponsableId(responsableId);
-        espace = espaceRepository.save(espace);
-    
-        if (user.getEspacesResponsables() == null) {
-            user.setEspacesResponsables(new ArrayList<>());
-        }
-    
-        user.getEspacesResponsables().add(espace.getId());
-        userRepository.save(user);
-    
-        return espace;
+public Espace ajouterEspace(String responsableId, Espace espace) {
+    User user = userRepository.findById(responsableId)
+            .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+    // Vérification du rôle
+    if (user.getRole() != Role.RESPONSABLE_SALLE && user.getRole() != Role.SECRETAIRE_GENERALE) {
+        throw new RuntimeException("L'utilisateur doit être un Responsable Salle ou Secrétaire Générale");
     }
 
-    // Modifier un espace
+    // Vérifier que le responsable appartient au même établissement que l'admin
+    User currentAdmin = getCurrentAdmin();
+    Etablissement etablissement = etablissementRepository.findByAdminId(currentAdmin.getId())
+            .orElseThrow(() -> new RuntimeException("Établissement non trouvé"));
+    
+    // Compare by etablissementId instead of nomEtablissement
+    if (!user.getEtablissementId().equals(etablissement.getId())) {
+        throw new RuntimeException("Le responsable n'appartient pas à votre établissement");
+    }
+
+    espace.setResponsableId(responsableId);
+    espace.setEtablissementId(etablissement.getId());
+    espace.setEtablissementNom(etablissement.getNom());
+    espace = espaceRepository.save(espace);
+
+    if (user.getEspacesResponsables() == null) {
+        user.setEspacesResponsables(new ArrayList<>());
+    }
+
+    user.getEspacesResponsables().add(espace.getId());
+    userRepository.save(user);
+
+    return espace;
+}
+
+    // Modifier un espace dans l'établissement de l'admin
     public Espace modifierEspace(String espaceId, Espace espaceModifie) {
         Espace espace = espaceRepository.findById(espaceId)
                 .orElseThrow(() -> new RuntimeException("Espace not found"));
+
+        // Vérifier que l'espace appartient à l'établissement de l'admin
+        User currentAdmin = getCurrentAdmin();
+        Etablissement etablissement = etablissementRepository.findByAdminId(currentAdmin.getId())
+                .orElseThrow(() -> new RuntimeException("Établissement non trouvé"));
+        
+        if (!espace.getEtablissementId().equals(etablissement.getId())) {
+            throw new RuntimeException("Vous n'avez pas les droits pour modifier cet espace");
+        }
 
         espace.setNom(espaceModifie.getNom());
         espace.setCapacite(espaceModifie.getCapacite());
@@ -61,43 +84,38 @@ public class AdminService {
         espace.setCategorie(espaceModifie.getCategorie()); 
         espace.setType(espaceModifie.getType());
         espace.setResponsableId(espaceModifie.getResponsableId());
-        espace.setEtablissementId(espaceModifie.getEtablissementId());
         return espaceRepository.save(espace);
     }
 
-    /*Supprimer un espace
-    public void supprimerEspace(String responsableId, String espaceId) {
-        User responsable = userRepository.findById(responsableId)
-                .orElseThrow(() -> new RuntimeException("Responsable not found"));
-
-        if (!responsable.getEspacesResponsables().contains(espaceId)) {
-            throw new RuntimeException("User does not manage this space.");
-        }
-
-        espaceRepository.deleteById(espaceId);
-
-        // Remove space from user's list
-        responsable.getEspacesResponsables().remove(espaceId);
-        userRepository.save(responsable);
-    }*/
-
-     public void supprimerEspace(String responsableId, String espaceId) {
-        // Vérification supplémentaire de cohérence
+    public void supprimerEspace(String espaceId) {
         Espace espace = espaceRepository.findById(espaceId)
             .orElseThrow(() -> new IllegalArgumentException("Espace introuvable"));
         
-        if (!espace.getResponsableId().equals(responsableId)) {
-            throw new IllegalArgumentException("Incohérence responsable/espace");
+        // Vérifier que l'espace appartient à l'établissement de l'admin
+        User currentAdmin = getCurrentAdmin();
+        Etablissement etablissement = etablissementRepository.findByAdminId(currentAdmin.getId())
+                .orElseThrow(() -> new RuntimeException("Établissement non trouvé"));
+        
+        if (!espace.getEtablissementId().equals(etablissement.getId())) {
+            throw new RuntimeException("Vous n'avez pas les droits pour supprimer cet espace");
         }
         
         espaceRepository.delete(espace);
     }
 
-    public List<User> getResponsablesSalle() {
-    return userRepository.findByRole(Role.RESPONSABLE_SALLE);
+    // Get responsables for current admin's establishment
+public List<User> getResponsablesSalle() {
+    User currentAdmin = getCurrentAdmin();
+    Etablissement etablissement = etablissementRepository.findByAdminId(currentAdmin.getId())
+            .orElseThrow(() -> new RuntimeException("Établissement non trouvé"));
+    
+    return userRepository.findByRoleAndEtablissementId(Role.RESPONSABLE_SALLE, etablissement.getId());
 }
 
-// Modification de sous admin
+
+
+
+
 public User updateAdmin(String adminId, User updatedUser) {
     User existingUser = userRepository.findById(adminId)
         .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
@@ -105,6 +123,16 @@ public User updateAdmin(String adminId, User updatedUser) {
     // Vérification du rôle
     if(!isValidRole(updatedUser.getRole())) {
         throw new IllegalArgumentException("Rôle invalide");
+    }
+
+    // Vérifier que l'utilisateur appartient à l'établissement de l'admin
+    User currentAdmin = getCurrentAdmin();
+    Etablissement etablissement = etablissementRepository.findByAdminId(currentAdmin.getId())
+            .orElseThrow(() -> new RuntimeException("Établissement non trouvé"));
+    
+    // Compare by ID instead of name
+    if (!existingUser.getEtablissementId().equals(etablissement.getId())) {
+        throw new RuntimeException("Vous n'avez pas les droits pour modifier cet utilisateur");
     }
 
     existingUser.setNom(updatedUser.getNom());
@@ -118,29 +146,82 @@ public User updateAdmin(String adminId, User updatedUser) {
     return userRepository.save(existingUser);
 }
 
-public void deleteAdmin(String adminId) {
-    User admin = userRepository.findById(adminId)
-        .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-    // Nettoyage des espaces associés
-    if(admin.getEspacesResponsables() != null && !admin.getEspacesResponsables().isEmpty()) {
-        espaceRepository.deleteAllById(admin.getEspacesResponsables());
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public void deleteAdmin(String adminId) {
+        User admin = userRepository.findById(adminId)
+            .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        // Vérifier que l'utilisateur appartient à l'établissement de l'admin
+       User currentAdmin = getCurrentAdmin();
+Etablissement etablissement = etablissementRepository.findByAdminId(currentAdmin.getId())
+        .orElseThrow(() -> new RuntimeException("Établissement non trouvé"));
+
+System.out.println("Admin's establishment: " + etablissement.getNom() + " (" + etablissement.getId() + ")");
+
+        if (!admin.getNomEtablissement().equals(etablissement.getNom())) {
+            throw new RuntimeException("Vous n'avez pas les droits pour supprimer cet utilisateur");
+        }
+
+        // Nettoyage des espaces associés
+        if(admin.getEspacesResponsables() != null && !admin.getEspacesResponsables().isEmpty()) {
+            espaceRepository.deleteAllById(admin.getEspacesResponsables());
+        }
+
+        userRepository.delete(admin);
     }
 
-    userRepository.delete(admin);
-}
-
-private boolean isValidRole(Role role) {
-    return role == Role.SECRETAIRE_GENERALE || role == Role.RESPONSABLE_SALLE;
-}
-
-public List<Espace> getAllEspaces() {
-    return espaceRepository.findAll(); // Supposant que vous avez un repository pour Espace
-}
+    // Get spaces for current admin's establishment
+    public List<Espace> getAllEspaces() {
+        User currentAdmin = getCurrentAdmin();
+        Etablissement etablissement = etablissementRepository.findByAdminId(currentAdmin.getId())
+                .orElseThrow(() -> new RuntimeException("Établissement non trouvé"));
+        
+        return espaceRepository.findByEtablissementId(etablissement.getId());
+    }
 
     public boolean espaceExists(String espaceId) {
         return espaceRepository.existsById(espaceId);
     }
 
-}
+    private boolean isValidRole(Role role) {
+        return role == Role.SECRETAIRE_GENERALE || role == Role.RESPONSABLE_SALLE;
+    }
 
+    public User getCurrentAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("No authenticated user found");
+        }
+        
+        Object principal = authentication.getPrincipal();
+        
+        if (!(principal instanceof CustomUserDetails)) {
+            throw new RuntimeException("Unexpected principal type");
+        }
+        
+        CustomUserDetails userDetails = (CustomUserDetails) principal;
+        
+        User user = userRepository.findById(userDetails.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (user.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Current user is not an admin");
+        }
+        
+        return user;
+    }
+}

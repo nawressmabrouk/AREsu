@@ -15,7 +15,9 @@ import { AuthService } from '../services/auth/auth.service';
 import { CalendarService } from '../services/calendar/calendar.service';
 import { Etablissement, EtablissementService } from '../services/etablissement/etablissement.service';
 import { CalendarSlotDTO } from '../shared/interfaces/calendar-slot.dto';
-
+import { MatIconModule } from '@angular/material/icon';
+import { ProfileComponent } from '../shared/components/profile/profile.component';
+import { MatButtonModule } from '@angular/material/button';
 @Injectable()
 export class CustomDateFnsAdapter extends DateFnsAdapter {
   constructor() {
@@ -33,7 +35,7 @@ export class CustomDateFnsAdapter extends DateFnsAdapter {
     RouterModule,
     MatDatepickerModule,
     MatInputModule,
-    MatFormFieldModule  
+    MatFormFieldModule  , MatIconModule , ProfileComponent , MatButtonModule
   ],
   selector: 'app-selection-calendar',
   templateUrl: './selection-calendar.component.html',
@@ -59,9 +61,13 @@ export class CustomDateFnsAdapter extends DateFnsAdapter {
     { provide: MAT_DATE_LOCALE, useValue: enUS }
   ]
 })
+
+
 export class SelectionCalendarComponent {
   currentDate = new Date();
-  timeSlots: string[] = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+timeSlots: string[] = Array.from({ length: 24 }, (_, i) => {
+  return `${i}:00`; // Proper time format like "0:00", "1:00", etc.
+});
   selectedStartTime: string | null = null;
   selectedEndTime: string | null = null;
   isLoading = false;
@@ -71,7 +77,7 @@ export class SelectionCalendarComponent {
   reservedDates: Date[] = [];
   dateControl = new FormControl(new Date());
    isLoadingEtablissements = false;
-
+currentUser : any ; 
  etablissementId: string | null = null;
   espaceId: string | null = null;
   selectedEtablissement: Etablissement | null = null;
@@ -104,7 +110,14 @@ export class SelectionCalendarComponent {
         this.errorMessage = 'Missing establishment or space information';
       }
     });
+     this.generateMonthDays();
   }
+isPreviousDayDisabled(): boolean {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return this.selectedDate <= today;
+}
+
 
   // Date filter function that disables weekends and reserved dates
   dateFilter = (date: Date | null): boolean => {
@@ -400,4 +413,190 @@ private processSlots(slots: CalendarSlotDTO[]): void {
     );
   });
 }
+
+
+
+weekDays = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+monthDays: {date: Date, isCurrentMonth: boolean}[] = [];
+currentMonth = new Date();
+
+
+
+isSameDay(date1: Date, date2: Date): boolean {
+  return date1.getDate() === date2.getDate() && 
+         date1.getMonth() === date2.getMonth() && 
+         date1.getFullYear() === date2.getFullYear();
+}
+
+
+selectDay(date: Date) {
+  if (this.isDayAvailable(date)) {
+    this.selectedDate = date;
+    this.dateControl.setValue(date);
+    this.loadReservedDates();
+  }
+}
+
+// Ajoutez ces méthodes pour naviguer entre les mois
+prevMonth() {
+  this.currentMonth = new Date(
+    this.currentMonth.getFullYear(),
+    this.currentMonth.getMonth() - 1,
+    1
+  );
+  this.generateMonthDays();
+}
+
+nextMonth() {
+  this.currentMonth = new Date(
+    this.currentMonth.getFullYear(),
+    this.currentMonth.getMonth() + 1,
+    1
+  );
+  this.generateMonthDays();
+}
+
+// Et la méthode generateMonthDays() que vous avez déjà
+generateMonthDays() {
+  this.monthDays = [];
+  const year = this.currentMonth.getFullYear();
+  const month = this.currentMonth.getMonth();
+  
+  // Premier jour du mois
+  const firstDay = new Date(year, month, 1);
+  // Dernier jour du mois
+  const lastDay = new Date(year, month + 1, 0);
+  
+  // Jours du mois précédent à afficher
+  const startDay = firstDay.getDay(); // 0=Dimanche, 1=Lundi, etc.
+  const prevMonthDays = startDay > 0 ? startDay : 0;
+  
+  // Jours du mois suivant à afficher
+  const totalCells = Math.ceil((lastDay.getDate() + prevMonthDays) / 7) * 7;
+  const nextMonthDays = totalCells - (lastDay.getDate() + prevMonthDays);
+  
+  // Ajouter les jours du mois précédent
+  for (let i = prevMonthDays; i > 0; i--) {
+    const date = new Date(year, month, -i + 1);
+    this.monthDays.push({date, isCurrentMonth: false});
+  }
+  
+  // Ajouter les jours du mois courant
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const date = new Date(year, month, i);
+    this.monthDays.push({date, isCurrentMonth: true});
+  }
+  
+  // Ajouter les jours du mois suivant
+  for (let i = 1; i <= nextMonthDays; i++) {
+    const date = new Date(year, month + 1, i);
+    this.monthDays.push({date, isCurrentMonth: false});
+  }
+
+
+}
+
+
+prevDay() {
+  const newDate = new Date(this.selectedDate);
+  newDate.setDate(newDate.getDate() - 1);
+  
+  // Empêche la navigation vers les dates passées
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (newDate >= today) {
+    this.selectedDate = newDate;
+    this.dateControl.setValue(newDate);
+    this.loadReservedDates();
+    this.loadAvailability(newDate); // Si vous utilisez cette méthode
+  }
+}
+
+nextDay() {
+  const newDate = new Date(this.selectedDate);
+  newDate.setDate(newDate.getDate() + 1);
+  this.selectedDate = newDate;
+  this.dateControl.setValue(newDate);
+  this.loadReservedDates();
+  this.loadAvailability(newDate); // Si vous utilisez cette méthode
+}
+// Vérifie si c'est aujourd'hui
+isToday(): boolean {
+  const today = new Date();
+  return (
+    this.selectedDate.getDate() === today.getDate() &&
+    this.selectedDate.getMonth() === today.getMonth() &&
+    this.selectedDate.getFullYear() === today.getFullYear()
+  );
+}
+
+
+
+// Vérifie si le jour est disponible (pas weekend ou réservé)
+isDayAvailable(date: Date): boolean {
+  return this.dateFilter(date);
+}
+
+
+
+
+getCurrentPosition(): number {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  return currentHour + (currentMinute / 60);
+}
+isCurrentTimeBetween(index: number): boolean {
+  if (!this.isToday() || index >= this.timeSlots.length - 1) return false;
+  
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTimeInHours = currentHour + (currentMinute / 60);
+  
+  const startTime = this.timeSlots[index];
+  const endTime = this.timeSlots[index + 1];
+  
+  const startHour = parseInt(startTime.split(':')[0]);
+  const endHour = parseInt(endTime.split(':')[0]);
+  
+  return currentTimeInHours >= startHour && currentTimeInHours < endHour;
+}
+
+
+shouldShowCurrentTime(time: string, index: number): boolean {
+  if (!this.isToday()) return false;
+  
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTotalMinutes = currentHour * 60 + currentMinute;
+  
+  // Parse the time slot (e.g., "1:00" -> 1)
+  const slotHour = parseInt(time.split(':')[0]);
+  const nextSlotHour = index < this.timeSlots.length - 1 
+    ? parseInt(this.timeSlots[index + 1].split(':')[0])
+    : 24;
+  
+  const slotStartMinutes = slotHour * 60;
+  const slotEndMinutes = nextSlotHour * 60;
+  
+  return currentTotalMinutes >= slotStartMinutes && 
+         currentTotalMinutes < slotEndMinutes;
+}
+
+get currentTime(): string {
+  const now = new Date();
+  return format(now, 'HH:mm'); // Format 24h
+}
+
+
+
+navigateToSpaces() {
+  console.log('Button clicked'); // Should appear in browser console
+  this.router.navigate(['/spaces']);
+}
+
+
 }

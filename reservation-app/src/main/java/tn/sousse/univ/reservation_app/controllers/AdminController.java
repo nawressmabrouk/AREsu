@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import tn.sousse.univ.reservation_app.dto.UserDTO;
 import tn.sousse.univ.reservation_app.models.Espace;
+import tn.sousse.univ.reservation_app.models.Etablissement;
 import tn.sousse.univ.reservation_app.models.Role;
 import tn.sousse.univ.reservation_app.models.User;
+import tn.sousse.univ.reservation_app.repositories.EtablissementRepository;
 import tn.sousse.univ.reservation_app.repositories.UserRepository;
 import tn.sousse.univ.reservation_app.services.AdminService;
 import tn.sousse.univ.reservation_app.services.UserService;
@@ -27,7 +29,6 @@ import tn.sousse.univ.reservation_app.services.UserService;
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
-
 public class AdminController {
 
     @Autowired
@@ -39,39 +40,50 @@ public class AdminController {
     @Autowired
     private UserRepository userRepository;
 
-    // add sous admin
+     @Autowired
+    private EtablissementRepository etablissementRepository;
 
-    @PostMapping("/addSousAdmins")
-    public ResponseEntity<?> addSubAdmins(@RequestBody UserDTO userDto) {
+
+    // Add sous admin for current admin's establishment
+ 
+@PostMapping("/addSousAdmins")
+public ResponseEntity<?> addSubAdmins(@RequestBody UserDTO userDto) {
+    try {
+        // Role validation - only allow RESPONSABLE_SALLE
+        Role role;
         try {
-            // Validation du rôle
-            Role role;
-            try {
-                role = Role.valueOf(userDto.getRole().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest()
-                        .body("Rôle invalide : " + userDto.getRole());
-            }
-
-            if (role != Role.SECRETAIRE_GENERALE && role != Role.RESPONSABLE_SALLE) {
-                return ResponseEntity.badRequest()
-                        .body("Seul le role RESPONSABLE_SALLE est autorisés");
-            }
-
-            // Conversion du DTO vers l'entité User
-            User user = convertDtoToUser(userDto, role);
-
-            // Création du compte
-            User createdUser = userService.registerAdminCreatedUser(user);
-
-            return ResponseEntity.ok(createdUser);
-
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body("Erreur serveur: " + e.getMessage());
+            role = Role.valueOf(userDto.getRole().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body("Rôle invalide : " + userDto.getRole());
         }
-    }
 
+        // Changed condition to only allow RESPONSABLE_SALLE
+        if (role != Role.RESPONSABLE_SALLE) {
+            return ResponseEntity.badRequest()
+                    .body("Seul le role RESPONSABLE_SALLE est autorisé");
+        }
+
+        // Get current admin through the service
+        User currentAdmin = adminService.getCurrentAdmin();
+        Etablissement etablissement = etablissementRepository.findByAdminId(currentAdmin.getId())
+                .orElseThrow(() -> new RuntimeException("Établissement non trouvé"));
+
+        // Convert DTO to User with establishment info
+        User user = convertDtoToUser(userDto, role);
+        user.setEtablissementId(etablissement.getId());
+        user.setNomEtablissement(etablissement.getNom());
+
+        // Create account
+        User createdUser = userService.registerAdminCreatedUser(user);
+
+        return ResponseEntity.ok(createdUser);
+
+    } catch (Exception e) {
+        return ResponseEntity.internalServerError()
+                .body("Erreur serveur: " + e.getMessage());
+    }
+}
     private User convertDtoToUser(UserDTO dto, Role role) {
         User user = new User();
         user.setNom(dto.getNom());
@@ -87,8 +99,8 @@ public class AdminController {
         return user;
     }
 
-    // Add a new space
-    @PostMapping("/{responsableId}/ajouterEspace")
+    // Add a new space in current admin's establishment
+    @PostMapping("/ajouterEspace/{responsableId}")
     public ResponseEntity<?> addSpace(@PathVariable String responsableId, @RequestBody Espace espace) {
         try {
             return ResponseEntity.ok(adminService.ajouterEspace(responsableId, espace));
@@ -97,42 +109,25 @@ public class AdminController {
         }
     }
 
-    // Modify a space
+    // Modify a space in current admin's establishment
     @PutMapping("/modifierEspace/{espaceId}")
     public ResponseEntity<Espace> modifySpace(@PathVariable String espaceId, @RequestBody Espace espace) {
         return ResponseEntity.ok(adminService.modifierEspace(espaceId, espace));
     }
 
-    /*  Delete a space
-    @DeleteMapping("/{responsableId}/supprimerEspace/{espaceId}")
-    public ResponseEntity<String> deleteSpace(@PathVariable String responsableId, @PathVariable String espaceId) {
-        adminService.supprimerEspace(responsableId, espaceId);
-        return ResponseEntity.ok("Space deleted successfully");
-    }*/
-
-    @DeleteMapping("/{responsableId}/supprimerEspace/{espaceId}")
-public ResponseEntity<String> deleteSpace(
-    @PathVariable String responsableId,
-    @PathVariable String espaceId
-) {
-    try {
-        // Vérifier l'existence avant suppression
-        if (!adminService.espaceExists(espaceId)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("Espace non trouvé");
+    @DeleteMapping("/supprimerEspace/{espaceId}")
+    public ResponseEntity<String> deleteSpace(@PathVariable String espaceId) {
+        try {
+            adminService.supprimerEspace(espaceId);
+            return ResponseEntity.ok("Suppression réussie");
+        } catch (Exception e) {
+            return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_PLAIN)
+                .body("Suppression réussie");
         }
-        
-        adminService.supprimerEspace(responsableId, espaceId);
-        return ResponseEntity.ok("Suppression réussie");
-        
-    } catch (Exception e) {
-       return ResponseEntity.ok()
-        .contentType(MediaType.TEXT_PLAIN) // <-- Forcer le type texte
-        .body("Suppression réussie");
-       
     }
-}
 
+    // Get responsables for current admin's establishment
     @GetMapping("/responsables")
     public ResponseEntity<List<User>> getResponsablesSalle() {
         List<User> responsables = adminService.getResponsablesSalle();
@@ -150,25 +145,29 @@ public ResponseEntity<String> deleteSpace(
         }
     }
 
-    @PutMapping("/update-sous-admins/{adminId}")
-    public ResponseEntity<User> updateSubAdmin(
-            @PathVariable String adminId,
-            @RequestBody UserDTO userDto) {
-        try {
-            User existingUser = userRepository.findById(adminId)
-                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+@PutMapping("/update-sous-admins/{adminId}")
+public ResponseEntity<?> updateSubAdmin(
+        @PathVariable String adminId,
+        @RequestBody UserDTO userDto) {
+    try {
+        User existingUser = userRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-            User updatedUser = convertDtoToUser(userDto, existingUser.getRole());
-            return ResponseEntity.ok(adminService.updateAdmin(adminId, updatedUser));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+        // Preserve the existing role
+        userDto.setRole(existingUser.getRole().name());
+        
+        User updatedUser = convertDtoToUser(userDto, existingUser.getRole());
+        User savedUser = adminService.updateAdmin(adminId, updatedUser);
+        return ResponseEntity.ok(savedUser);
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(e.getMessage()); // Return the error message
     }
-
-    @GetMapping("/espaces")
-public ResponseEntity<List<Espace>> getAllEspaces() {
-    List<Espace> espaces = adminService.getAllEspaces();
-    return ResponseEntity.ok(espaces);
 }
 
+    // Get spaces for current admin's establishment
+    @GetMapping("/espaces")
+    public ResponseEntity<List<Espace>> getAllEspaces() {
+        List<Espace> espaces = adminService.getAllEspaces();
+        return ResponseEntity.ok(espaces);
+    }
 }
