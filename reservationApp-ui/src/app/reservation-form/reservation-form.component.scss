@@ -1,7 +1,5 @@
 
 
-
-
 /* Bouton "Ajouter équipement" principal */
 .add-equipment {
   padding: 8px 16px !important;
@@ -387,6 +385,8 @@
 
 
 .reservation-container {
+  position: relative;
+  top: 90px;
   max-width: 800px;
   margin: 0 auto;
  padding: 150px 20px 40px;
@@ -605,9 +605,9 @@ position: relative;
 .reservation-form {
   .form-group {
     input, textarea {
-      padding: 8px 12px; /* Réduire le padding */
-      font-size: 0.9rem; /* Réduire la taille de police */
-      height: 80px; /* Fixer une hauteur */
+      padding: 10px 12px 10px 40px;
+        font-size: 0.9rem; /* Réduire la taille de police */
+    height: auto; // Enlevez la hauteur fixe
        position: relative;
         height: 25px;
         border: 1px solid black;
@@ -783,4 +783,3 @@ position: relative;
     }
   }
 } 
-

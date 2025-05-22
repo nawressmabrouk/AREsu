@@ -1,19 +1,15 @@
 package tn.sousse.univ.reservation_app.services;
 
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.google.api.client.util.DateTime;
-import com.google.api.services.calendar.model.Event;
-import com.google.api.services.calendar.model.EventDateTime;
 
 import tn.sousse.univ.reservation_app.config.GoogleCalendarConfig;
 import tn.sousse.univ.reservation_app.models.Espace;
@@ -51,110 +47,48 @@ public class ResponsableEspaceService {
     @Autowired
     private EmailService emailService;
 
-   private static final Logger logger = LoggerFactory.getLogger(ResponsableEspaceService.class);
-
-    /*
-     * public void processDecision(String reservationId, boolean accepted, String
-     * responsableId) {
-     * Reservation reservation = getReservationWithAuthorization(reservationId,
-     * responsableId);
-     * 
-     * StatusReservation newStatus = accepted ? StatusReservation.ACCEPTÉE :
-     * StatusReservation.REFUSÉE;
-     * reservation.setStatut(newStatus);
-     * reservation.setDecideePar(responsableId);
-     * 
-     * reservationRepository.save(reservation);
-     * }
-     */
-    /*
-     * endpoint nawress
-     * public void processDecision(String reservationId, boolean accepted, String
-     * decidedBy) {
-     * Reservation reservation = reservationRepository.findById(reservationId)
-     * .orElseThrow(() -> new RuntimeException("Reservation not found"));
-     * if (reservation.getStatut() != StatusReservation.EN_ATTENTE) {
-     * throw new
-     * IllegalStateException("Only pending reservations can be processed");
-     * }
-     * if (accepted) {
-     * try {
-     * Espace espace = espaceRepository.findById(reservation.getEspaceId())
-     * .orElseThrow(() -> new RuntimeException("Espace not found"));
-     * // Determine which calendar to use
-     * String calendarId = espace.getGoogleCalendarId() != null ?
-     * espace.getGoogleCalendarId()
-     * Event event = new Event()
-     * .setSummary(reservation.getIntituleAction())
-     * .setDescription(reservation.getDescription())
-     * .setStart(new EventDateTime().setDateTime(new
-     * DateTime(reservation.getHeureDebut())))
-     * .setEnd(new EventDateTime().setDateTime(new
-     * DateTime(reservation.getHeureFin())));
-     * Event createdEvent = googleCalendarService.getGoogleCalendarClient()
-     * .events()
-     * .insert(calendarId, event)
-     * .execute();
-     * reservation.setStatut(StatusReservation.ACCEPTÉE);
-     * reservation.setGoogleCalendarEventId(createdEvent.getId());
-     * } catch (Exception e) {
-     * logger.error("Failed to create calendar event", e);
-     * throw new RuntimeException("Failed to process reservation acceptance", e);
-     * }
-     * } else {
-     * reservation.setStatut(StatusReservation.REFUSÉE);
-     * }
-     * reservation.setDecideePar(decidedBy);
-     * reservationRepository.save(reservation);
-     * String message = accepted ? "Your reservation has been accepted by " +
-     * decidedBy
-     * : "Your reservation has been rejected by " + decidedBy;
-     * logger.info("Reservation {} processed by {} - Decision: {}",
-     * reservationId,
-     * decidedBy,
-     * accepted ? "ACCEPTED" : "REJECTED");
-     * }
-     */
+    private static final Logger logger = LoggerFactory.getLogger(ResponsableEspaceService.class);
 
     public void processDecision(String reservationId,
-                                boolean accepted,
-                                List<String> approvedEquipements,
-                                String decidedBy) {
+            boolean accepted,
+            List<String> approvedEquipements,
+            String decidedBy) {
         // 1) load the reservation
         Reservation reservation = reservationRepository.findById(reservationId)
-            .orElseThrow(() -> new RuntimeException("Réservation introuvable: " + reservationId));
-           // Ajoutez cette validation des équipements
-    if (accepted && approvedEquipements != null) {
-        if (!reservation.getEquipements().containsAll(approvedEquipements)) {
-            throw new IllegalArgumentException("Équipements approuvés non inclus dans la demande");
+                .orElseThrow(() -> new RuntimeException("Réservation introuvable: " + reservationId));
+        // Ajoutez cette validation des équipements
+        if (accepted && approvedEquipements != null) {
+            if (!reservation.getEquipements().containsAll(approvedEquipements)) {
+                throw new IllegalArgumentException("Équipements approuvés non inclus dans la demande");
+            }
+            reservation.setApprovedEquipements(approvedEquipements); // ← Ligne manquante
+        } else {
+            reservation.setApprovedEquipements(Collections.emptyList());
         }
-        reservation.setApprovedEquipements(approvedEquipements); // ← Ligne manquante
-    } else {
-        reservation.setApprovedEquipements(Collections.emptyList());
-    }
         // 2) ensure établissementId is populated
         if (reservation.getEtablissementId() == null) {
             Espace espace = espaceRepository.findById(reservation.getEspaceId())
-                .orElseThrow(() -> new RuntimeException("Espace introuvable: " + reservation.getEspaceId()));
+                    .orElseThrow(() -> new RuntimeException("Espace introuvable: " + reservation.getEspaceId()));
             reservation.setEtablissementId(espace.getEtablissementId());
             reservationRepository.save(reservation);
         }
 
         // 3) fetch the établissement’s calendar
         Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
-            .orElseThrow(() -> new RuntimeException("Établissement introuvable: " + reservation.getEtablissementId()));
+                .orElseThrow(
+                        () -> new RuntimeException("Établissement introuvable: " + reservation.getEtablissementId()));
         String calendarId = etab.getGoogleCalendarId();
         if (calendarId == null || calendarId.isEmpty()) {
             throw new IllegalStateException("Pas de calendrier Google configuré pour: " + etab.getNom());
         }
-    if (accepted) {
-        if (approvedEquipements == null) {
-            approvedEquipements = Collections.emptyList();
+        if (accepted) {
+            if (approvedEquipements == null) {
+                approvedEquipements = Collections.emptyList();
+            }
+            reservation.setApprovedEquipements(approvedEquipements);
+        } else {
+            reservation.setApprovedEquipements(Collections.emptyList());
         }
-        reservation.setApprovedEquipements(approvedEquipements);
-    } else {
-        reservation.setApprovedEquipements(Collections.emptyList());
-    }
         // 4) if accepted, push to Google Calendar & make visible
         if (accepted) {
             try {
@@ -177,41 +111,48 @@ public class ResponsableEspaceService {
     }
 
     private void sendNotificationsAndEmails(Reservation reservation, StatusReservation status) {
-        // Récupération des données nécessaires
-        User demandeur = userRepository.findById(reservation.getDemandeurId()).orElseThrow();
-        Espace espace = espaceRepository.findById(reservation.getEspaceId()).orElseThrow();
-        Etablissement etablissement = etablissementRepository.findById(espace.getEtablissementId())
-                .orElseThrow();
+        // Récupération des données
+        User demandeur = userRepository.findById(reservation.getDemandeurId())
+                .orElseThrow(() -> new NoSuchElementException("Demandeur non trouvé"));
 
-        // Notification au demandeur
+        Espace espace = espaceRepository.findById(reservation.getEspaceId())
+                .orElseThrow(() -> new NoSuchElementException("Espace non trouvé"));
+
+        Etablissement etablissement = etablissementRepository.findById(reservation.getEtablissementId())
+                .orElseThrow(() -> new NoSuchElementException("Établissement non trouvé"));
+
+        // Formatage des messages
         String statusMessage = status == StatusReservation.ACCEPTÉE ? "acceptée" : "refusée";
+        String formattedDate = new SimpleDateFormat("dd/MM/yyyy 'à' HH:mm").format(reservation.getHeureDebut());
+
+        // 1. Notification au demandeur
         notificationService.sendNotification(
                 reservation.getDemandeurId(),
-                "Votre réservation a été " + statusMessage + " par le responsable",
-                reservation.getId());
+                "Décision sur votre réservation - " + espace.getNom(),
+                "Votre demande pour le " + formattedDate + " a été " + statusMessage + " par le responsable");
 
-        // Email au demandeur avec les équipements approuvés
-        emailService.sendStatusEmailWithEquipment(
-                demandeur.getEmail(),
-                demandeur.getNom(),
+        // 2. Email au demandeur
+        String demandeurSubject = "Décision sur votre réservation - " + espace.getNom();
+        String demandeurBody = String.format(
+                "Bonjour,\n\n" +
+                        "Nous avons le plaisir de vous informer que votre demande de réservation pour l'espace \"%s\" a été %s.\n\n"
+                        +
+                        "- Équipements approuvés : %s\n\n" +
+                        "Cordialement,\n" +
+                        "Le Responsable d'Espace demandée\n%s",
                 espace.getNom(),
-                status.toString(),
-                reservation.getApprovedEquipements());
+                statusMessage,
+                reservation.getApprovedEquipements().isEmpty() ? "Aucun équipement approuvé"
+                        : String.join(", ", reservation.getApprovedEquipements()),
+                etablissement.getNom());
+        emailService.sendEmail(demandeur.getEmail(), demandeurSubject, demandeurBody);
 
-        // Notification au secrétaire
-        String sgId = etablissement.getSecretaireGeneraleId();
+        // 3. Notification au secrétaire général
         notificationService.sendNotification(
-                sgId,
-                "Réservation " + statusMessage + " par le responsable",
-                reservation.getId());
+                etablissement.getSecretaireGeneraleId(),
+                "Décision prise sur réservation #" + reservation.getId(),
+                "Le responsable a " + statusMessage + " une réservation pour " + espace.getNom());
 
-        // Email au secrétaire
-        User secretaire = userRepository.findById(sgId).orElseThrow();
-        emailService.sendEmail(
-                secretaire.getEmail(),
-                "Décision sur une réservation",
-                "Une réservation a été " + statusMessage + " par un responsable. " +
-                        "ID Réservation: " + reservation.getId());
     }
 
     public List<Reservation> getAllReservationsByResponsable(String responsableId) {
@@ -269,48 +210,6 @@ public class ResponsableEspaceService {
                 "Votre réservation a été annulée par le responsable. Raison : " + reason);
 
     }
-
-    /*
-     * public Reservation findReservationById(String reservationId) {
-     * return reservationRepository.findById(reservationId)
-     * .orElseThrow(() -> new RuntimeException("Reservation not found"));
-     * }
-     * 
-     * public void annulerReservation(String reservationId, String reason) {
-     * Reservation reservation = findReservationById(reservationId);
-     * if (reservation.getStatut() != StatusReservation.ACCEPTÉE) {
-     * throw new
-     * IllegalStateException("Only accepted reservations can be cancelled");
-     * }
-     * if (new Date().after(reservation.getHeureDebut())) {
-     * throw new IllegalStateException("Cannot cancel after start time");
-     * }
-     * try {
-     * if (reservation.getGoogleCalendarEventId() != null) {
-     * String calendarId = espaceRepository.findById(reservation.getEspaceId())
-     * .map(espace -> espace.getGoogleCalendarId() != null ?
-     * espace.getGoogleCalendarId()
-     * : googleCalendarConfig.getCalendarId())
-     * .orElse(googleCalendarConfig.getCalendarId());
-     * googleCalendarService.getGoogleCalendarClient()
-     * .events()
-     * .delete(calendarId, reservation.getGoogleCalendarEventId())
-     * .execute();
-     * }
-     * } catch (Exception e) {
-     * logger.error("Failed to delete calendar event", e);
-     * }
-     * reservation.setStatut(StatusReservation.ANNULÉE);
-     * reservation.setAnnulationReason(reason);
-     * reservation.setDecideePar("SecretaireGenerale");
-     * reservationRepository.save(reservation);
-     * notificationService.sendNotification(
-     * reservation.getDemandeurId(),
-     * "Annulation de réservation",
-     * "Votre réservation a été annulée par le secrétaire général. Raison : " +
-     * reason);
-     * }
-     */
 
     public List<Espace> getEspacesByResponsable(String responsableId) {
         return espaceRepository.findByResponsableId(responsableId);

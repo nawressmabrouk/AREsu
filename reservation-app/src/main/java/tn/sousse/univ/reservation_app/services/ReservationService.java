@@ -2,6 +2,7 @@
 package tn.sousse.univ.reservation_app.services;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -62,103 +63,65 @@ public class ReservationService {
     private EmailService emailService;
 
     private static final String CALENDAR_ID = "REDACTED_OLD_APP_EMAIL";
-    /*
-     * public ReservationResponseDTO creerReservation(ReservationRequestDTO
-     * reservationDTO) {
-     * // Fetch demandeur
-     * User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
-     * .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
-     * 
-     * // Fetch espace
-     * Espace espace = espaceRepository.findById(reservationDTO.getEspaceId())
-     * .orElseThrow(() -> new RuntimeException("Espace introuvable"));
-     * 
-     * // Create reservation entity
-     * Reservation reservation = ReservationMapper.toEntity(reservationDTO,
-     * demandeur.getId());
-     * 
-     * // Set espace name and demandeur role HERE
-     * reservation.setEspaceNom(espace.getNom()); // Add this line
-     * reservation.setDemandeurRole(demandeur.getRole().toString()); // Add this
-     * line
-     * 
-     * reservation.setStatut(StatusReservation.EN_ATTENTE);
-     * Reservation savedReservation = reservationRepository.save(reservation); //
-     * Saved to DB
-     * 
-     * // Build response
-     * return ReservationMapper.toResponseDTOFull(
-     * savedReservation,
-     * demandeur.getEmail(),
-     * demandeur.getNom(),
-     * espace.getNom(),
-     * demandeur.getRole().toString()
-     * );
-     * }
-     * 
-     * 
-     */
 
-public ReservationResponseDTO creerReservation(ReservationRequestDTO reservationDTO) {
-    logger.debug("Début de creerReservation avec DTO: {}", reservationDTO);
+    public ReservationResponseDTO creerReservation(ReservationRequestDTO reservationDTO) {
+        logger.debug("Début de creerReservation avec DTO: {}", reservationDTO);
 
-    // 1. Fetch demandeur
-    User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
-            .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
+        // 1. Fetch demandeur
+        User demandeur = userRepository.findById(reservationDTO.getDemandeurId())
+                .orElseThrow(() -> new RuntimeException("Demandeur introuvable"));
 
-    // 2. Fetch espace and verify etablissementId
-    Espace espace = espaceRepository.findById(reservationDTO.getEspaceId())
-            .orElseThrow(() -> new RuntimeException("Espace introuvable"));
-    
-            Etablissement etab = etablissementRepository.findById(espace.getEtablissementId())
-    .orElseThrow(() -> new RuntimeException("Establishment not found"));
+        // 2. Fetch espace and verify etablissementId
+        Espace espace = espaceRepository.findById(reservationDTO.getEspaceId())
+                .orElseThrow(() -> new RuntimeException("Espace introuvable"));
 
-if (etab.getGoogleCalendarId() == null) {
-    logger.error("Establishment {} has no Google Calendar configured", etab.getId());
-    throw new IllegalStateException("This establishment has no calendar configured");
-}
+        Etablissement etab = etablissementRepository.findById(espace.getEtablissementId())
+                .orElseThrow(() -> new RuntimeException("Establishment not found"));
 
-    if (espace.getEtablissementId() == null || espace.getEtablissementId().isEmpty()) {
-        logger.error("L'espace {} n'a pas d'etablissementId associé", espace.getId());
-        throw new IllegalStateException("L'espace n'est associé à aucun établissement");
+        if (etab.getGoogleCalendarId() == null) {
+            logger.error("Establishment {} has no Google Calendar configured", etab.getId());
+            throw new IllegalStateException("This establishment has no calendar configured");
+        }
+
+        if (espace.getEtablissementId() == null || espace.getEtablissementId().isEmpty()) {
+            logger.error("L'espace {} n'a pas d'etablissementId associé", espace.getId());
+            throw new IllegalStateException("L'espace n'est associé à aucun établissement");
+        }
+
+        // 3. Create reservation with ALL required fields
+        Reservation reservation = ReservationMapper.toEntity(reservationDTO, demandeur.getId());
+        reservation.setEspaceNom(espace.getNom());
+        reservation.setDemandeurRole(demandeur.getRole().toString());
+        reservation.setStatut(StatusReservation.EN_ATTENTE);
+        reservation.setEtablissementId(espace.getEtablissementId()); // CRITICAL: Set etablissementId
+
+        // 4. Save reservation
+        Reservation savedReservation = reservationRepository.save(reservation);
+        logger.info("Réservation créée avec ID: {}", savedReservation.getId());
+
+        // 5. Verify transmission data
+        logger.debug("Transmission data - ReservationID: {}, EspaceID: {}, EtablissementID: {}",
+                savedReservation.getId(),
+                savedReservation.getEspaceId(),
+                savedReservation.getEtablissementId());
+
+        try {
+            transmettreReservation(savedReservation.getId());
+        } catch (Exception e) {
+            logger.error("Échec transmission pour réservation {}", savedReservation.getId(), e);
+            throw new RuntimeException("Erreur de transmission: " + e.getMessage(), e);
+        }
+
+        // ... (email sending code remains the same)
+
+        return ReservationMapper.toResponseDTOFull(
+                savedReservation,
+                demandeur.getEmail(),
+                demandeur.getNom(),
+                espace.getNom(),
+                demandeur.getRole().toString());
     }
 
-    // 3. Create reservation with ALL required fields
-    Reservation reservation = ReservationMapper.toEntity(reservationDTO, demandeur.getId());
-    reservation.setEspaceNom(espace.getNom());
-    reservation.setDemandeurRole(demandeur.getRole().toString());
-    reservation.setStatut(StatusReservation.EN_ATTENTE);
-    reservation.setEtablissementId(espace.getEtablissementId()); // CRITICAL: Set etablissementId
-    
-    // 4. Save reservation
-    Reservation savedReservation = reservationRepository.save(reservation);
-    logger.info("Réservation créée avec ID: {}", savedReservation.getId());
-
-    // 5. Verify transmission data
-    logger.debug("Transmission data - ReservationID: {}, EspaceID: {}, EtablissementID: {}", 
-        savedReservation.getId(), 
-        savedReservation.getEspaceId(), 
-        savedReservation.getEtablissementId()
-    );
-
-    try {
-        transmettreReservation(savedReservation.getId());
-    } catch (Exception e) {
-        logger.error("Échec transmission pour réservation {}", savedReservation.getId(), e);
-        throw new RuntimeException("Erreur de transmission: " + e.getMessage(), e);
-    }
-
-    // ... (email sending code remains the same)
-
-    return ReservationMapper.toResponseDTOFull(
-            savedReservation,
-            demandeur.getEmail(),
-            demandeur.getNom(),
-            espace.getNom(),
-            demandeur.getRole().toString()
-    );
-}
- 
     public void addReservationToCalendar(Reservation reservation) throws IOException {
         // 1. Get the establishment's calendar ID
         Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
@@ -169,8 +132,8 @@ if (etab.getGoogleCalendarId() == null) {
             throw new IllegalStateException("No Google Calendar configured for establishment: " + etab.getNom());
         }
 
-        logger.info("Adding reservation to calendar {} for establishment {}", 
-            etab.getGoogleCalendarId(), etab.getNom());
+        logger.info("Adding reservation to calendar {} for establishment {}",
+                etab.getGoogleCalendarId(), etab.getNom());
 
         // 2. Create event with proper timezone handling
         Event event = new Event()
@@ -193,13 +156,9 @@ if (etab.getGoogleCalendarId() == null) {
         reservation.setGoogleEventId(createdEvent.getId());
         reservationRepository.save(reservation);
 
-        logger.info("Successfully added event {} to calendar {}", 
-            createdEvent.getId(), etab.getGoogleCalendarId());
+        logger.info("Successfully added event {} to calendar {}",
+                createdEvent.getId(), etab.getGoogleCalendarId());
     }
- 
- 
- 
- 
 
     public void supprimerReservation(String id) {
         reservationRepository.deleteById(id);
@@ -240,7 +199,6 @@ if (etab.getGoogleCalendarId() == null) {
     }
 
     // endpoint nourhen :
-
     @Transactional
     public String transmettreReservation(String reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -249,49 +207,121 @@ if (etab.getGoogleCalendarId() == null) {
         Espace espace = espaceRepository.findById(reservation.getEspaceId())
                 .orElseThrow(() -> new RuntimeException("Espace non trouvé"));
 
+        Etablissement etablissement = etablissementRepository.findById(espace.getEtablissementId())
+                .orElseThrow(() -> new RuntimeException("Etablissement non trouvé"));
+
         try {
-            String recipientId = determineRecipient(espace.getId());
-            Etablissement etablissement = etablissementRepository.findById(espace.getEtablissementId())
-                    .orElseThrow(() -> new RuntimeException("Etablissement non trouvé"));
-
-            // Mise à jour du statut de vue
+            // Mise à jour du statut
             reservation.setVueParSecretaire(false);
-            reservationRepository.save(reservation);
+            reservation.setStatut(StatusReservation.EN_ATTENTE);
 
-            // Notification avec contexte complet
-            notificationService.sendNotification(
-                    recipientId,
-                    "Nouvelle demande pour " + espace.getNom() + " (" + etablissement.getNom() + ")",
-                    reservationId);
-            User destinataire = userRepository.findById(recipientId).orElseThrow();
-            emailService.sendEmail(
-                    destinataire.getEmail(),
-                    "Nouvelle demande de réservation",
-                    "Une nouvelle demande nécessite votre action : " + reservation.getIntituleAction());
+            String resultMessage;
+            String formattedDate = new SimpleDateFormat("dd/MM/yyyy 'à' HH:mm").format(reservation.getHeureDebut());
 
             if (espace.getResponsableId() != null) {
-                reservation.setStatut(StatusReservation.EN_ATTENTE);
+                // Cas avec responsable d'espace
                 reservation.setResponsableEspaceId(espace.getResponsableId());
-                reservation.setVueParSecretaire(false);
                 reservationRepository.save(reservation);
 
-                // Notify secretary general if needed
-                User secretaire = userRepository.findById(etablissement.getSecretaireGeneraleId())
-                        .orElseThrow(() -> new RuntimeException("Secrétaire général non trouvé"));
+                // Email au responsable
+                User responsable = userRepository.findById(espace.getResponsableId())
+                        .orElseThrow(() -> new RuntimeException("Responsable non trouvé"));
+
+                String emailBodyResponsable = String.format(
+                        "Madame, Monsieur,\n\n" +
+                                "Une nouvelle demande de réservation nécessite votre examen :\n\n" +
+                                "Détails de la demande :\n" +
+                                "- Espace : %s\n" +
+                                "- Demandeur : %s\n" +
+                                "- Date demandée : %s\n" +
+                                "- Motif : %s\n" +
+                                "- Équipements demandés : %s\n\n" +
+                                "Veuillez traiter cette demande dans les plus brefs délais.\n\n" +
+                                "Cordialement,\n" +
+                                "Le Service des Réservations\n" +
+                                "%s",
+                        espace.getNom(),
+                        userRepository.findById(reservation.getDemandeurId()).orElseThrow().getNom(),
+                        formattedDate,
+                        reservation.getIntituleAction(),
+                        reservation.getEquipements().isEmpty() ? "Aucun"
+                                : String.join(", ", reservation.getEquipements()),
+                        etablissement.getNom());
 
                 emailService.sendEmail(
-                        secretaire.getEmail(),
-                        "Notification de demande",
-                        "Une nouvelle demande a été transmise à un responsable : " + espace.getNom());
+                        responsable.getEmail(),
+                        "Nouvelle demande de réservation - Action requise",
+                        emailBodyResponsable);
 
-                return "ENVOYÉ_RESPONSABLE_ET_SG";
+                // Notification au secrétaire général
+                if (etablissement.getSecretaireGeneraleId() != null) {
+                    User secretaire = userRepository.findById(etablissement.getSecretaireGeneraleId())
+                            .orElseThrow(() -> new RuntimeException("Secrétaire général non trouvé"));
+
+                    String emailBodySG = String.format(
+                            "Madame, Monsieur,\n\n" +
+                                    "Pour information, une nouvelle demande a été transmise à un responsable :\n\n" +
+                                    "- Espace : %s\n" +
+                                    "- Responsable assigné : %s\n" +
+                                    "- Demandeur : %s\n" +
+                                    "- Date demandée : %s\n\n" +
+                                    "Cordialement,\n" +
+                                    "Système de Gestion des Réservations\n" +
+                                    "%s",
+                            espace.getNom(),
+                            responsable.getNom(),
+                            userRepository.findById(reservation.getDemandeurId()).orElseThrow().getNom(),
+                            formattedDate,
+                            etablissement.getNom());
+
+                    emailService.sendEmail(
+                            secretaire.getEmail(),
+                            "Notification : Demande transmise à un responsable",
+                            emailBodySG);
+                }
+
+                resultMessage = "ENVOYÉ_RESPONSABLE_ET_SG";
             } else {
-                reservation.setStatut(StatusReservation.EN_ATTENTE);
+                // Cas sans responsable - envoi direct au secrétaire général
                 reservationRepository.save(reservation);
-                return "ENVOYÉ_SG_SEUL";
+
+                if (etablissement.getSecretaireGeneraleId() != null) {
+                    User secretaire = userRepository.findById(etablissement.getSecretaireGeneraleId())
+                            .orElseThrow(() -> new RuntimeException("Secrétaire général non trouvé"));
+
+                    String emailBodySG = String.format(
+                            "Madame, Monsieur,\n\n" +
+                                    "Une nouvelle demande de réservation nécessite votre examen :\n\n" +
+                                    "Détails de la demande :\n" +
+                                    "- Espace : %s\n" +
+                                    "- Demandeur : %s\n" +
+                                    "- Date demandée : %s\n" +
+                                    "- Motif : %s\n" +
+                                    "- Équipements demandés : %s\n\n" +
+                                    "Veuillez traiter cette demande dans les plus brefs délais.\n\n" +
+                                    "Cordialement,\n" +
+                                    "Système de Gestion des Réservations\n" +
+                                    "%s",
+                            espace.getNom(),
+                            userRepository.findById(reservation.getDemandeurId()).orElseThrow().getNom(),
+                            formattedDate,
+                            reservation.getIntituleAction(),
+                            reservation.getEquipements().isEmpty() ? "Aucun"
+                                    : String.join(", ", reservation.getEquipements()),
+                            etablissement.getNom());
+
+                    emailService.sendEmail(
+                            secretaire.getEmail(),
+                            "Nouvelle demande de réservation - Action requise",
+                            emailBodySG);
+                }
+
+                resultMessage = "ENVOYÉ_SG_SEUL";
             }
 
+            return resultMessage;
         } catch (Exception e) {
+            logger.error("Erreur lors de la transmission de la réservation: {}", e.getMessage(), e);
             throw new RuntimeException("Erreur de transmission: " + e.getMessage());
         }
     }
@@ -318,14 +348,14 @@ if (etab.getGoogleCalendarId() == null) {
     }
 
     private void verifyCalendarAccess(String calendarId) throws IOException {
-    try {
-        // This will throw if calendar doesn't exist or isn't accessible
-        googleCalendar.calendars().get(calendarId).execute();
-    } catch (GoogleJsonResponseException e) {
-        if (e.getStatusCode() == 404) {
-            throw new IOException("Calendar not found: " + calendarId);
+        try {
+            // This will throw if calendar doesn't exist or isn't accessible
+            googleCalendar.calendars().get(calendarId).execute();
+        } catch (GoogleJsonResponseException e) {
+            if (e.getStatusCode() == 404) {
+                throw new IOException("Calendar not found: " + calendarId);
+            }
+            throw new IOException("Calendar access error: " + e.getMessage());
         }
-        throw new IOException("Calendar access error: " + e.getMessage());
     }
-}
 }
