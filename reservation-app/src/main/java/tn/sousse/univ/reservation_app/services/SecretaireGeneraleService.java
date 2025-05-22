@@ -269,8 +269,8 @@ public void processDecision(String reservationId,
     // 5) Record the decision and save
     reservation.setDecideePar(decidedBy);
     reservationRepository.save(reservation);
-
-  senNotificationsAndEmails( reservation ,reservation.getStatus())
+        sendNotificationsAndEmails(reservation, reservation.getStatut());
+  
 }
 
     
