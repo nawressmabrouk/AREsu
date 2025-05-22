@@ -193,9 +193,17 @@ right: -2100px;
 }
 
 /* Ajustement du contenu principal */
+/* Ajustement du contenu principal */
 .main-content {
   transition: margin-left 0.3s ease;
+  margin-left: 0; /* Par défaut sans marge */
+  
+  /* Lorsque la sidebar est ouverte */
+  .sidebar-vertical.expanded ~ & {
+    margin-left: 210px; /* Doit correspondre à la largeur de votre sidebar */
+  }
 }
+
 .admin-header {
   /* Keep all existing root styles exactly the same */
   padding: 3rem 5%;
@@ -2715,6 +2723,14 @@ dans .modal-overlay {
     color: #232f56;
     width: 200px;
     font-size: 1.5rem; /* Augmentez cette valeur pour agrandir l'icône */
+      padding: 15px; /* Makes the click area larger */
+  cursor: pointer;
+  z-index: 1101; /* Higher than sidebar */
+  
+  /* Visual feedback */
+  &:active {
+    transform: scale(0.95);
+  }
 }
 .profile-icon {
 position: relative;

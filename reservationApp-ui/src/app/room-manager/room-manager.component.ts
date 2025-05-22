@@ -452,9 +452,11 @@ switchSection(section: 'access' | 'space' | 'calendar'): void {
   }
 }
 
-  toggleSidebar() {
-    this.isSidebarExpanded = !this.isSidebarExpanded;
-  }
+// In your component.ts
+toggleSidebar(event: Event) {
+  event.stopPropagation(); // Prevents event bubbling
+  this.isSidebarExpanded = !this.isSidebarExpanded;
+}
 
 
 

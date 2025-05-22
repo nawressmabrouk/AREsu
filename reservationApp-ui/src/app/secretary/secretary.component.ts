@@ -362,9 +362,11 @@ switchSection(section: 'access' | 'unseen' | 'seen' | 'calendar'): void {
     }
   }
 
-  toggleSidebar(): void {
-    this.isSidebarExpanded = !this.isSidebarExpanded;
-  }
+// In your component.ts
+toggleSidebar(event: Event) {
+  event.stopPropagation(); // Prevents event bubbling
+  this.isSidebarExpanded = !this.isSidebarExpanded;
+}
 
   onSearch(): void {
     // Implement search logic if needed
