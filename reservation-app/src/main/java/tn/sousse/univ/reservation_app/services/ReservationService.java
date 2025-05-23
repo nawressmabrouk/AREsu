@@ -112,8 +112,6 @@ public class ReservationService {
             throw new RuntimeException("Erreur de transmission: " + e.getMessage(), e);
         }
 
-        // ... (email sending code remains the same)
-
         return ReservationMapper.toResponseDTOFull(
                 savedReservation,
                 demandeur.getEmail(),
