@@ -17,11 +17,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import tn.sousse.univ.reservation_app.models.User;
 import tn.sousse.univ.reservation_app.models.Espace;
 import tn.sousse.univ.reservation_app.models.Reservation;
 import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
 import tn.sousse.univ.reservation_app.repositories.ReservationRepository;
+import tn.sousse.univ.reservation_app.repositories.UserRepository;
+import tn.sousse.univ.reservation_app.security.CustomUserDetails;
 import tn.sousse.univ.reservation_app.services.SecretaireGeneraleService;
 import tn.sousse.univ.reservation_app.dto.DecisionDTO;
 
@@ -29,7 +34,8 @@ import tn.sousse.univ.reservation_app.dto.DecisionDTO;
 @RequestMapping("/api/secretaire")
 // Only for SECRETAIRE_GENERALE
 public class SecretaireGeneraleController {
-
+    @Autowired
+private UserRepository userRepository;
     @Autowired
     private SecretaireGeneraleService secretaireGeneraleService;
 
@@ -55,23 +61,80 @@ public class SecretaireGeneraleController {
     }
 
     // hedhy tjy liste des reservations ely howa aamalelhom vu sayee
-    @GetMapping("/reservations/viewed")
-    public List<Reservation> getViewed() {
-        return secretaireGeneraleService.getReservationsViewedBySG();
+@GetMapping("/reservations/viewed")
+public ResponseEntity<?> getViewed(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    // 1. Vérification de l'authentification
+    if (userDetails == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
+    try {
+        // 2. Récupération de l'utilisateur complet
+        User currentUser = userRepository.findById(userDetails.getUserId())
+                .orElseThrow(() -> new UsernameNotFoundException("Secrétaire non trouvé"));
+
+        // 3. Validation de l'établissement
+        if (currentUser.getEtablissementId() == null) {
+            return ResponseEntity.badRequest().body("Aucun établissement associé à ce compte");
+        }
+
+        // 4. Récupération des réservations vues
+        List<Reservation> reservations = secretaireGeneraleService.getReservationsViewedBySG(
+            currentUser.getEtablissementId()
+        );
+
+        // 5. Réponse formatée
+        return ResponseEntity.ok(reservations);
+
+    } catch (UsernameNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    } catch (Exception e) {
+        return ResponseEntity.internalServerError().body("Erreur lors du traitement");
+    }
+}
+
 
     // hedhy tjyblou lista mtaa reservation ely lezm ychoufhom (maaneha mtaa
     // responsable w howa bch ychoufhom khw)
-    @GetMapping("/reservations/toView")
-    public List<Reservation> getToVisa() {
-        return secretaireGeneraleService.getReservationsToViewBySG();
+@GetMapping("/reservations/toView")
+public ResponseEntity<?> getToVisa(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    // Vérification de l'authentification
+    if (userDetails == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+    
+    try {
+        // Récupération de l'utilisateur complet depuis la base de données
+        User currentUser = userRepository.findById(userDetails.getUserId())
+                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
+        
+        // Récupération des réservations pour l'établissement du secrétaire
+        List<Reservation> reservations = secretaireGeneraleService.getReservationsToViewBySG(currentUser.getEtablissementId());
+        
+        return ResponseEntity.ok(reservations);
+        
+    } catch (UsernameNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur non trouvé");
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur serveur");
+    }
+}
 
     // hedhy tjyblou les reservation ely howa bch yetretihom
-    @GetMapping("/reservations/toHandle")
-    public List<Reservation> getToHandle() {
-        return secretaireGeneraleService.getReservationsToHandleBySG();
+@GetMapping("/reservations/toHandle")
+public ResponseEntity<?> getToHandle(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    if (userDetails == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+    
+    // Get the actual User entity from the database
+    User currentUser = userRepository.findById(userDetails.getUserId())
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    
+    return ResponseEntity.ok(
+        secretaireGeneraleService.getReservationsToHandleBySG(currentUser.getEtablissementId())
+    );
+}
 
     // kif yenzel aal 3in
     @PostMapping("/reservations/view/{reservationId}")

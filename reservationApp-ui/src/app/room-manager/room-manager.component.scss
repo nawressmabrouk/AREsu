@@ -12,9 +12,9 @@
  
 }
 
-.profile{
+.profile {
 position: relative;
-top: -280px;
+top: -310px;
 right: -2100px;
 }
 
@@ -2670,7 +2670,7 @@ dans .modal-overlay {
   height: auto;
  
   position: relative;
-  top: -50px;
+  top: -80px;
   right: -60px;
 }
 
@@ -2732,11 +2732,15 @@ dans .modal-overlay {
     transform: scale(0.95);
   }
 }
+
+
 .profile-icon {
 position: relative;
-top: -400px;
+top: -500px;
 right: -2100px;
 }
+
+
 }
 
 
@@ -2746,8 +2750,8 @@ right: -2100px;
   .page-subtitle {
     font-size: 1.2rem;
     position: relative;
-    top: -200px;
-    right: -900px;
+    top: -230px;
+    right: -930px;
     color: rgb(255, 255, 255);
     transition: inherit;
   }
@@ -2758,7 +2762,7 @@ right: -2100px;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  top: -190px;
+  top: -220px;
     right: 50px;
   color: #ffffff; /* Couleur de texte profonde */
   text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.526); /* Ombre subtile */

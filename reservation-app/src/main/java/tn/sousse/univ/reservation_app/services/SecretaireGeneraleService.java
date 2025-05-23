@@ -48,26 +48,35 @@ public class SecretaireGeneraleService {
     private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleService.class);
 
     // Getter methods
-    public List<Reservation> getReservationsViewedBySG() {
-        return reservationRepository.findAll().stream()
-                .filter(reservation -> hasResponsable(reservation.getEspaceId()) &&
-                        Boolean.TRUE.equals(reservation.getVueParSecretaire()))
-                .toList();
-    }
+public List<Reservation> getReservationsViewedBySG(String etablissementId) {
+    return reservationRepository.findAll().stream()
+            .filter(reservation -> 
+                hasResponsable(reservation.getEspaceId()) &&
+                Boolean.TRUE.equals(reservation.getVueParSecretaire()) &&
+                etablissementId.equals(reservation.getEtablissementId())
+            )
+            .toList();
+}
 
-    public List<Reservation> getReservationsToViewBySG() {
-        return reservationRepository.findAll().stream()
-                .filter(reservation -> hasResponsable(reservation.getEspaceId()) &&
-                        Boolean.FALSE.equals(reservation.getVueParSecretaire()))
-                .toList();
-    }
+public List<Reservation> getReservationsToViewBySG(String etablissementId) {
+    return reservationRepository.findAll().stream()
+            .filter(reservation -> 
+                hasResponsable(reservation.getEspaceId()) &&
+                Boolean.FALSE.equals(reservation.getVueParSecretaire()) &&
+                etablissementId.equals(reservation.getEtablissementId())
+            )
+            .toList();
+}
 
-    public List<Reservation> getReservationsToHandleBySG() {
-        return reservationRepository.findAll().stream()
-                .filter(reservation -> !hasResponsable(reservation.getEspaceId()) &&
-                        reservation.getStatut().equals(StatusReservation.EN_ATTENTE))
-                .toList();
-    }
+public List<Reservation> getReservationsToHandleBySG(String etablissementId) {
+    return reservationRepository.findAll().stream()
+            .filter(reservation -> 
+                !hasResponsable(reservation.getEspaceId()) &&
+                reservation.getStatut().equals(StatusReservation.EN_ATTENTE) &&
+                etablissementId.equals(reservation.getEtablissementId())
+            )
+            .toList();
+}
 
     /*
      * public boolean isEspaceDisponible(ObjectId espaceId, Date startDate, Date
