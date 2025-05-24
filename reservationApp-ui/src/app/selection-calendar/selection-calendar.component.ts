@@ -18,7 +18,8 @@ import { CalendarService } from '../services/calendar/calendar.service';
 import { Etablissement, EtablissementService } from '../services/etablissement/etablissement.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
 import { CalendarSlotDTO } from '../shared/interfaces/calendar-slot.dto';
-
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 @Injectable()
 export class CustomDateFnsAdapter extends DateFnsAdapter {
   constructor() {
@@ -39,7 +40,7 @@ export class CustomDateFnsAdapter extends DateFnsAdapter {
     MatFormFieldModule,
     MatIconModule,
     ProfileComponent,
-    MatButtonModule
+    MatButtonModule , MatDialogModule , ConfirmDialogComponent
   ],
   selector: 'app-selection-calendar',
   templateUrl: './selection-calendar.component.html',
@@ -96,7 +97,7 @@ currentTimePosition: string = this.getCurrentTimePosition();
     private calendarService: CalendarService,
     private etablissementService: EtablissementService,
     private authService: AuthService,
-    private datePipe: DatePipe
+    private datePipe: DatePipe , private dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -317,16 +318,18 @@ isSameDay(date1: Date, date2: Date): boolean {
     this.errorMessage = '';
   }
 
-  private completeSelection(time: string): void {
-    this.selectedEndTime = time;
-    
-    if (this.validateTimeSelection()) {
-      this.selectionState = 'end-selected';
-    } else {
-      this.errorMessage = 'End time must be after start time';
-      this.selectedEndTime = null;
-    }
+private completeSelection(time: string): void {
+  this.selectedEndTime = time;
+  
+  if (this.validateTimeSelection()) {
+    this.selectionState = 'end-selected';
+    // Afficher directement la boîte de dialogue
+    this.navigateToReservation();
+  } else {
+    this.errorMessage = 'L\'heure de fin doit être après l\'heure de début';
+    this.selectedEndTime = null;
   }
+}
 
   private resetAndStartNewSelection(time: string): void {
     this.resetSelection();
@@ -343,34 +346,45 @@ isSameDay(date1: Date, date2: Date): boolean {
            (end.hours === start.hours && end.minutes > start.minutes);
   }
 
-  navigateToReservation(): void {
-    if (!this.selectedStartTime || !this.selectedEndTime) {
-      this.errorMessage = 'Please select a valid time range';
-      return;
-    }
-
-    const convertTo24Hour = (time: string) => {
-      const { hours, minutes } = this.parseTime(time);
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    };
-
-    const formattedDate = this.datePipe.transform(this.selectedDate, 'yyyy-MM-dd');
-    const queryParams = {
-      ...this.route.snapshot.queryParams,
-      date: formattedDate,
-      startTime: convertTo24Hour(this.selectedStartTime),
-      endTime: convertTo24Hour(this.selectedEndTime)
-    };
-
-    this.router.navigate(['/reservation-form'], { 
-      queryParams,
-      replaceUrl: true
-    }).catch(err => {
-      this.errorMessage = 'Failed to navigate to reservation form';
-      console.error('Navigation error:', err);
-    });
+navigateToReservation(): void {
+  if (!this.selectedStartTime || !this.selectedEndTime) {
+    this.errorMessage = 'Veuillez sélectionner une plage horaire valide';
+    return;
   }
 
+const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+  width: '650px',
+  panelClass: ['custom-dialog-container', 'backdrop-blur'], // Applique les classes
+  disableClose: true,
+  data: {
+    startTime: this.selectedStartTime,
+    endTime: this.selectedEndTime
+  }
+});}
+
+
+private proceedToReservation(): void {
+  const convertTo24Hour = (time: string) => {
+    const { hours, minutes } = this.parseTime(time);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  const formattedDate = this.datePipe.transform(this.selectedDate, 'yyyy-MM-dd');
+  const queryParams = {
+    ...this.route.snapshot.queryParams,
+    date: formattedDate,
+    startTime: convertTo24Hour(this.selectedStartTime!),
+    endTime: convertTo24Hour(this.selectedEndTime!)
+  };
+
+  this.router.navigate(['/reservation-form'], { 
+    queryParams,
+    replaceUrl: true
+  }).catch(err => {
+    this.errorMessage = 'Failed to navigate to reservation form';
+    console.error('Navigation error:', err);
+  });
+}
   resetSelection(): void {
     this.selectedStartTime = null;
     this.selectedEndTime = null;

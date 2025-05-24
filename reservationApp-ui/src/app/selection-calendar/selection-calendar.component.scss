@@ -665,3 +665,76 @@ border: 1px solid white;}
     transform: translateY(1px);
   }
 }
+
+
+// Style pour la boîte de dialogue
+// Styles globaux pour les boîtes de dialogue Material
+.mat-dialog-container {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+.mat-dialog-title {
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.mat-dialog-title {
+  color: #3b4f90;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.mat-dialog-content {
+  padding: 16px 0 !important;
+  margin: 0 !important;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.mat-dialog-actions {
+  padding: 16px 0 0 0 !important;
+  margin-bottom: -8px !important;
+  justify-content: flex-end;
+}
+
+
+.time-range-selection {
+  background: #f8f9fa;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
+
+  p {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+    strong {
+      color: #333;
+    }
+  }
+}
+
+// Effet de flou pour l'arrière-plan du dialogue
+.backdrop-blur {
+  backdrop-filter: blur(8px) brightness(0.6); /* Augmentez le flou et assombrissez */
+  background-color: rgba(0, 0, 0, 0.5) !important; /* Fond plus sombre */
+  transition: backdrop-filter 0.3s ease; /* Animation fluide */
+}
+
+/* Optionnel : style pour le conteneur du dialogue */
+.custom-dialog-container .mat-dialog-container {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+
+.backdrop-blur-intense {
+  backdrop-filter: blur(12px) brightness(0.4);
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
