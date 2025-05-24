@@ -90,22 +90,16 @@
     <div class="time-slots-container" [class.disabled]="!isDayAvailable(selectedDate)">
       
 
-      <div class="time-range-selection" *ngIf="selectionState !== 'idle'">
-        <p>
-          Selected time range: 
-          <strong>{{ selectedStartTime }}</strong>
-          <span *ngIf="selectedEndTime"> to <strong>{{ selectedEndTime }}</strong></span>
-          <span *ngIf="!selectedEndTime"> (select end time)</span>
-        </p>
-         <div class="selection-actions">
-       <button mat-button color="warn" (click)="resetSelection()">Cancel</button>
-    <button mat-raised-button color="primary"
-            *ngIf="selectionState === 'end-selected'"
-            (click)="navigateToReservation()">
-      Confirm
-    </button>
-      </div>
-      </div>
+<div class="time-range-selection" *ngIf="selectionState !== 'idle'">
+  <p>
+    Plage horaire sélectionnée : 
+    <strong>{{ selectedStartTime }}</strong>
+    <span *ngIf="selectedEndTime"> à <strong>{{ selectedEndTime }}</strong></span>
+    <span *ngIf="!selectedEndTime"> (sélectionnez l'heure de fin)</span>
+  </p>
+</div>
+
+
 <div class="time-slots">
   <div *ngFor="let time of timeSlots; let i = index" class="time-slot-wrapper">
     <!-- Current time indicator -->
