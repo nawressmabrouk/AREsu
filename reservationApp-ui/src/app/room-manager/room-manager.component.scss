@@ -2778,11 +2778,3 @@ right: -2100px;
 
 }
 
-/* Calendar container should also have lower z-index */
-.calendar-container {
-  z-index: 500; /* Lower than modal */
-  position: relative;
-  top: 80px;
-}
-
-
