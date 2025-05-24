@@ -1,5 +1,6 @@
-// features/super-admin/etablissement-details/etablissement-details.component.scss
 .etablissement-details {
+  font-size: 1.1rem;
+
   .details-header {
     display: flex;
     justify-content: space-between;
@@ -9,6 +10,7 @@
     h2 {
       margin: 0;
       color: #2c3e50;
+      font-size: 1.8rem;
     }
   }
   
@@ -17,6 +19,7 @@
     
     p {
       margin: 5px 0;
+      font-size: 1.1rem;
     }
   }
   
@@ -31,7 +34,7 @@
       border: none;
       cursor: pointer;
       color: #7f8c8d;
-      font-size: 0.9em;
+      font-size: 1.1rem;
       border-bottom: 2px solid transparent;
       
       &.active {
@@ -41,9 +44,7 @@
     }
   }
   
-
-
- .responsables-list {
+  .responsables-list {
     .responsable-item {
       display: flex;
       align-items: center;
@@ -58,11 +59,11 @@
         width: 48px;
         height: 48px;
         border-radius: 50%;
-        background-color: #e3f2fd; // Light blue background
-        color: #1976d2; // Blue icon color
+        background-color: #e3f2fd;
+        color: #1976d2;
         
         mat-icon {
-          font-size: 24px; // Slightly smaller icon
+          font-size: 24px;
           width: 24px;
           height: 24px;
         }
@@ -74,14 +75,14 @@
         h4 {
           margin: 0 0 4px 0;
           color: #2c3e50;
-          font-size: 1.1em;
+          font-size: 1.3rem;
           font-weight: 500;
         }
         
         p {
           margin: 0 0 4px 0;
           color: #7f8c8d;
-          font-size: 0.9em;
+          font-size: 1.1rem;
           
           &:last-child {
             margin-bottom: 0;
@@ -96,5 +97,20 @@
     }
   }
 
-
+  table {
+    width: 100%;
+    
+    th {
+      text-align: left;
+      color: #7f8c8d;
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+    
+    td, th {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 1.1rem;
+    }
+  }
 }

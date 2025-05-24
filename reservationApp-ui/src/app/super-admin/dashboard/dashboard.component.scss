@@ -1,84 +1,73 @@
-
-
-//navbar desing : 
 .spaces-header {
-  
- 
-      background: linear-gradient(135deg, hsl(213, 66%, 83%) ,#3b4f90, #232f56  );
-    color: white;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    position: relative;
-    z-index: 1000;
-    height: 100px;
-    box-shadow: 
-     
-      0 5px 10px rgba(0, 0, 0, 0.6);
-      
-    transition: box-shadow 0.3s ease;
+  background: linear-gradient(135deg, hsl(213, 66%, 83%), #3b4f90, #232f56);
   color: white;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  box-shadow: 
- 
-    0 5px 10px rgba(0, 0, 0, 0.6),
-    0 15px 35px rgba(0, 0, 0, 0.4);
+  height: 100px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6), 0 15px 35px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
 
-
-.profile-icon {
-position: relative;
-top: -220px;
-right: -2000px;
-}
-}
-
-
-
-// desing title and sous tilte 
+  .profile-icon {
+    position: relative;
+    top: -220px;
+    right: -2000px;
+  }
 
   .page-subtitle {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     position: relative;
     top: -130px;
-    right: -900px;
+    right: -810px;
     color: rgb(255, 255, 255);
     transition: inherit;
   }
- .page-title {
-  font-size: 1.9rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  top: -125px;
+
+  .page-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    top: -125px;
     right: 50px;
-  color: #ffffff; /* Couleur de texte profonde */
-  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.526); /* Ombre subtile */
-  letter-spacing: 0.5px; /* Espacement des lettres */
-  margin: 0.5em 0; /* Marge améliorée */
-  position: relative; /* Pour les effets optionnels */
+    color: #ffffff;
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.526);
+    letter-spacing: 0.5px;
+    margin: 0.5em 0;
+    position: relative;
 
-
-  &:hover {
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée au survol */
-    
-    &::after {
-      width: 80px; /* Animation du soulignement au survol */
+    &:hover {
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+      
+      &::after {
+        width: 80px;
+      }
     }
   }
 
+  .logo-image {
+    max-width: 120px;
+    height: auto;
+    position: relative;
+    top: -10px;
+    right: -60px;
+  }
+
+  .logo1-image {
+    max-width: 120px;
+    height: auto;
+    position: relative;
+    right: 0px;
+  }
 }
 
 .super-admin-dashboard {
-padding: 200px;
+  padding: 200px;
+  font-size: 1.1rem;
   
   .header {
     margin-bottom: 30px;
@@ -86,16 +75,22 @@ padding: 200px;
     h1 {
       color: #2c3e50;
       margin-bottom: 5px;
+      font-size: 2rem;
     }
     
     p {
       color: #7f8c8d;
+      font-size: 1.3rem;
     }
   }
   
   .content {
     display: flex;
     gap: 20px;
+    
+    h2 {
+      font-size: 1.8rem;
+    }
     
     .etablissements-list {
       flex: 1;
@@ -122,28 +117,8 @@ padding: 200px;
     justify-content: center;
     padding: 20px;
   }
-} 
-
-     .logo-image {
-  max-width: 120px; /* 15% de la largeur de l'écran */
-  height: auto;
- 
-  position: relative;
-  top: -10px;
-  right: -60px;
 }
 
-
-     .logo1-image {
-  max-width: 120px; /* 15% de la largeur de l'écran */
-  height: auto;
- 
-  position: relative;
-  
-  right: 0px;
-}
-
-/* Check if any CSS is preventing clicks */
 .close-btn {
   pointer-events: auto !important;
   z-index: 10;

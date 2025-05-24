@@ -60,6 +60,7 @@ right: -2100px;
 
 
 /* Sidebar - cachée par défaut */
+
 .sidebar-vertical {
   width: 0 ;
   background: linear-gradient(135deg, hsl(214, 45%, 72%) ,#3b4f90 );
@@ -70,7 +71,8 @@ right: -2100px;
   transition: all 0.3s ease;
   overflow: hidden;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-  
+  left: 0;
+  top: 0;
   /* État ouvert */
   &.expanded {
     top: -1px;
@@ -192,6 +194,7 @@ right: -2100px;
   }
 }
 
+
 /* Ajustement du contenu principal */
 /* Ajustement du contenu principal */
 .main-content {
@@ -295,11 +298,7 @@ right: -2100px;
         }
       }
       
-      .page-subtitle {
-        font-size: 1.2rem;
-        color: white;
-        transition: inherit;
-      }
+   
     
       /* Animation au clic */
       &:hover {
@@ -2691,7 +2690,7 @@ dans .modal-overlay {
  
       background: linear-gradient(135deg, hsl(213, 66%, 83%) ,#3b4f90, #232f56  );
     color: white;
-    position: fixed;
+  
     top: 0;
     left: 0;
     right: 0;
@@ -2751,7 +2750,7 @@ right: -2100px;
     font-size: 1.2rem;
     position: relative;
     top: -230px;
-    right: -930px;
+    right: -890px;
     color: rgb(255, 255, 255);
     transition: inherit;
   }
@@ -2780,4 +2779,12 @@ right: -2100px;
   }
 
 }
+
+/* Calendar container should also have lower z-index */
+.calendar-container {
+  z-index: 500; /* Lower than modal */
+  position: relative;
+  top: 80px;
+}
+
 
