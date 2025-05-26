@@ -17,7 +17,7 @@
    
 </header>
  <div *ngIf="selectedEtablissement" class="page-subtitle">
-  <h2>Calendar for {{ selectedEtablissement.nom }}</h2>
+  <h2>Calendrier de {{ selectedEtablissement.nom }}</h2>
 </div>
 
 
@@ -79,7 +79,7 @@
     <button class="button1" mat-stroked-button (click)="selectToday()">
       Aujourd'hui
     </button>
-    <h2>{{ selectedDate | date:'fullDate' }}</h2>
+    <h2 >{{ selectedDate | date:'fullDate' }}</h2>
   </div>
 </div>
 

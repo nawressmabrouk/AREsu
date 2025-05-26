@@ -24,11 +24,12 @@
     font-size: 1.45rem; /* Réduit de 2rem à 1.4rem */
     font-weight: bold;
     margin: 0;
-    color: rgb(255, 255, 255);
+   color: rgba(202, 197, 197, 0.8);
     display: flex;
     align-items: center;
     gap: 0.6rem; /* Espacement réduit entre icône et texte */
-    
+    position: relative;
+    right: -40px;
     .page-icon {
       font-size: 1rem; /* Réduit de 1.2rem à 1rem */
       color: #17A2B8;
@@ -169,8 +170,9 @@
     margin-right: 3rem; /* Empêche d'aller trop à droite */
     text-align: left;
     position: relative;
-    right: -500px;
+    right: -450px;
     top: -20px;
+    
   }
   
   
@@ -178,7 +180,7 @@
   .breadcrumb {
     font-size: 1rem;
     font-weight: 800;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(202, 197, 197, 0.8);
     margin-top: 0.5rem;
     right: 200px;
    
@@ -347,7 +349,7 @@
   .logo-image {
   max-width: 160px; /* 15% de la largeur de l'écran */
   height: auto;
-  right: 480px;
+  right: 420px;
   position: relative;
   top: -10px;
 }

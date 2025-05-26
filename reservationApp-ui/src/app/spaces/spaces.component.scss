@@ -247,7 +247,7 @@ right: -280px;
   padding: 0 20px;
   position: relative;
   top: 150px;
-  right: 420px;
+  right: 20px;
 
   .filter-controls {
     display: inline-flex;
@@ -622,7 +622,24 @@ right: -280px;
   .logo-image {
   max-width: 160px; /* 15% de la largeur de l'écran */
   height: auto;
-  right: 300px;
+  right: 280px;
   position: relative;
   top: 0px;
+}
+
+
+.filter-icon {
+position: relative;
+right: 450px;
+top: 50px;
+font-size: 1.4rem;
+font-weight: 800;
+color: rgb(13, 13, 73);
+}
+
+
+
+.icons-filter{
+right: 100px;
+color: rgb(13, 13, 73);
 }

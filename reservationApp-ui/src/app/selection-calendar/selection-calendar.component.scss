@@ -1,8 +1,8 @@
 /* Calendar Container Styles */
 .calendar-container {
  display: flex;
-  height: calc(100vh - 100px);
-  margin-top: 100px;
+  height: calc(100vh - 80px);
+  margin-top: 80px;
   font-family: 'Segoe UI', Roboto, sans-serif;
   background: #fff;
   position: relative;
@@ -13,14 +13,16 @@
 
 
 .sidebar {
-  width: 280px;
-  padding: 20px;
+  width: 320px;
+  padding: 25px;
   background-color: #f8f9fa;
   border-right: 1px solid #e0e0e0;
 
   .selection-info h2 {
     color: #3b4f90;
     font-size: 1.2rem;
+    position: relative;
+    right: -500px;
     margin-top: 20px;
   }
 }
@@ -103,8 +105,8 @@
   position: relative;
   top: -30px;
   overflow-y: auto;
-  width: 2000px;
-  right: -10px;
+   width: calc(100% - 320px); /* Adjusted to match new sidebar width */
+  right: 0; /* Remove the negative right positioning */
 }
 
 .date-header {
@@ -124,6 +126,7 @@
    position: relative;
   border-radius: 8px;
   overflow: hidden;
+   width: 100%;
   border: 1px solid #e0e0e0;  
   &.disabled {
     opacity: 0.6;
@@ -300,7 +303,7 @@ button {
       background-color: white;
       height: auto;
       position: relative;
-      right: 850px;
+      right: 650px;
       top: 30px;
     :hover{
       color: #aaa;
@@ -315,13 +318,13 @@ button {
       line-height: 1.2;
       color: #2b3b6e;
       position: relative;
-      right: 400px;
+      right: 200px;
     }
   }
 }
 .bu{
 position: relative;
-right: 490px;
+right: 300px;
 top: 10px;
 width: 50px !important;
   height: 50px !important;
@@ -547,15 +550,7 @@ border: 1px solid white;}
     width: 2320px;
     z-index: 100;
    
-    box-shadow: 
-     
-      0 5px 10px rgba(0, 0, 0, 0.6);
-      
-    transition: box-shadow 0.3s ease;
-  color: white;
- 
   
-  z-index: 1000;
 
   
   box-shadow: 
@@ -572,7 +567,7 @@ border: 1px solid white;}
  
   position: relative;
   top: -210px;
-  right: -2200px;
+  right: -1800px;
 
 
 
@@ -594,7 +589,7 @@ border: 1px solid white;}
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
- 
+ right: 170px;
   top: -170px;
   color: #ffffff; /* Couleur de texte profonde */
   text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.526); /* Ombre subtile */
@@ -646,16 +641,18 @@ border: 1px solid white;}
 }
 
 .back-to-spaces-button {
+  position: relative;
+  
   background: white;
   border: 2px solid black;
   border-radius: 20px;
-  padding: 20px 48px;
+  padding: 17px 30px;
   font-weight: 600;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  right: 950px;
+  right: 700px;
   &:hover {
     background: #f0f0f0;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -737,4 +734,7 @@ border: 1px solid white;}
   backdrop-filter: blur(12px) brightness(0.4);
   background-color: rgba(0, 0, 0, 0.7) !important;
 }
+
+
+
 

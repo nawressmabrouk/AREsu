@@ -352,15 +352,23 @@ navigateToReservation(): void {
     return;
   }
 
-const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-  width: '650px',
-  panelClass: ['custom-dialog-container', 'backdrop-blur'], // Applique les classes
-  disableClose: true,
-  data: {
-    startTime: this.selectedStartTime,
-    endTime: this.selectedEndTime
-  }
-});}
+  const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+    width: '650px',
+    panelClass: ['custom-dialog-container', 'backdrop-blur'],
+    disableClose: true,
+    data: {
+      startTime: this.selectedStartTime,
+      endTime: this.selectedEndTime
+    }
+  });
+
+  // Ajoutez cette souscription
+  dialogRef.afterClosed().subscribe(result => {
+    if (result) { // Si l'utilisateur a cliqué sur Confirmer
+      this.proceedToReservation();
+    }
+  });
+}
 
 
 private proceedToReservation(): void {

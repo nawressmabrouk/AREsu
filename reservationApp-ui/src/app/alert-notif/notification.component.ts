@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
     <div *ngIf="notification" class="notification" [class.success]="notification.type === 'success'" 
                                                   [class.error]="notification.type === 'error'">
       {{ notification.message }}
-      <button (click)="dismiss()">×</button>
+      <button class=" buttonx"(click)="dismiss()">×</button>
     </div>
   `,
  styles: [`
@@ -18,7 +18,7 @@ import { CommonModule } from '@angular/common';
     position: fixed;
     top: 150px;
     right: 20px;
-    padding: 30px 30px; /* Padding réduit */
+    padding: 19px 20px; /* Padding réduit */
     border-radius: 5px;
     color: white;
     z-index: 1000;
@@ -27,7 +27,7 @@ import { CommonModule } from '@angular/common';
     justify-content: space-between;
     min-width: 200px; /* Largeur minimale réduite */
     box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-    font-size: 22px; /* Taille de police augmentée */
+    font-size: 20px; /* Taille de police augmentée */
   }
   .success { background-color: #28a745; }
   .error { background-color:rgb(207, 45, 61); }
@@ -38,6 +38,9 @@ import { CommonModule } from '@angular/common';
     font-size: 20px;
     cursor: pointer;
     margin-left: 15px;
+  }
+  .buttonx{
+  position:relative; 
   }
 `]
 })

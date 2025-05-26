@@ -1,6 +1,7 @@
 .etablissement-details {
   font-size: 1.1rem;
-
+position: relative;
+top: -1000px;
   .details-header {
     display: flex;
     justify-content: space-between;

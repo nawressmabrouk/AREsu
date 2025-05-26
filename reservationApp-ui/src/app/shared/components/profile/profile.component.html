@@ -276,9 +276,9 @@
   </div>
 </div>
 <!-- Logout Confirmation Modal -->
-<div class="modal-overlay" *ngIf="showLogoutModal" (click)="closeLogoutModal()">
+<div class="modal-overlay1" *ngIf="showLogoutModal" (click)="closeLogoutModal()">
 <div class="modal-box logout-modal" (click)="$event.stopPropagation()">
-  <button class="modal-close" (click)="closeModal()">&times;</button>
+   <button class="modal-close" (click)="closeModal()">&times;</button>
   <h3>Souhaitez-vous vraiment <br> vous déconnecter ?</h3>
   <p>Se déconnecter en tant que <br><strong>{{ profileData?.email || '' }}</strong></p>
   
