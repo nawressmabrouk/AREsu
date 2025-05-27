@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+/*import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -71,5 +71,23 @@ fetch(url, {
         abortController.abort();
       };
     });
+  }
+}*/
+
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ChatService {
+
+  private apiUrl = 'http://localhost:8080/api/chat'; // URL de ton backend
+
+  constructor(private http: HttpClient) {}
+
+  askBot(question: string): Observable<string> {
+    return this.http.post(this.apiUrl, question, { responseType: 'text' });
   }
 }

@@ -18,6 +18,7 @@ import {
 import { Espace, Etablissement, EtablissementService } from '../services/etablissement/etablissement.service';
 import { UserService } from '../services/user/user.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
+import { ChatComponent } from '../chatbot/chatbot.component';
 //import { ChatbotComponent } from '../chatbot/chatbot.component';
 interface SpaceCategory {
   label: string;
@@ -28,7 +29,7 @@ interface SpaceCategory {
 @Component({
   selector: 'app-spaces',
   standalone: true,
-  imports: [FontAwesomeModule, CommonModule, FormsModule , ProfileComponent, /*ChatbotComponent*/],
+  imports: [FontAwesomeModule, CommonModule, FormsModule , ProfileComponent, ChatComponent],
   templateUrl: './spaces.component.html',
   styleUrls: ['./spaces.component.scss']
 })

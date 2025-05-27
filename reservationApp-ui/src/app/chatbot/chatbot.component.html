@@ -1,4 +1,4 @@
-<!-- chatbot.component.html -->
+<!-- chatbot.component.html 
 <div class="chat-container">
   <div class="messages">
     <div *ngFor="let msg of messages" [class.user]="msg.from === 'user'" [class.bot]="msg.from === 'bot'">
@@ -19,5 +19,44 @@
       placeholder="Type your message..."
     />
     <button (click)="sendMessage()">Send</button>
+  </div>
+</div-->
+
+<!-- BOUTON FLOTTANT -->
+<button class="chat-toggle-btn" (click)="toggleChat()">
+  <img 
+    *ngIf="!isOpen" 
+    src="chat-icon.svg" 
+    alt="Chat Icon"
+  />
+  <img 
+    *ngIf="isOpen" 
+    src="arrow-down.svg" 
+    alt="Close Chat"
+  />
+</button>
+
+<!-- Fenêtre de chat -->
+<div class="chat-container" *ngIf="isOpen">
+  <div class="messages">
+    <div *ngFor="let msg of messages">
+      <div class="message-bubble" [ngClass]="msg.from">
+        <img *ngIf="msg.from === 'bot'" src="/bot-avatar.png" alt="bot" class="avatar" />
+        <div *ngIf="msg.loading" class="loading-indicator">
+          <div class="dot-flashing"></div>
+        </div>
+        <span *ngIf="!msg.loading">{{ msg.text }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input 
+      type="text" 
+      [(ngModel)]="userMessage" 
+      (keyup.enter)="sendMessage()"
+      placeholder="Tapez votre message..."
+    />
+    <button (click)="sendMessage()">Envoyer</button>
   </div>
 </div>

@@ -7,7 +7,7 @@ import { Routes } from '@angular/router';
 import { AdminComponent } from './admin/admin.component';
 import { AuthComponent } from './auth/auth.component';
 import { AuthGuard } from './auth/auth.guard';
-import { ChatbotComponent } from './chatbot/chatbot.component';
+import { ChatComponent } from './chatbot/chatbot.component';
 import { HomeComponent } from './home/home.component';
 import { IdOublieComponent } from './mot-de-passe-oubliée/id-oublie/id-oublie.component';
 import { ResetPasswordComponent } from './mot-de-passe-oubliée/reset-password/reset-password.component';
@@ -54,7 +54,7 @@ export const routes: Routes = [
   },
   { 
     path: 'chatbot', 
-    component: ChatbotComponent 
+    component: ChatComponent 
   },
   { 
     path: 'secretary',

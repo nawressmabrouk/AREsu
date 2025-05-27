@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+/*import { Component, OnDestroy } from '@angular/core';
 import { ChatService } from '../services/chatbot/chat.service';
 import { Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -57,5 +57,67 @@ export class ChatbotComponent implements OnDestroy {
 
   ngOnDestroy() {
     this.subscription?.unsubscribe();
+  }
+}*/
+
+import { Component } from '@angular/core';
+import { ChatService } from '../services/chatbot/chat.service';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+
+interface Message {
+  from: 'user' | 'bot';
+  text: string;
+  loading?: boolean;
+}
+
+@Component({
+  selector: 'app-chat',
+  templateUrl: './chatbot.component.html',
+  styleUrls: ['./chatbot.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    HttpClientModule
+  ]
+})
+export class ChatComponent {
+  userMessage: string = '';
+  messages: Message[] = [];
+isOpen = false;
+toggleChat() {
+  this.isOpen = !this.isOpen;
+}
+  constructor(private chatService: ChatService) {}
+
+  sendMessage() {
+    const question = this.userMessage.trim();
+    if (!question) return;
+
+    // Ajoute le message utilisateur
+    this.messages.push({ from: 'user', text: question });
+
+    // Ajoute une bulle de chargement du bot
+    const loadingMsg: Message = { from: 'bot', text: '', loading: true };
+    this.messages.push(loadingMsg);
+
+    this.chatService.askBot(question).subscribe({
+      next: (response) => {
+        // Retire la bulle de chargement
+        this.messages.pop();
+        // Ajoute la réponse réelle
+        this.messages.push({ from: 'bot', text: response });
+      },
+      error: () => {
+        this.messages.pop();
+        this.messages.push({ from: 'bot', text: "Erreur lors de la communication avec le bot." });
+      }
+    });
+
+
+    // Vide le champ utilisateur
+    this.userMessage = '';
   }
 }

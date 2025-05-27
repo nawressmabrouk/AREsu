@@ -12,6 +12,7 @@ import { AuthService } from '../services/auth/auth.service';
 import { RegistrationService } from '../services/auth/register.service';
 import { NotificationComponent } from '../alert-notif/notification.component';
 import { NotificationService } from '../services/alert-notif/notification.service';
+import { ChatComponent } from '../chatbot/chatbot.component';
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -19,7 +20,7 @@ import { NotificationService } from '../services/alert-notif/notification.servic
     CommonModule,    // Required for *ngIf and other common directives
     FormsModule,     // Required for template-driven forms
     RouterModule,    // Required for routerLink
-    FontAwesomeModule , NotificationComponent
+    FontAwesomeModule , NotificationComponent, ChatComponent
   ],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss']
