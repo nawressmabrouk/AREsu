@@ -221,12 +221,13 @@ $primary-hover: #5848e5;
 .chat-toggle-btn {
   position: fixed;
   bottom: 20px;
-  right: 20px;
-  background-color: #578ac5;
+  right: 40px;
+  top: 800px;
+  background-color: #3b4f90;
   border: none;
   border-radius: 50%;
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -236,15 +237,26 @@ $primary-hover: #5848e5;
   transition: transform 0.3s, background-color 0.3s;
 
   &:hover {
-    background-color: #5848e5;
+   
     transform: scale(1.05);
   }
 
+  svg {
+    width: 56px;
+    height: 56px;
+  }
+
   img {
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
   }
 }
+
+
+
+
+
+
 
 .avatar {
   width: 24px;
@@ -253,3 +265,5 @@ $primary-hover: #5848e5;
   border-radius: 50%;
   vertical-align: middle;
 }
+
+

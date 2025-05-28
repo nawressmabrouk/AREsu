@@ -74,7 +74,7 @@ showAnimation = false;
 
   getLogoPath(etablissement: string): string {
   const logoMap: {[key: string]: string} = {
-    'Université de Sousse': 'OIP.png',
+    'Université de Sousse': 'universitee.png',
     'Institut des Hautes Études Commerciales': 'institut-des-hautes-etudes-commerciales-de-sousse.png',
     'Institut de Finance et Fiscalité': 'isff.png',
     'Institut des Beaux-Arts': 'beauxart.png',
@@ -87,7 +87,7 @@ showAnimation = false;
     'Institut des Sciences Infirmières': 'logo_issis.png',
     'Faculté de Médecine': 'medecine.png',
     'Faculté de Droit et des Sciences Politiques': 'droit.png',
-    'Faculté des Lettres et des Sciences Humaines': 'sante.png', // Ajustez si nécessaire
+    'Faculté des Lettres et des Sciences Humaines': 'OIP.png', // Ajustez si nécessaire
     'Faculté des Sciences Économiques et de Gestion': 'fseg.png',
     'École Nationale des Ingénieurs': 'eniso.png',
     'École des Sciences et Technologies de Hammam Sousse': 'essths.png',

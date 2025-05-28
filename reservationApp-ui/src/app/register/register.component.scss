@@ -20,7 +20,7 @@
   height: 600px;
   min-height: 500px;
   padding: 30px -0px;
-  top: 0px;
+  top: 100px;
   margin: auto;
   border-radius: 10px;
   display: flex;
@@ -1021,3 +1021,9 @@ transition: box-shadow 0.3s ease;
 }
 
 
+.main {
+    position: relative;
+    top: -50px;
+border: 3px solid rgb(169, 169, 169);
+height: 820px;
+}
