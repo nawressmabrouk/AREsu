@@ -20,6 +20,7 @@ import { NotificationComponent } from '../alert-notif/notification.component';
 import { NotificationService } from '../services/alert-notif/notification.service';
 import { AuthService } from '../services/auth/auth.service';
 import { RegistrationService } from '../services/auth/register.service';
+import { ChatComponent } from '../chatbot/chatbot.component';
 
 @Component({
   selector: 'app-auth',
@@ -29,7 +30,7 @@ import { RegistrationService } from '../services/auth/register.service';
     RouterModule,
     FontAwesomeModule,
     FormsModule,
-    NotificationComponent
+    NotificationComponent , ChatComponent
   ],
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.scss']

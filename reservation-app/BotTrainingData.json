@@ -2730,11 +2730,11 @@
     },
     {
         "prompt": "Je cherche une salle de 100 places avec vidéoprojecteur et caméra visio. Quelles sont les options ?",
-        "completion": "La Salle de conférence D (100 places) et la Salle de conférence  (100 places) répondent à vos critères."
+        "completion": "La Salle de conférence D (100 places) dans la  Faculté des Sciences Économiques et de Gestion de Sousse  ou la Salle de conférence  (100 places) dans Institut Supérieur d’Informatique et des Technologies de Communication de Hammam Sousse répondent à vos critères."
     },
     {
         "prompt": "Quels amphithéâtres de 150 places ont un projecteur et un système audio ?",
-        "completion": "Amphi 2 (150 places) et Amphi 4 (150 places)."
+        "completion": "Amphi 2 (150 places) et Amphi 4 (150 places) dans ."
     },
     {
         "prompt": "Y a-t-il un laboratoire avec imprimante 3D et PCs pour 15 personnes ?",

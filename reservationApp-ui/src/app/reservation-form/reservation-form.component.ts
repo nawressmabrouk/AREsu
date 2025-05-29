@@ -4,6 +4,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NotificationService } from '../services/alert-notif/notification.service';
 import {
   faAlignLeft,
   faArrowRight,
@@ -27,11 +28,13 @@ import { ReservationsubmissionService } from '../services/reservationflow/reserv
 import { lastValueFrom } from 'rxjs/internal/lastValueFrom';
 import { catchError } from 'rxjs/operators';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
+import { ChatComponent } from "../chatbot/chatbot.component";
+import { NotificationComponent } from "../alert-notif/notification.component";
 
 @Component({
   selector: 'app-reservation-form',
   standalone: true,
-  imports: [FontAwesomeModule, FormsModule, CommonModule, RouterModule, ProfileComponent],
+  imports: [FontAwesomeModule, FormsModule, CommonModule, RouterModule, ProfileComponent, ChatComponent, NotificationComponent],
   templateUrl: './reservation-form.component.html',
   styleUrls: ['./reservation-form.component.scss'],
   providers: [DatePipe]
@@ -94,7 +97,7 @@ export class ReservationFormComponent implements OnInit {
     private route: ActivatedRoute,
     private datePipe: DatePipe,
     private authService: AuthService,
-    private reservationService: ReservationsubmissionService
+    private reservationService: ReservationsubmissionService , private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -280,69 +283,72 @@ export class ReservationFormComponent implements OnInit {
            this.timeSlotIsValid();
   }
 
-  async onSubmit(form: NgForm): Promise<void> {
-    this.formSubmitted = true;
-    this.errorMessage = null;
-    this.isLoading = true;
-  
-    try {
-      if (!this.isFormValid(form)) {
-        throw new Error('Please fill all required fields correctly');
-      }
+async onSubmit(form: NgForm): Promise<void> {
+  this.formSubmitted = true;
+  this.errorMessage = null;
+  this.isLoading = true;
 
-      if (!this.currentUser?.userId) {
-        throw new Error('Session expired, please log in again');
-      }
-
-      const reservationPayload = {
-        ...this.reservation,
-        nbrParticipant: Number(this.reservation.nbrParticipant),
-        equipements: this.selectedEquipments,
-        demandeurId: this.currentUser.userId,
-        heureDebut: this.reservation.heureDebut,
-        heureFin: this.reservation.heureFin
-      };
-
-      console.log('Submission payload:', reservationPayload);
-
-      // Create reservation
-      const createResponse = await lastValueFrom(
-        this.reservationService.createReservation(reservationPayload).pipe(
-          catchError(err => {
-            throw new Error(`Creation failed: ${this.extractErrorMessage(err)}`);
-          })
-        )
-      );
-
-      if (!createResponse?.id) {
-        throw new Error('Invalid server response - missing ID');
-      }
-
-      // Send to responsible
-      await lastValueFrom(
-        this.reservationService.sendReservation(createResponse.id).pipe(
-          catchError(err => {
-            throw new Error(`Sending failed: ${this.extractErrorMessage(err)}`);
-          })
-        )
-      );
-
-      this.showAlert('success', 'Reservation created and sent successfully!');
-      this.router.navigate(['/spaces'], {
-        state: {
-          reservationData: reservationPayload,
-          reservationId: createResponse.id
-        }
-      });
-
-    } catch (error: any) {
-      console.error('Submission error:', error);
-      this.errorMessage = error.message;
-      this.showAlert('error', error.message);
-    } finally {
-      this.isLoading = false;
+  try {
+    if (!this.isFormValid(form)) {
+      throw new Error('Veuillez remplir correctement tous les champs obligatoires.');
     }
+
+    if (!this.currentUser?.userId) {
+      throw new Error('Session expired, please log in again');
+    }
+
+    const reservationPayload = {
+      ...this.reservation,
+      nbrParticipant: Number(this.reservation.nbrParticipant),
+      equipements: this.selectedEquipments,
+      demandeurId: this.currentUser.userId,
+      heureDebut: this.reservation.heureDebut,
+      heureFin: this.reservation.heureFin
+    };
+
+    console.log('Submission payload:', reservationPayload);
+
+    // Create reservation
+    const createResponse = await lastValueFrom(
+      this.reservationService.createReservation(reservationPayload).pipe(
+        catchError(err => {
+          throw new Error(`Creation failed: ${this.extractErrorMessage(err)}`);
+        })
+      )
+    );
+
+    if (!createResponse?.id) {
+      throw new Error('Invalid server response - missing ID');
+    }
+
+    // Send to responsible
+    await lastValueFrom(
+      this.reservationService.sendReservation(createResponse.id).pipe(
+        catchError(err => {
+          throw new Error(`Sending failed: ${this.extractErrorMessage(err)}`);
+        })
+      )
+    );
+
+    this.notificationService.showSuccess('Réservation créée et envoyée avec succès !');
+    
+    // NE PAS REDIRIGER, rester sur la même page
+    // this.router.navigate(['/spaces'], {
+    //   state: {
+    //     reservationData: reservationPayload,
+    //     reservationId: createResponse.id
+    //   }
+    // });
+
+  } catch (error: any) {
+    console.error('Submission error:', error);
+    this.errorMessage = error.message;
+    this.showAlert('error', error.message);
+  } finally {
+    this.isLoading = false;
   }
+}
+
   
   private extractErrorMessage(error: any): string {
     if (error instanceof HttpErrorResponse) {

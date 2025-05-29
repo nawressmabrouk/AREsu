@@ -1,71 +1,12 @@
-/*import { Component, OnDestroy } from '@angular/core';
-import { ChatService } from '../services/chatbot/chat.service';
-import { Subscription } from 'rxjs';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 
 
-@Component({
-  selector: 'app-chatbot',
-  templateUrl: './chatbot.component.html',
-  styleUrls: ['./chatbot.component.scss'],
-  standalone: true,
-  imports: [CommonModule, FormsModule] // Add both modules here
-})
-
-export class ChatbotComponent implements OnDestroy {
-  userMessage = '';
-  userId = 'user123'; // Get this from your auth system
-  messages: { from: 'user' | 'bot', text: string, loading?: boolean }[] = [];
-  private subscription?: Subscription;
-
-  constructor(private chatService: ChatService) {}
-
-  sendMessage() {
-    if (!this.userMessage.trim()) return;
-
-    // Add user message
-    this.messages.push({ 
-      from: 'user', 
-      text: this.userMessage 
-    });
-
-    // Add temporary bot message
-    const botMessageIndex = this.messages.push({ 
-      from: 'bot', 
-      text: '',
-      loading: true
-    }) - 1;
-
-    this.subscription = this.chatService
-      .streamChat(this.userMessage, this.userId)
-      .subscribe({
-        next: (chunk) => {
-          this.messages[botMessageIndex].text += chunk;
-        },
-        error: (error) => {
-          this.messages[botMessageIndex].text = 'Error: ' + error.message;
-          this.messages[botMessageIndex].loading = false;
-        },
-        complete: () => {
-          this.messages[botMessageIndex].loading = false;
-        }
-      });
-
-    this.userMessage = '';
-  }
-
-  ngOnDestroy() {
-    this.subscription?.unsubscribe();
-  }
-}*/
-
-import { Component } from '@angular/core';
+import { Component , OnInit , ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { ChatService } from '../services/chatbot/chat.service';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faRobot , faCommentDots} from '@fortawesome/free-solid-svg-icons';
 interface Message {
   from: 'user' | 'bot';
   text: string;
@@ -80,16 +21,46 @@ interface Message {
   imports: [
     CommonModule,
     FormsModule,
-    HttpClientModule
+    HttpClientModule , FontAwesomeModule
   ]
 })
-export class ChatComponent {
+export class ChatComponent implements OnInit, AfterViewChecked {
+  @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
   userMessage: string = '';
   messages: Message[] = [];
 isOpen = false;
+isExpanded = false;
+faRobot = faRobot ;
+faCommentDots = faCommentDots;
 toggleChat() {
   this.isOpen = !this.isOpen;
+  // Simplifié, ça marche pareil
 }
+ ngAfterViewChecked() {
+    this.scrollToBottom();
+  }
+
+  private scrollToBottom(): void {
+    try {
+      this.messagesContainer.nativeElement.scrollTop = 
+        this.messagesContainer.nativeElement.scrollHeight;
+    } catch(err) { }
+  }
+
+ ngOnInit() {
+    // Ajouter le message de bienvenue quand le composant est initialisé
+    this.messages.push({ 
+      from: 'bot', 
+      text: 'Salut ! Comment puis-je t\'\aider aujourd\'\hui ?' 
+    });
+  }
+
+
+toggleExpand() {
+  this.isExpanded = !this.isExpanded;
+}
+
+
   constructor(private chatService: ChatService) {}
 
   sendMessage() {
@@ -120,4 +91,7 @@ toggleChat() {
     // Vide le champ utilisateur
     this.userMessage = '';
   }
+
+
+
 }

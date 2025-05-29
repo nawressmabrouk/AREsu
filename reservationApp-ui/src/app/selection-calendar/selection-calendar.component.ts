@@ -20,6 +20,7 @@ import { ProfileComponent } from '../shared/components/profile/profile.component
 import { CalendarSlotDTO } from '../shared/interfaces/calendar-slot.dto';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { ChatComponent } from "../chatbot/chatbot.component";
 @Injectable()
 export class CustomDateFnsAdapter extends DateFnsAdapter {
   constructor() {
@@ -40,8 +41,9 @@ export class CustomDateFnsAdapter extends DateFnsAdapter {
     MatFormFieldModule,
     MatIconModule,
     ProfileComponent,
-    MatButtonModule , MatDialogModule , ConfirmDialogComponent
-  ],
+    MatButtonModule, MatDialogModule, ConfirmDialogComponent,
+    ChatComponent
+],
   selector: 'app-selection-calendar',
   templateUrl: './selection-calendar.component.html',
   styleUrls: ['./selection-calendar.component.scss'],
