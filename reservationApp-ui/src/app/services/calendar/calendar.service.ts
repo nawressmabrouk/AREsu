@@ -175,14 +175,16 @@ getCalendarView(
   }*/
  
  // Modify the getUnavailableDates method to accept etablissementId
-getUnavailableDates(etablissementId: string): Observable<string[]> {
-  if (!etablissementId) {
-    return throwError(() => new Error('Etablissement ID is required'));
+getUnavailableDates(etablissementId: string, espaceId: string): Observable<string[]> {
+  if (!etablissementId || !espaceId) {
+    return throwError(() => new Error('Both establishment and space IDs are required'));
   }
 
   return this.http.get<string[]>(`${this.apiUrl}/reservations/dates`, {
     headers: this.getHeaders(),
-    params: new HttpParams().set('etablissementId', etablissementId)
+    params: new HttpParams()
+      .set('etablissementId', etablissementId)
+      .set('espaceId', espaceId)
   }).pipe(
     catchError(this.handleError)
   );

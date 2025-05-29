@@ -68,4 +68,5 @@ List<Reservation> findByEtablissementIdAndEspaceIdAndHeureDebutBetween(
     Date startOfDay, 
     Date endOfDay
 );
+
 }

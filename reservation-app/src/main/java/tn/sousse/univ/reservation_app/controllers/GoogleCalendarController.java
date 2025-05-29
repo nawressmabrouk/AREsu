@@ -56,15 +56,16 @@ public class GoogleCalendarController {
     @Autowired
 private ReservationRepository reservationRepo;
 
-    @GetMapping("/reservations/dates")
-    public ResponseEntity<List<String>> getReservedDates(
-            @RequestParam String etablissementId) {
-        try {
-            return ResponseEntity.ok(googleCalendarService.getReservedDates(etablissementId));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+@GetMapping("/reservations/dates")
+public ResponseEntity<List<String>> getReservedDates(
+        @RequestParam String etablissementId,
+        @RequestParam String espaceId) {
+    try {
+        return ResponseEntity.ok(googleCalendarService.getReservedDates(etablissementId, espaceId));
+    } catch (Exception e) {
+        return ResponseEntity.internalServerError().build();
     }
+}
    
 
    /*  @GetMapping("/reservations/confirmed")

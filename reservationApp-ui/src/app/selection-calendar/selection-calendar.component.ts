@@ -171,11 +171,20 @@ currentTimePosition: string = this.getCurrentTimePosition();
     return !this.isDateReserved(date);
   }
 
-  isDateReserved(date: Date): boolean {
-    return this.reservedDates.some(reservedDate => 
-      isSameDay(date, reservedDate)
-    );
-  }
+isDateReserved(date: Date): boolean {
+  if (!this.reservedDates || !date) return false;
+  
+  // Compare dates without time components
+  const checkDate = new Date(date);
+  checkDate.setHours(0, 0, 0, 0);
+  
+  return this.reservedDates.some(reservedDate => {
+    const rd = new Date(reservedDate);
+    rd.setHours(0, 0, 0, 0);
+    return rd.getTime() === checkDate.getTime();
+  });
+}
+
 // Add this method to check if current time should be shown
 shouldShowCurrentTime(time: string, index: number): boolean {
   if (!this.isToday()) return false;
@@ -242,29 +251,40 @@ isSameDay(date1: Date, date2: Date): boolean {
     });
   }
 
-  loadReservedDates(): void {
-    if (!this.etablissementId || !this.espaceId) {
-      console.warn('Cannot load reserved dates - missing IDs');
-      return;
-    }
-
-    this.isLoading = true;
-    this.calendarService.getUnavailableDates(this.etablissementId)
-      .subscribe({
-        next: (dateStrings: string[]) => {
-          this.reservedDates = dateStrings
-            .map(dateStr => this.parseBackendDate(dateStr))
-            .filter((date): date is Date => date !== null);
-          this.isLoading = false;
-          this.dateControl.updateValueAndValidity();
-        },
-        error: (err) => {
-          console.error('Error loading reserved dates:', err);
-          this.errorMessage = 'Failed to load reserved dates. Please try again later.';
-          this.isLoading = false;
-        }
-      });
+loadReservedDates(): void {
+  if (!this.etablissementId || !this.espaceId) {
+    console.warn('Cannot load reserved dates - missing IDs');
+    return;
   }
+
+  this.isLoading = true;
+  this.calendarService.getUnavailableDates(this.etablissementId, this.espaceId)
+    .subscribe({
+      next: (dateStrings: string[]) => {
+        // Convert string dates to Date objects
+        this.reservedDates = dateStrings.map(dateStr => {
+          // Parse date string in format "yyyy-MM-dd"
+          const parts = dateStr.split('-');
+          return new Date(
+            parseInt(parts[0]), 
+            parseInt(parts[1]) - 1, 
+            parseInt(parts[2])
+          );
+        });
+        
+        this.isLoading = false;
+        this.dateControl.updateValueAndValidity();
+        
+        // Debug log
+        console.log('Reserved dates:', this.reservedDates);
+      },
+      error: (err) => {
+        console.error('Error loading reserved dates:', err);
+        this.errorMessage = 'Failed to load reserved dates. Please try again later.';
+        this.isLoading = false;
+      }
+    });
+}
 
   isUnavailable(time: string): boolean {
     const { hours, minutes } = this.parseTime(time);
@@ -273,11 +293,12 @@ isSameDay(date1: Date, date2: Date): boolean {
     return this.isDateReserved(dateToCheck);
   }
 
-  selectToday(): void {
-    this.selectedDate = new Date();
-    this.dateControl.setValue(this.selectedDate);
-    this.loadReservedDates();
-  }
+
+selectToday(): void {
+  this.selectedDate = new Date();
+  this.dateControl.setValue(this.selectedDate);
+  this.loadReservedDates(); // This will refresh with the correct reservations
+}
 
   handleSlotClick(time: string): void {
     if (this.isUnavailable(time)) {
@@ -501,27 +522,27 @@ private proceedToReservation(): void {
     );
   }
 
-  prevDay() {
-    const newDate = new Date(this.selectedDate);
-    newDate.setDate(newDate.getDate() - 1);
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (newDate >= today) {
-      this.selectedDate = newDate;
-      this.dateControl.setValue(newDate);
-      this.loadReservedDates();
-    }
-  }
-
-  nextDay() {
-    const newDate = new Date(this.selectedDate);
-    newDate.setDate(newDate.getDate() + 1);
+prevDay(): void {
+  const newDate = new Date(this.selectedDate);
+  newDate.setDate(newDate.getDate() - 1);
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (newDate >= today) {
     this.selectedDate = newDate;
     this.dateControl.setValue(newDate);
-    this.loadReservedDates();
+    this.loadReservedDates(); // Refresh reservations
   }
+}
+
+nextDay(): void {
+  const newDate = new Date(this.selectedDate);
+  newDate.setDate(newDate.getDate() + 1);
+  this.selectedDate = newDate;
+  this.dateControl.setValue(newDate);
+  this.loadReservedDates(); // Refresh reservations
+}
 
   navigateToSpaces() {
     this.router.navigate(['/spaces']);

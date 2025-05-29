@@ -106,39 +106,49 @@ public class GoogleCalendarService {
      * @return List of unique reserved dates in "yyyy-MM-dd" format
      */
  
- public List<String> getReservedDates(String etablissementId) {
+public List<String> getReservedDates(String etablissementId, String espaceId) {
     Set<String> reservedDates = new HashSet<>();
     try {
-        Etablissement etab = etablissementRepo.findById(etablissementId)
-            .orElseThrow(() -> new RuntimeException("Etablissement not found"));
+        // 1. Get space-specific reservations
+        List<Reservation> reservations = reservationRepository
+            .findByEtablissementIdAndEspaceIdAndStatut(
+                etablissementId, 
+                espaceId,
+                StatusReservation.ACCEPTÉE
+            );
         
-        Calendar service = getCalendarService();
-        
-        // 1. Fetch from establishment's calendar
-        reservedDates.addAll(getReservationsFromCalendar(service, etab.getGoogleCalendarId()));
-        
-        // 2. Attempt to fetch from Tunisian holiday calendars
-        boolean foundHolidays = false;
-        for (String calendarId : TUNISIAN_HOLIDAY_CALENDAR_IDS) {
-            try {
-                reservedDates.addAll(getReservationsFromCalendar(service, calendarId));
-                foundHolidays = true;
-                logger.info("Successfully fetched holidays from: {}", calendarId);
-                break;
-            } catch (IOException e) {
-                logger.warn("Failed to fetch from: {} - {}", calendarId, e.getMessage());
+        // 2. Convert to date strings
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        for (Reservation res : reservations) {
+            if (res.getHeureDebut() != null) {
+                reservedDates.add(sdf.format(res.getHeureDebut()));
             }
         }
         
-        if (!foundHolidays) {
-            logger.warn("No holiday calendars could be accessed");
+        // 3. (Optional) Keep holiday checks if needed
+        boolean foundHolidays = false;
+        for (String calendarId : TUNISIAN_HOLIDAY_CALENDAR_IDS) {
+            try {
+                reservedDates.addAll(getReservationsFromCalendar(getCalendarService(), calendarId));
+                foundHolidays = true;
+                break;
+            } catch (IOException e) {
+                logger.warn("Failed to fetch from holiday calendar: {}", calendarId);
+            }
         }
-    } catch (GeneralSecurityException | IOException e) {
-        logger.error("Calendar service failure: {}", e.getMessage());
+        
+        return new ArrayList<>(reservedDates);
+    } catch (Exception e) {
+        logger.error("Error getting reserved dates", e);
         throw new RuntimeException("Calendar service error", e);
     }
-    return new ArrayList<>(reservedDates);
 }
+
+private String formatDate(Date date) {
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    return sdf.format(date);
+}
+
 
     /**
      * Fetches event start dates from a Google Calendar.
