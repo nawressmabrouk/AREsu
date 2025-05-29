@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.bson.types.ObjectId;
-import org.springframework.security.core.Authentication; 
+import org.springframework.security.core.Authentication;
 
+import tn.sousse.univ.reservation_app.models.Espace;
 import tn.sousse.univ.reservation_app.models.Reservation;
+import tn.sousse.univ.reservation_app.repositories.EspaceRepository;
 import tn.sousse.univ.reservation_app.services.ReservationService;
 
 @RestController
@@ -27,6 +29,9 @@ public class ReservationController {
 
     @Autowired
     private ReservationService reservationService;
+
+        @Autowired
+    private EspaceRepository espaceRepository;
 
     /*
      * @Autowired
@@ -102,7 +107,12 @@ public class ReservationController {
         }
     }
     
-
+@GetMapping("/espaces/{espaceId}")
+public ResponseEntity<Espace> getEspaceDetails(@PathVariable String espaceId) {
+    Espace espace = espaceRepository.findById(espaceId)
+            .orElseThrow(() -> new RuntimeException("Espace non trouvé"));
+    return ResponseEntity.ok(espace);
+}
     
     
 }

@@ -87,10 +87,11 @@ public class ChatService {
 
 package tn.sousse.univ.reservation_app.services;
 
-import org.springframework.stereotype.Service;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+
+import org.springframework.stereotype.Service;
 
 @Service
 public class PythonBridgeService {
@@ -98,7 +99,10 @@ public class PythonBridgeService {
     public String ask(String question) {
         try {
             // Appelle Python avec l'argument de la question
-            ProcessBuilder pb = new ProcessBuilder("python", "ask_bot.py", question);
+            ProcessBuilder pb = new ProcessBuilder(
+                    "C:\\Windows\\py.exe", // Full path to Python launcher
+                    "C:\\Users\\mabro\\Downloads\\reservation-app\\reservation-app\\ask_bot.py",
+                    question);
             pb.redirectErrorStream(true);
             Process process = pb.start();
 

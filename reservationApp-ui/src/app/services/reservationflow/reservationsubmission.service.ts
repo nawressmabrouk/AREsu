@@ -2,7 +2,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
 
 @Injectable({
@@ -95,4 +95,23 @@ export class ReservationsubmissionService {
     console.error('API Error:', errorMessage, error);
     return throwError(() => new Error(errorMessage));
   }
+
+// In your ReservationsubmissionService
+getEspaceDetails(espaceId: string): Observable<any> {
+  return this.http.get(
+    `${this.apiUrl}/reservations/espaces/${espaceId}`,
+    { headers: this.getHeaders() }
+  ).pipe(
+    map((response: any) => {
+      // Map French field names to English
+      return {
+        ...response,
+        capacity: response.capacite,  // Map capacite to capacity
+        nom: response.nom             // Keep other fields as needed
+      };
+    }),
+    catchError(this.handleError)
+  );
+}
+
 }

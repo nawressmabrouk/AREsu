@@ -4,7 +4,6 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NotificationService } from '../services/alert-notif/notification.service';
 import {
   faAlignLeft,
   faArrowRight,
@@ -22,14 +21,15 @@ import {
   faUsers,
   faUserTag
 } from '@fortawesome/free-solid-svg-icons';
+import { NotificationService } from '../services/alert-notif/notification.service';
 import { AuthService } from '../services/auth/auth.service';
 import { ReservationsubmissionService } from '../services/reservationflow/reservationsubmission.service';
 
 import { lastValueFrom } from 'rxjs/internal/lastValueFrom';
 import { catchError } from 'rxjs/operators';
-import { ProfileComponent } from '../shared/components/profile/profile.component';
-import { ChatComponent } from "../chatbot/chatbot.component";
 import { NotificationComponent } from "../alert-notif/notification.component";
+import { ChatComponent } from "../chatbot/chatbot.component";
+import { ProfileComponent } from '../shared/components/profile/profile.component';
 
 @Component({
   selector: 'app-reservation-form',
@@ -64,6 +64,7 @@ export class ReservationFormComponent implements OnInit {
   showEquipmentModal = false;
   isLoading = false;
   errorMessage: string | null = null;
+  loadingSpaceDetails = false;
   
   // Equipment management
   selectedEquipments: string[] = [];
@@ -71,6 +72,8 @@ export class ReservationFormComponent implements OnInit {
   customEquipment: string = '';
   canAddEquipment = false;
   currentUser: any;
+  selectedSpaceCapacity: number | null = null;
+  selectedSpaceName: string = '';
 
   // Reservation data
   reservation = {
@@ -97,7 +100,8 @@ export class ReservationFormComponent implements OnInit {
     private route: ActivatedRoute,
     private datePipe: DatePipe,
     private authService: AuthService,
-    private reservationService: ReservationsubmissionService , private notificationService: NotificationService
+    private reservationService: ReservationsubmissionService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -136,6 +140,9 @@ export class ReservationFormComponent implements OnInit {
           heureFin: this.formatISODateTime(params['date'], endTime24h)
         };
 
+        // Load space details including capacity
+        this.loadEspaceDetails(params['espaceId']);
+
         console.log('Reservation data initialized:', this.reservation);
       } catch (error) {
         console.error('Error initializing reservation:', error);
@@ -149,7 +156,21 @@ export class ReservationFormComponent implements OnInit {
       }
     });
   }
-
+ 
+private loadEspaceDetails(espaceId: string): void {
+  this.loadingSpaceDetails = true;
+  this.reservationService.getEspaceDetails(espaceId).subscribe({
+    next: (espace) => {
+      this.selectedSpaceCapacity = espace.capacite;  // Use the French field name
+      this.selectedSpaceName = espace.nom;
+      this.loadingSpaceDetails = false;
+    },
+    error: (err) => {
+      console.error('Failed to load space details:', err);
+      this.loadingSpaceDetails = false;
+    }
+  });
+}
   private convertTo24HourFormat(timeStr: string): string {
     if (!timeStr) throw new Error('Time string is empty');
     
@@ -247,9 +268,32 @@ export class ReservationFormComponent implements OnInit {
     }
   }
 
+  checkCapacity(): void {
+    if (this.reservation.nbrParticipant && this.selectedSpaceCapacity) {
+      if (this.reservation.nbrParticipant > this.selectedSpaceCapacity) {
+        this.notificationService.showError(
+          `The capacity of "${this.selectedSpaceName}" is ${this.selectedSpaceCapacity}. ` +
+          `Please select a smaller number of participants or choose a different space.`
+        );
+      }
+    }
+  }
+
   participantsIsValid(): boolean {
-    return this.reservation.nbrParticipant !== null && 
-           this.reservation.nbrParticipant > 0;
+    const basicValidation = this.reservation.nbrParticipant !== null && 
+                          this.reservation.nbrParticipant > 0;
+    
+    if (!basicValidation) return false;
+    
+    // Only validate capacity if we successfully loaded it
+    if (this.selectedSpaceCapacity !== null) {
+      return (
+        this.reservation.nbrParticipant !== null &&
+        this.reservation.nbrParticipant <= this.selectedSpaceCapacity
+      );
+    }
+    
+    return true; // If capacity isn't loaded yet, don't fail validation
   }
 
   timeSlotIsValid(): boolean {
@@ -270,6 +314,20 @@ export class ReservationFormComponent implements OnInit {
   }
 
   isFormValid(form: NgForm): boolean {
+    console.log('Form validation check:', {
+  formValid: form.valid,
+  responsableAction: this.reservation.responsableAction,
+  intituleAction: this.reservation.intituleAction,
+  nbrParticipant: this.reservation.nbrParticipant,
+  cible: this.reservation.cible,
+  emailValid: this.emailIsValid(),
+  fonctionR: this.reservation.fonctionR,
+  structure: this.reservation.structure,
+  linkedInValid: this.linkedInIsValid(),
+  description: this.reservation.description,
+  timeSlotValid: this.timeSlotIsValid(),
+  capacity: this.selectedSpaceCapacity
+});
     return !!form.valid &&
            this.reservation.responsableAction.trim() !== '' &&
            this.reservation.intituleAction.trim() !== '' &&
@@ -283,73 +341,64 @@ export class ReservationFormComponent implements OnInit {
            this.timeSlotIsValid();
   }
 
-async onSubmit(form: NgForm): Promise<void> {
-  this.formSubmitted = true;
-  this.errorMessage = null;
-  this.isLoading = true;
+  async onSubmit(form: NgForm): Promise<void> {
+    this.formSubmitted = true;
+    this.errorMessage = null;
+    this.isLoading = true;
 
-  try {
-    if (!this.isFormValid(form)) {
-      throw new Error('Veuillez remplir correctement tous les champs obligatoires.');
+    try {
+      if (!this.isFormValid(form)) {
+        throw new Error('Veuillez remplir correctement tous les champs obligatoires.');
+      }
+
+      if (!this.currentUser?.userId) {
+        throw new Error('Session expired, please log in again');
+      }
+
+      const reservationPayload = {
+        ...this.reservation,
+        nbrParticipant: Number(this.reservation.nbrParticipant),
+        equipements: this.selectedEquipments,
+        demandeurId: this.currentUser.userId,
+        heureDebut: this.reservation.heureDebut,
+        heureFin: this.reservation.heureFin
+      };
+
+      console.log('Submission payload:', reservationPayload);
+
+      // Create reservation
+      const createResponse = await lastValueFrom(
+        this.reservationService.createReservation(reservationPayload).pipe(
+          catchError(err => {
+            throw new Error(`Creation failed: ${this.extractErrorMessage(err)}`);
+          })
+        )
+      );
+
+      if (!createResponse?.id) {
+        throw new Error('Invalid server response - missing ID');
+      }
+
+      // Send to responsible
+      await lastValueFrom(
+        this.reservationService.sendReservation(createResponse.id).pipe(
+          catchError(err => {
+            throw new Error(`Sending failed: ${this.extractErrorMessage(err)}`);
+          })
+        )
+      );
+
+      this.notificationService.showSuccess('Réservation créée et envoyée avec succès !');
+      
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      this.errorMessage = error.message;
+      this.notificationService.showError(error.message);
+    } finally {
+      this.isLoading = false;
     }
-
-    if (!this.currentUser?.userId) {
-      throw new Error('Session expired, please log in again');
-    }
-
-    const reservationPayload = {
-      ...this.reservation,
-      nbrParticipant: Number(this.reservation.nbrParticipant),
-      equipements: this.selectedEquipments,
-      demandeurId: this.currentUser.userId,
-      heureDebut: this.reservation.heureDebut,
-      heureFin: this.reservation.heureFin
-    };
-
-    console.log('Submission payload:', reservationPayload);
-
-    // Create reservation
-    const createResponse = await lastValueFrom(
-      this.reservationService.createReservation(reservationPayload).pipe(
-        catchError(err => {
-          throw new Error(`Creation failed: ${this.extractErrorMessage(err)}`);
-        })
-      )
-    );
-
-    if (!createResponse?.id) {
-      throw new Error('Invalid server response - missing ID');
-    }
-
-    // Send to responsible
-    await lastValueFrom(
-      this.reservationService.sendReservation(createResponse.id).pipe(
-        catchError(err => {
-          throw new Error(`Sending failed: ${this.extractErrorMessage(err)}`);
-        })
-      )
-    );
-
-    this.notificationService.showSuccess('Réservation créée et envoyée avec succès !');
-    
-    // NE PAS REDIRIGER, rester sur la même page
-    // this.router.navigate(['/spaces'], {
-    //   state: {
-    //     reservationData: reservationPayload,
-    //     reservationId: createResponse.id
-    //   }
-    // });
-
-  } catch (error: any) {
-    console.error('Submission error:', error);
-    this.errorMessage = error.message;
-    this.showAlert('error', error.message);
-  } finally {
-    this.isLoading = false;
   }
-}
 
-  
   private extractErrorMessage(error: any): string {
     if (error instanceof HttpErrorResponse) {
       return error.error?.message || error.message || 'Unknown server error';
@@ -357,28 +406,25 @@ async onSubmit(form: NgForm): Promise<void> {
     return error.message || 'Unknown error';
   }
 
-  showAlert(type: 'success'|'error', message: string): void {
-    alert(`${type.toUpperCase()}: ${message}`);
-  }
-
   goBack(): void {
     this.router.navigate(['/spaces']);
   }
+
   showError(field: keyof typeof this.reservation): boolean {
-  if (!this.formSubmitted) return false;
-  
-  const fieldValue = this.reservation[field];
-  
-  // Handle specific field validations
-  switch (field) {
-    case 'nbrParticipant':
-      return !this.participantsIsValid();
-    case 'emailR':
-      return !this.emailIsValid();
-    case 'lienLinkedInR':
-      return !!this.reservation.lienLinkedInR && !this.linkedInIsValid();
-    default:
-      return fieldValue === '' || fieldValue === null;
+    if (!this.formSubmitted) return false;
+    
+    const fieldValue = this.reservation[field];
+    
+    // Handle specific field validations
+    switch (field) {
+      case 'nbrParticipant':
+        return !this.participantsIsValid();
+      case 'emailR':
+        return !this.emailIsValid();
+      case 'lienLinkedInR':
+        return !!this.reservation.lienLinkedInR && !this.linkedInIsValid();
+      default:
+        return fieldValue === '' || fieldValue === null;
+    }
   }
-}
 }
