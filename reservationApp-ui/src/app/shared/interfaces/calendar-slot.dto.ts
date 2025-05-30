@@ -11,7 +11,7 @@ export interface CalendarSlotDTO {
   intituleAction?: string;
   description?:    string;
   
-  espaceName: string;
+  espaceNom: string;
   // <— instead of `"ACCEPTÉE" | "EN_ATTENTE" | "ANNULÉE"`
   statut: StatusReservation;
 

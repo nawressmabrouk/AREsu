@@ -63,6 +63,7 @@
   background: #4299e1;
   color: white;
   font-weight: 500;
+   margin-right: 16px;
 }
 
 .today-btn:hover {
@@ -73,6 +74,9 @@
   width: 36px;
   height: 36px;
   font-size: 1rem;
+    justify-content: center;
+  align-items: center;
+  display: flex;
 }
 
 .calendar-grid {

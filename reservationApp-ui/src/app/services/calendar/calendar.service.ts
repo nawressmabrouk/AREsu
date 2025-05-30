@@ -243,4 +243,16 @@ getUnconfirmedEvents(etablissementId: string): Observable<CalendarSlotDTO[]> {
     catchError(this.handleError)
   );
 }
+
+getEspaceNom(etablissementId: string): Observable<{ espaceNom: string }> {
+  return this.http.get<{ espaceNom: string }>(
+    `${this.apiUrl}/espace-name`,
+    {
+      headers: this.getHeaders(),
+      params: new HttpParams().set('etablissementId', etablissementId)
+    }
+  ).pipe(
+    catchError(this.handleError)
+  );
+}
 }

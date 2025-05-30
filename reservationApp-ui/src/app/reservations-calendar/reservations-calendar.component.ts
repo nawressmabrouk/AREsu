@@ -1,5 +1,5 @@
-import { Component, Input , OnChanges , SimpleChanges  } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import {
   addMonths,
   eachDayOfInterval,
@@ -14,10 +14,11 @@ import {
   startOfWeek,
   subMonths
 } from 'date-fns';
-import { forkJoin } from 'rxjs';
-import { CalendarSlotDTO } from '../shared/interfaces/calendar-slot.dto';
-import { CalendarService } from '../services/calendar/calendar.service';
+import { forkJoin, Subject, takeUntil } from 'rxjs';
 import { StatusReservation } from '../models/reservation.model';
+import { CalendarService } from '../services/calendar/calendar.service';
+import { CalendarSlotDTO } from '../shared/interfaces/calendar-slot.dto';
+
 @Component({
   selector: 'app-reservations-calendar',
   templateUrl: './reservations-calendar.component.html',
@@ -25,66 +26,63 @@ import { StatusReservation } from '../models/reservation.model';
   standalone: true,
   imports: [CommonModule]
 })
-export class ReservationsCalendarComponent implements OnChanges {
-    // Input property for establishment ID
+export class ReservationsCalendarComponent implements OnChanges, OnDestroy {
+  // Input property for establishment ID
   @Input() etablissementId: string = '';
   // Calendar configuration
   currentDate = new Date();
   weeks: Date[][] = [];
   slots: CalendarSlotDTO[] = [];
   loading = false;
-   public StatusReservation = StatusReservation;
+  public StatusReservation = StatusReservation;
   // Selection state
   selectedDay: Date | null = null;
   public selectedSlot: CalendarSlotDTO | null = null;
   selectedDate: Date | null = null;
+espaceNom?: string;
+  private destroy$ = new Subject<void>();
 
   constructor(private calendarService: CalendarService) { }
-   ngOnChanges(changes: SimpleChanges): void {
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
     if (changes['etablissementId'] && this.etablissementId) {
+      this.loadEspaceNom();
       this.loadSlots();
     }
   }
+
   ngOnInit(): void {
-      console.log('📅 Using calendar for établissement:', this.etablissementId);
+    console.log('📅 Using calendar for établissement:', this.etablissementId);
     this.generateCalendar();
     this.loadSlots();
   }
 
-  /*private loadSlots(): void {
-    this.loading = true;
+  private loadEspaceNom(): void {
+    if (!this.etablissementId) return;
     
-    forkJoin([
-      this.calendarService.getConfirmedEvents(),
-      this.calendarService.getUnconfirmedEvents()
-    ]).subscribe({
-      next: ([confirmedSlots, unconfirmedSlots]) => {
-        this.slots = [...confirmedSlots, ...unconfirmedSlots]
-          .map(slot => ({
-            ...slot,
-            heureDebut: typeof slot.heureDebut === 'string' ? parseISO(slot.heureDebut) : new Date(slot.heureDebut),
-            heureFin: typeof slot.heureFin === 'string' ? parseISO(slot.heureFin) : new Date(slot.heureFin)
-          }));
-        
-        this.loading = false;
-        
-        const todaySlots = this.getSlotsForDay(new Date());
-        if (todaySlots.length > 0) {
-          this.selectDay(new Date());
+    this.calendarService.getEspaceNom(this.etablissementId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.espaceNom = response.espaceNom;
+        },
+        error: (err) => {
+          console.error('Failed to load espace name:', err);
+          this.espaceNom = '';
         }
-      },
-      error: (err) => {
-        console.error('Failed to load slots:', err);
-        this.loading = false;
-      }
-    });
-  }*/
+      });
+  }
+
+
+
 
 public loadSlots(): void {
-  if (!this.etablissementId) {
-    console.warn('Cannot load slots - no etablissementId');
-    return;
-  }
+  if (!this.etablissementId) return;
 
   this.loading = true;
   
@@ -93,20 +91,20 @@ public loadSlots(): void {
     this.calendarService.getUnconfirmedEvents(this.etablissementId)
   ]).subscribe({
     next: ([confirmedSlots, pendingSlots]) => {
-      console.log('Loaded slots:', { confirmedSlots, pendingSlots });
-      
       const merged: CalendarSlotDTO[] = [
         ...confirmedSlots.map(s => ({
           ...s,
           reserved: true,
           selectable: false,
-          statut: StatusReservation.ACCEPTEE
+          statut: StatusReservation.ACCEPTEE,
+          espaceNom: s.espaceNom  // Ensure espaceNom is included
         })),
         ...pendingSlots.map(s => ({
           ...s,
           reserved: false,
           selectable: true,
-          statut: StatusReservation.EN_ATTENTE
+          statut: StatusReservation.EN_ATTENTE,
+          espaceNom: s.espaceNom  // Ensure espaceNom is included
         }))
       ];
 
@@ -125,9 +123,13 @@ public loadSlots(): void {
   });
 }
 
-private ensureDate(date: string | Date): Date {
-  return typeof date === 'string' ? parseISO(date) : date;
-}
+
+
+
+  private ensureDate(date: string | Date): Date {
+    return typeof date === 'string' ? parseISO(date) : date;
+  }
+
   generateCalendar(): void {
     const firstDay = startOfWeek(startOfMonth(this.currentDate));
     const lastDay = endOfWeek(endOfMonth(this.currentDate));
@@ -162,28 +164,24 @@ private ensureDate(date: string | Date): Date {
   }
 
   // Slot Handling
-getSlotsForDay(day: Date): CalendarSlotDTO[] {
-  return this.slots.filter((slot): slot is CalendarSlotDTO & { heureDebut: Date } =>
-    slot.heureDebut instanceof Date && isSameDay(slot.heureDebut, day)
-  );
-}
+  getSlotsForDay(day: Date): CalendarSlotDTO[] {
+    return this.slots.filter((slot): slot is CalendarSlotDTO & { heureDebut: Date } =>
+      slot.heureDebut instanceof Date && isSameDay(slot.heureDebut, day)
+    );
+  }
 
+  confirmSelectedSlot(): void {
+    if (!this.selectedSlot?.id) return;
 
-confirmSelectedSlot(): void {
-  if (!this.selectedSlot?.id) return;
-
-  this.calendarService.confirmEvent(this.selectedSlot.id)
-    .subscribe({
-      next: () => {
-        // reload all slots from the server
-        this.loadSlots();
-        // clear selection (so the detail pane goes away, or you can re‐select it)
-        this.clearSelection();
-      },
-      error: err => console.error('Failed to confirm slot:', err)
-    });
-}
-
+    this.calendarService.confirmEvent(this.selectedSlot.id)
+      .subscribe({
+        next: () => {
+          this.loadSlots();
+          this.clearSelection();
+        },
+        error: err => console.error('Failed to confirm slot:', err)
+      });
+  }
 
   // Date Helpers
   isSameMonth(day: Date): boolean {
@@ -205,12 +203,11 @@ confirmSelectedSlot(): void {
     this.selectedDate = day;
   }
 
-selectSlot(slot: CalendarSlotDTO) {
-  this.selectedSlot = slot;
-  // assert to Date
-  this.selectedDate = slot.heureDebut as Date;
-  this.selectedDay   = slot.heureDebut as Date;
-}
+  selectSlot(slot: CalendarSlotDTO) {
+    this.selectedSlot = slot;
+    this.selectedDate = slot.heureDebut as Date;
+    this.selectedDay = slot.heureDebut as Date;
+  }
 
   clearSelection(): void {
     this.selectedDay = null;
@@ -228,20 +225,18 @@ selectSlot(slot: CalendarSlotDTO) {
   }
 
   getFormattedTime(date: Date): string {
-  return date ? format(date, 'HH:mm') : '';
-}
-
-getFormattedTimeRange(start: Date, end: Date): string {
-  if (!start || !end) return '';
-  return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
-}
-
-  private updateCalendarView(): void {
-    // Update your calendar display based on reservations
-    this.generateCalendar();
-    if (this.selectedDay) {
-      this.selectDay(this.selectedDay); // Refresh selected day
-    }
+    return date ? format(date, 'HH:mm') : '';
   }
 
+  getFormattedTimeRange(start: Date, end: Date): string {
+    if (!start || !end) return '';
+    return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
+  }
+
+  private updateCalendarView(): void {
+    this.generateCalendar();
+    if (this.selectedDay) {
+      this.selectDay(this.selectedDay);
+    }
+  }
 }

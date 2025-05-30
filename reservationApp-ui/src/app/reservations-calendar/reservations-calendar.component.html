@@ -75,8 +75,11 @@
         <div class="detail-section" *ngIf="selectedSlot.intituleAction">
           <h5>Action Title</h5>
           <p>{{ selectedSlot.intituleAction }}</p>
-        </div>
-        
+  <div class="detail-section" *ngIf="selectedSlot.espaceNom">
+    <h5>Espace</h5>
+    <p>{{ selectedSlot.espaceNom }}</p>
+  </div>
+    </div>
         <div class="detail-section" *ngIf="selectedSlot.description">
           <h5>Description</h5>
           <p>{{ selectedSlot.description }}</p>
