@@ -80,6 +80,22 @@ espaceNom?: string;
 
 
 
+expandedDays: Set<string> = new Set();
+
+isDayExpanded(day: Date): boolean {
+  return this.expandedDays.has(day.toISOString());
+}
+
+toggleDayExpansion(day: Date): void {
+  const dayKey = day.toISOString();
+  if (this.expandedDays.has(dayKey)) {
+    this.expandedDays.delete(dayKey);
+  } else {
+    this.expandedDays.add(dayKey);
+  }
+}
+
+
 
 public loadSlots(): void {
   if (!this.etablissementId) return;
@@ -197,11 +213,16 @@ public loadSlots(): void {
   }
 
   // Selection Handling
-  selectDay(day: Date): void {
-    this.selectedDay = day;
-    this.selectedSlot = null;
-    this.selectedDate = day;
+selectDay(day: Date): void {
+  this.selectedDay = day;
+  this.selectedSlot = null;
+  this.selectedDate = day;
+  
+  // Auto-expand day when clicked if there are multiple slots
+  if (this.getSlotsForDay(day).length > 2) {
+    this.toggleDayExpansion(day);
   }
+}
 
   selectSlot(slot: CalendarSlotDTO) {
     this.selectedSlot = slot;

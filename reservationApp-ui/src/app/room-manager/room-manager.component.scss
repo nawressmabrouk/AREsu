@@ -11,11 +11,15 @@
   flex-wrap: wrap;
  
 }
-
+.calendar-container{
+position: relative;
+position: relative;
+top: 70px;
+}
 .profile {
 position: relative;
 top: -310px;
-right: -2100px;
+right: -1800px;
 }
 
 .equipment-badge {
@@ -2748,7 +2752,7 @@ right: -2100px;
     font-size: 1.2rem;
     position: relative;
     top: -230px;
-    right: -890px;
+    right: -787px;
     color: rgb(255, 255, 255);
     transition: inherit;
   }

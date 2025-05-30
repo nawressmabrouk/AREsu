@@ -349,9 +349,119 @@
   .logo-image {
   max-width: 160px; /* 15% de la largeur de l'écran */
   height: auto;
-  right: 550px;
+  right: 400px;
   position: relative;
   top: -10px;
+}
+
+
+
+
+
+/* 🔁 Responsive design */
+@media (max-width: 1200px) {
+  .main-container {
+    width: 90%;
+    flex-direction: column;
+    height: auto;
+  }
+
+  .main-content {
+    width: 95%;
+    flex-direction: column;
+    height: auto;
+    padding: 20px;
+  }
+
+  .greeting-container {
+    width: 100%;
+    height: auto;
+    padding: 20px;
+  }
+
+  .signup-content,
+  .signin-content {
+    flex-direction: column;
+    width: 100% !important;
+  }
+
+  .form-content {
+    width: 90% !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: auto;
+    padding: 20px;
+    top: 0 !important;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 15px;
+    right: 0 !important;
+  }
+
+  .btn-sumbit,
+  .main-button,
+  .main-button1 {
+    right: 0 !important;
+    left: 0 !important;
+    margin: 0 auto !important;
+    top: 20px;
+  }
+
+  .register-title,
+  .register1-title,
+  .title {
+    right: 0 !important;
+    text-align: center;
+  }
+
+  .form1-grid .input-container {
+    width: 100% !important;
+    left: 0 !important;
+  }
+
+  .forgot-password {
+    left: 0 !important;
+    text-align: center;
+  }
+
+  .login-section {
+    width: 95%;
+    right: 0 !important;
+    margin: auto;
+    padding: 20px;
+  }
+
+  .slide-shape {
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .title,
+  .register-title,
+  .register1-title {
+    font-size: 1.4rem !important;
+  }
+
+  .form-content {
+    padding: 10px !important;
+  }
+
+  .form1-grid .input-container {
+    height: 40px !important;
+  }
+
+  .btn-sumbit,
+  .main-button,
+  .main-button1 {
+    width: 90% !important;
+  }
+
+  .forgot-password {
+    font-size: 0.9rem !important;
+  }
 }
 
 

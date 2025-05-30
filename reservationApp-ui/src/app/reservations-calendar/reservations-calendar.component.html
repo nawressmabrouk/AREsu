@@ -21,29 +21,41 @@
       </div>
 
       <div *ngFor="let week of weeks" class="week">
-        <div *ngFor="let day of week" 
-             class="day" 
-             [class.not-current-month]="!isSameMonth(day)"
-             [class.today]="isToday(day)"
-             [class.selected]="isSelected(day)"
-             (click)="selectDay(day)">
-          <div class="day-number">{{ day | date:'d' }}</div>
-          
-          <div class="slots">
-            <div *ngFor="let slot of getSlotsForDay(day).slice(0, 2)" 
-                 class="slot"
-                [class.confirmed]="slot.reserved"
-                [class.unconfirmed]="!slot.reserved && slot.selectable"
-                 (click)="$event.stopPropagation(); selectSlot(slot)">
-              <div class="slot-time">{{ getFormattedTime(slot.heureDebut) }}</div>
-              <div class="slot-title" *ngIf="slot.intituleAction">{{ slot.intituleAction }}</div>
-            </div>
-          </div> 
-          <div *ngIf="getSlotsForDay(day).length > 2" class="more-slots" 
-               (click)="$event.stopPropagation(); selectDay(day)">
-            +{{ getSlotsForDay(day).length - 2 }} more 
-          </div>
-        </div>
+<div *ngFor="let day of week" 
+     class="day" 
+     [class.not-current-month]="!isSameMonth(day)"
+     [class.today]="isToday(day)"
+     [class.selected]="isSelected(day)"
+     [class.expanded]="isDayExpanded(day)"
+     (click)="selectDay(day)">
+  <div class="day-number">{{ day | date:'d' }}</div>
+  
+  <div class="slots">
+    <!-- Show first 2 slots always, or all if expanded -->
+    <div *ngFor="let slot of getSlotsForDay(day).slice(0, isDayExpanded(day) ? undefined : 2)" 
+         class="slot"
+         [class.confirmed]="slot.reserved"
+         [class.unconfirmed]="!slot.reserved && slot.selectable"
+         (click)="$event.stopPropagation(); selectSlot(slot)">
+      <div class="slot-time">{{ getFormattedTime(slot.heureDebut) }}</div>
+      <div class="slot-title" *ngIf="slot.intituleAction">{{ slot.intituleAction }}</div>
+    </div>
+  </div>
+
+  <!-- Show "+X more" only if there are more slots and day isn't expanded -->
+  <div *ngIf="getSlotsForDay(day).length > 2 && !isDayExpanded(day)" 
+       class="more-slots" 
+       (click)="$event.stopPropagation(); toggleDayExpansion(day)">
+    +{{ getSlotsForDay(day).length - 2 }} more 
+  </div>
+
+  <!-- Show "Show less" if expanded -->
+  <div *ngIf="isDayExpanded(day) && getSlotsForDay(day).length > 2" 
+       class="more-slots" 
+       (click)="$event.stopPropagation(); toggleDayExpansion(day)">
+    Show less
+  </div>
+</div>
       </div>
     </div>
   </div>
