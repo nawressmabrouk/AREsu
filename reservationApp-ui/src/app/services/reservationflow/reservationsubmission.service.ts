@@ -96,18 +96,16 @@ export class ReservationsubmissionService {
     return throwError(() => new Error(errorMessage));
   }
 
-// In your ReservationsubmissionService
 getEspaceDetails(espaceId: string): Observable<any> {
   return this.http.get(
     `${this.apiUrl}/reservations/espaces/${espaceId}`,
     { headers: this.getHeaders() }
   ).pipe(
     map((response: any) => {
-      // Map French field names to English
       return {
         ...response,
         capacity: response.capacite,  // Map capacite to capacity
-        nom: response.nom             // Keep other fields as needed
+        nom: response.nom            
       };
     }),
     catchError(this.handleError)

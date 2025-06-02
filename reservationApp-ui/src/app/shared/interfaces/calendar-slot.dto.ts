@@ -1,4 +1,3 @@
-// src/app/shared/interfaces/calendar-slot.dto.ts
 
 import { StatusReservation } from '../../models/reservation.model';
 
@@ -12,10 +11,7 @@ export interface CalendarSlotDTO {
   description?:    string;
   
   espaceNom: string;
-  // <— instead of `"ACCEPTÉE" | "EN_ATTENTE" | "ANNULÉE"`
   statut: StatusReservation;
-
-  // your extra UI flags
   reserved:   boolean;
   selectable: boolean;
 }

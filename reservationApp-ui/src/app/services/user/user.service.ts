@@ -20,7 +20,6 @@ export class UserService {
     const token = this.authService.getToken();
     if (!token) {
       console.error('No token available!');
-      // Handle this case - perhaps redirect to login
     }
     return new HttpHeaders({
       'Content-Type': 'application/json',
@@ -47,11 +46,11 @@ getProfile(): Observable<User> {
         throw new Error('Aucune donnée reçue');
       }
       
-      // Debug: Log the raw response
+      // Log the raw response
       console.log('Raw profile response:', response);
       
       return {
-        id: response._id || response.id || '', // Handle both _id (Mongo) and id
+        id: response._id || response.id || '', 
         nom: response.nom || '',
         prenom: response.prenom || '',
         email: response.email || '',
@@ -59,7 +58,7 @@ getProfile(): Observable<User> {
         role: response.role as Role,
         fonction: response.fonction || '',
         nomEtablissement: response.nomEtablissement || '',
-        etablissementId: response.etablissementId || '', // Don't override if exists
+        etablissementId: response.etablissementId || '', 
         structure: response.structure || '',
         linkedInLink: response.linkedInLink || '',
         enabled: response.enabled || false,
@@ -123,7 +122,6 @@ updateProfile(profileData: any): Observable<any> {
   }
 
   // Change password
-
 changePassword(passwordData: any): Observable<any> {
   const payload = {
     ancienMotDePasse: passwordData.oldPassword,
@@ -150,8 +148,6 @@ changePassword(passwordData: any): Observable<any> {
   }
 
   // Get reservations (for demandeur only)
-  // Récupération des réservations
-// user.service.ts
 getReservations(): Observable<any[]> {
   const userId = this.authService.getCurrentUser()?.id;
   return this.http.get<any[]>(
@@ -161,7 +157,7 @@ getReservations(): Observable<any[]> {
 }
 
 
-  // Annulation réservation
+  // cancel reservation
   cancelReservation(reservationId: string): Observable<any> {
     const userId = this.authService.getCurrentUser()?.id;
     return this.http.post(
@@ -173,7 +169,6 @@ getReservations(): Observable<any[]> {
     );
   }
 
-  // Traduction des statuts
   private translateStatus(status: string): string {
     const statusMap: { [key: string]: string } = {
       'EN_ATTENTE': 'En attente',
@@ -185,7 +180,6 @@ getReservations(): Observable<any[]> {
     return statusMap[status] || status;
   }
 
-  // Gestion des erreurs
   private handleError(error: any): Observable<never> {
     let errorMessage = 'Une erreur est survenue';
     

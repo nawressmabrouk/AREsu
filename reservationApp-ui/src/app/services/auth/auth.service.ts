@@ -1,139 +1,3 @@
-/*import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
-import { Observable, catchError, tap, throwError } from 'rxjs';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {  // Renamed from LoginService to AuthService
-  private readonly apiUrl = 'http://localhost:8080/api/auth';
-  private readonly tokenKey = 'auth_token';
-
-  constructor(
-    private http: HttpClient,
-    private router: Router  // Added for navigation after logout
-  ) {}
-// services/auth/auth.service.ts
-clearAuth(): void {
-  // Clear tokens, user data, etc.
-  localStorage.removeItem('auth_token');
-  localStorage.removeItem('user_data');
-}
-private clearAllAuthData(): void {
-  localStorage.clear();
-  sessionStorage.clear();
-  document.cookie.split(';').forEach(c => {
-    document.cookie = c.replace(/^ +/, '')
-      .replace(/=., `=;expires=${new Date().toUTCString()};path=/`);
-  });
-}
-private disableBrowserBack(): void {
-  history.pushState(null, '', window.location.href);
-  window.onpopstate = () => {
-    history.pushState(null, '', window.location.href);
-    this.router.navigate(['/login'], { replaceUrl: true });
-  };
-}
-
-  login(email: string, password: string): Observable<{ token: string }> {
-    return this.http.post<{ token: string }>(
-      `${this.apiUrl}/login`, 
-      { email, password }
-    ).pipe(
-      tap(response => {
-        if (response?.token) {
-          this.saveToken(response.token);
-        }
-      }),
-      catchError(error => {
-        this.clearToken();  // Clear token on login failure
-        return throwError(() => error);
-      })
-    );
-  }
-
-
-
-
-
-
-
-
-
-
-
-    
-
-  private saveToken(token: string): void {
-    localStorage.setItem(this.tokenKey, token);
-    console.debug('Token saved');  // Removed token from log for security
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
-  }
-
-  isLoggedIn(): boolean {  // New helper method
-    return !!this.getToken();
-  }
-  logout(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/logout`, {}).pipe(
-      tap(() => {
-        this.clearAllAuthData();
-        this.disableBrowserBack();
-        window.location.href = '/login'; // Redirection forcée
-      })
-    );
-  }
-  
-
-  private clearTokenAndRedirect(): void {
-    this.clearAllAuthData();
-    // Use replaceUrl to prevent back navigation
-    this.router.navigate(['/login'], { replaceUrl: true });
-  }
-
-  private clearToken(): void {
-    localStorage.removeItem(this.tokenKey);
-  }
-
-  decodeToken(token: string): any {
-    try {
-      const payload = token.split('.')[1];
-      const decodedPayload = decodeURIComponent(
-        atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      return JSON.parse(decodedPayload);
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      this.clearToken(); // Clear invalid token
-      return null;
-    }
-  }
-  
-  // Add this to get user info
-  getCurrentUser(): any {
-    const token = this.getToken();
-    if (!token) return null;
-    return this.decodeToken(token);
-  }
-  
-
-
-// auth.service.ts
-private refreshToken(): Observable<any> {
-  return this.http.post(`${this.apiUrl}/refresh-token`, {
-    refreshToken: this.getRefreshToken()
-  });
-}
-
-}*/
-
-//ekher version 
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
@@ -162,25 +26,6 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {}
-
-  /*
-  // Login method with refresh token support
-  login(email: string, password: string): Observable<{ token: string, refreshToken: string }> {
-    return this.http.post<{ token: string, refreshToken: string }>(
-      `${this.apiUrl}/login`,
-      { email, password }
-    ).pipe(
-      tap(response => {
-        this.saveTokens(response.token, response.refreshToken);
-        this.saveUserData(this.decodeToken(response.token));
-        this.isAuthenticatedSubject.next(true); // Add this line
-      }),
-      catchError(error => {
-        this.clearAuth();
-        return throwError(() => error);
-      })
-    );
-  }*/
 
 // Add this public method
 isAuthenticated(): Observable<boolean> {
@@ -212,12 +57,7 @@ isAuthenticated(): Observable<boolean> {
   isLoggedIn(): boolean {
     return !!this.getToken();
   }
-
-  /* Get current user info  hedhy without role validation
-  getCurrentUser(): any {
-    const userData = localStorage.getItem(this.userDataKey);
-    return userData ? JSON.parse(userData) : null;
-  }*/
+ 
 
   // Refresh token implementation
   refreshToken(): Observable<{ token: string, refreshToken: string }> {
@@ -243,9 +83,6 @@ isAuthenticated(): Observable<boolean> {
   }
 
   // Logout method
- 
- 
- 
   logout(): Observable<any> {
     const refreshToken = this.getRefreshToken();
     const request = refreshToken 
@@ -280,7 +117,7 @@ clearAuth(): void {
   localStorage.removeItem(this.tokenKey);
   localStorage.removeItem(this.refreshTokenKey);
   localStorage.removeItem(this.userDataKey);
-  this.isAuthenticatedSubject.next(false); // Add this line
+  this.isAuthenticatedSubject.next(false); 
 }
 
   // Decode JWT token
@@ -310,7 +147,7 @@ clearAuth(): void {
     };
   }
 
- // Modified login method with role validation
+ //  login method with role validation
  login(email: string, password: string): Observable<{ token: string, refreshToken: string }> {
   return this.http.post<{ token: string, refreshToken: string }>(
     `${this.apiUrl}/login`,
@@ -335,9 +172,9 @@ clearAuth(): void {
 // Enhanced token decoding with role validation
 private decodeAndValidateToken(token: string): any {
   try {
-    console.log('Raw token:', token); // Debug
+    console.log('Raw token:', token); 
     const userData = this.decodeToken(token);
-    console.log('Decoded token data:', userData); // Debug
+    console.log('Decoded token data:', userData); 
     
     if (!userData) {
       throw new Error('Token decoding failed');
@@ -348,25 +185,25 @@ private decodeAndValidateToken(token: string): any {
       throw new Error('No roles found in token');
     }
 
-    console.log('Original roles from token:', userData.roles); // Debug
+    console.log('Original roles from token:', userData.roles);
 
     // Normalize and validate roles
     const validatedRoles = userData.roles
       .map((role: string) => {
         const normalized = this.normalizeRole(role);
-        console.log(`Role: ${role} → Normalized: ${normalized}`); // Debug
+        console.log(`Role: ${role} → Normalized: ${normalized}`); 
         return normalized;
       })
       .filter((role: string) => {
         const isValid = this.validRoles.includes(role);
-        console.log(`Checking role ${role}: ${isValid}`); // Debug
+        console.log(`Checking role ${role}: ${isValid}`); 
         return isValid;
       });
 
-    console.log('Validated roles:', validatedRoles); // Debug
+    console.log('Validated roles:', validatedRoles); 
 
     if (validatedRoles.length === 0) {
-      console.warn('No roles matched validRoles:', this.validRoles); // Debug
+      console.warn('No roles matched validRoles:', this.validRoles); 
       throw new Error('No valid roles found');
     }
 
@@ -381,58 +218,22 @@ private decodeAndValidateToken(token: string): any {
     return null;
   }
 }
-/*
-private decodeAndValidateToken(token: string): any {
-  try {
-    const userData = this.decodeToken(token);
-    
-    if (!userData || !userData.roles || userData.roles.length === 0) {
-      throw new Error('No roles found in token');
-    }
 
-    // Normalize and validate roles
-    const validatedRoles = userData.roles
-      .map((role: string) => {
-        // Remove ROLE_ prefix if present
-        const normalized = role.replace(/^ROLE?_/, '');
-        return this.normalizeRole(normalized);
-      })
-      .filter((role: string) => this.validRoles.includes(role));
-
-    if (validatedRoles.length === 0) {
-      throw new Error('No valid roles found');
-    }
-
-    return {
-      ...userData,
-      roles: validatedRoles,
-      role: validatedRoles[0] // Main role is first in array
-    };
-  } catch (error) {
-    console.error('Token validation failed:', error);
-    this.clearAuth();
-    return null;
-  }
-}*/
 // Role normalization
-
 private normalizeRole(role: string): string {
   if (!role) return '';
-  // Keep the ROLE_ prefix if present
   return role.toUpperCase().replace(/ /g, '_');
 }
 
 getCurrentUser(): User & { id: string } | null {
-  // Version 1: Récupération depuis le localStorage
   const userDataStr = localStorage.getItem(this.userDataKey);
   if (userDataStr) {
     try {
       const parsed = JSON.parse(userDataStr);
-      console.log('User data from localStorage:', parsed); // Debug
+      console.log('User data from localStorage:', parsed); 
       
-      // Extraction depuis les données sauvegardées
       return {
-        id: parsed.userId || parsed.id || parsed.sub, // <-- Correction ici
+        id: parsed.userId || parsed.id || parsed.sub, 
         userId: parsed.userId || parsed.sub,
         sub: parsed.sub,
         role: parsed.role,
@@ -443,16 +244,14 @@ getCurrentUser(): User & { id: string } | null {
     }
   }
 
-  // Version 2: Récupération depuis le JWT
   const token = this.getToken();
   if (token) {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log('JWT payload:', payload); // Debug
+      console.log('JWT payload:', payload); 
 
-      // Extraction directe depuis le JWT
       return {
-        id: payload.userId || payload.sub, // <-- Priorité au userId du JWT
+        id: payload.userId || payload.sub, 
         userId: payload.userId || payload.sub,
         sub: payload.sub,
         role: payload.role || '',
@@ -465,68 +264,5 @@ getCurrentUser(): User & { id: string } | null {
 
   return null;
 }
-
-/* hedhy version m3a nourhen 
-getCurrentUser(): User | null {
-  // D'abord essayer avec le JWT (plus sécurisé)
-  const token = this.getToken();
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log('JWT Payload:', payload);
-      
-      return {
-        id: payload.userId || payload.sub,
-        userId: payload.userId,
-        sub: payload.sub,
-        role: this.normalizeRole(payload.role),
-        roles: payload.roles?.map((r: string) => this.normalizeRole(r))
-      };
-    } catch (error) {
-      console.error('Error parsing JWT:', error);
-    }
-  }
-
-  // Fallback sur localStorage si JWT absent ou invalide
-  const userData = localStorage.getItem(this.userDataKey);
-  if (!userData) return null;
-
-  try {
-    const parsed = JSON.parse(userData);
-    return {
-      id: parsed.id || parsed.sub || parsed.userId,
-      userId: parsed.userId || parsed.sub,
-      sub: parsed.sub,
-      role: this.normalizeRole(parsed.role),
-      roles: parsed.roles?.map((r: string) => this.normalizeRole(r))
-    };
-  } catch (error) {
-    console.error('Error parsing user data:', error);
-    return null;
-  }
-}*/
-
-
-
-/* version mte3y  temchi mrigla Updated getCurrentUser with role validation
-getCurrentUser(): User | null {
-  const userData = localStorage.getItem(this.userDataKey);
-  if (!userData) return null;
-
-  try {
-    const parsed = JSON.parse(userData);
-    return {
-      id: parsed.id || parsed.sub || parsed.userId,
-      userId: parsed.userId || parsed.sub,
-      sub: parsed.sub,
-      role: this.normalizeRole(parsed.role),
-      roles: parsed.roles?.map((r: string) => this.normalizeRole(r))
-    };
-  } catch (error) {
-    console.error('Error parsing user data:', error);
-    return null;
-  }
-}*/
-
 
 }

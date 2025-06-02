@@ -5,7 +5,6 @@ import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
 
 
-// Interfaces remain the same
 export interface Etablissement {
   id: string;
   nom: string;
@@ -107,24 +106,6 @@ export class EtablissementService {
       })
     );
   }
-
-/*
-  getEspaceById(espaceId: string): Observable<Espace> {
-    // Normalize the ID by replacing common inconsistencies
-    const normalizedId = espaceId
-      .replace('ObjectId(', '')
-      .replace(')', '')
-      .trim();
-      
-    console.log('Fetching space with ID:', normalizedId);
-    
-    return this.http.get<Espace>(`${this.baseUrl}/espaces/id/${normalizedId}`).pipe(
-      catchError(err => {
-        console.error('Error fetching space:', err);
-        return throwError(() => err);
-      })
-    );
-  }*/
 
   getEtablissementById(etablissementId: string): Observable<Etablissement> {
     // Normalize the ID by replacing common inconsistencies

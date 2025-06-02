@@ -9,7 +9,6 @@ export class NotificationService {
   private notificationSubject = new Subject<any>();
   notification$ = this.notificationSubject.asObservable();
   
-  // Durée d'affichage en millisecondes (5 secondes au lieu de la valeur par défaut)
   private displayDuration = 5000; 
 
   showSuccess(message: string) {

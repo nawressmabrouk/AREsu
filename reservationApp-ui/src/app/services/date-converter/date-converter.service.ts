@@ -1,4 +1,3 @@
-// src/app/services/date-converter.service.ts
 import { Injectable } from '@angular/core';
 
 @Injectable({
@@ -20,7 +19,7 @@ export class DateConverterService {
     return new Date(dateValue);
   }
 
-  // Optional: Convert Date to API-acceptable format
+  //  ConvertS Date to API-acceptable format
   convertToApiFormat(date: Date): string {
     return date.toISOString();
   }

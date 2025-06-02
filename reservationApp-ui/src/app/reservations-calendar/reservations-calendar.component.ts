@@ -39,16 +39,21 @@ export class ReservationsCalendarComponent implements OnChanges, OnDestroy {
   selectedDay: Date | null = null;
   public selectedSlot: CalendarSlotDTO | null = null;
   selectedDate: Date | null = null;
-espaceNom?: string;
+  espaceNom?: string;
+  // Cleanup subject for subscriptions
   private destroy$ = new Subject<void>();
+  expandedDays: Set<string> = new Set();
+
 
   constructor(private calendarService: CalendarService) { }
 
+  // Cleanup to prevent memory leaks
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  // Handle input changes
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['etablissementId'] && this.etablissementId) {
       this.loadEspaceNom();
@@ -56,12 +61,14 @@ espaceNom?: string;
     }
   }
 
+  // Initialize component
   ngOnInit(): void {
-    console.log('📅 Using calendar for établissement:', this.etablissementId);
+    console.log('Using calendar for établissement:', this.etablissementId);
     this.generateCalendar();
     this.loadSlots();
   }
 
+  // Load the space name for display
   private loadEspaceNom(): void {
     if (!this.etablissementId) return;
     
@@ -79,9 +86,7 @@ espaceNom?: string;
   }
 
 
-
-expandedDays: Set<string> = new Set();
-
+// Check if a day is expanded
 isDayExpanded(day: Date): boolean {
   return this.expandedDays.has(day.toISOString());
 }
@@ -95,8 +100,7 @@ toggleDayExpansion(day: Date): void {
   }
 }
 
-
-
+// Load both confirmed and pending reservation slots
 public loadSlots(): void {
   if (!this.etablissementId) return;
 
@@ -138,9 +142,6 @@ public loadSlots(): void {
     }
   });
 }
-
-
-
 
   private ensureDate(date: string | Date): Date {
     return typeof date === 'string' ? parseISO(date) : date;

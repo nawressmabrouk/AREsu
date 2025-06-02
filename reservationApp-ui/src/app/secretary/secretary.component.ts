@@ -1,12 +1,13 @@
 
 import { CommonModule } from '@angular/common';
-import { Component, OnInit , ViewChild  } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   faArrowRight,
   faBars,
+  faCalendarAlt,
   faCheckCircle,
   faClock,
   faEye,
@@ -14,15 +15,15 @@ import {
   faHome,
   faKey,
   faSearch, faSpinner,
-  faTimesCircle , faCalendarAlt
+  faTimesCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { finalize, forkJoin } from 'rxjs';
 import { Reservation, StatusReservation } from '../models/reservation.model';
 import { ReservationsCalendarComponent } from '../reservations-calendar/reservations-calendar.component';
 import { AuthService } from '../services/auth/auth.service';
 import { SecretaryService } from '../services/secretary/secretary.service';
-import { ProfileComponent } from '../shared/components/profile/profile.component';
 import { UserService } from '../services/user/user.service';
+import { ProfileComponent } from '../shared/components/profile/profile.component';
 import { User } from '../shared/interfaces/user.model';
 @Component({
   selector: 'app-secretary',
@@ -84,7 +85,7 @@ faCalendarAlt = faCalendarAlt ;
     approved: 0,
     rejected: 0
   };
-// Ajoutez cette propriété avec les autres propriétés de la classe
+
 approvedEquipment: { [reservationId: string]: string[] } = {};
   // Loading states
 loading: {
@@ -93,7 +94,9 @@ loading: {
   viewed: boolean;
   approved: boolean;
   rejected: boolean;
-  [key: string]: boolean; // Add index signature to allow dynamic keys
+
+  // index signature to allow dynamic keys
+  [key: string]: boolean; 
 } = {
   toHandle: false,
   toView: false,
@@ -117,7 +120,7 @@ private loadInitialData(): void {
     next: (profile: User) => {
       console.log('Full profile structure:', profile);
       
-      // Temporary fallback - remove after backend fix
+      
       const effectiveEtabId = profile.etablissementId || '68036ba5bea561813e4008f7';
       
       if (!effectiveEtabId) {
@@ -144,7 +147,7 @@ private loadInitialData(): void {
 }
 
 
-
+//Filters reservations based on active tab
 private updateFilteredRequests(): void {
   switch(this.activeTab) {
     case StatusReservation.EN_ATTENTE: 
@@ -311,7 +314,7 @@ approveRequest(reservation: Reservation): void {
 rejectRequest(reservation: Reservation): void {
   this.secretaryService.makeDecision(reservation.id, false).subscribe({
     next: () => {
-      delete this.approvedEquipment[reservation.id]; // Nettoyage des équipements
+      delete this.approvedEquipment[reservation.id]; 
       this.loadToHandleReservations();
       this.loadRejectedReservations();
       this.loadViewedReservations();
@@ -368,10 +371,6 @@ toggleSidebar(event: Event) {
   this.isSidebarExpanded = !this.isSidebarExpanded;
 }
 
-  onSearch(): void {
-    // Implement search logic if needed
-  }
-
   private calculateStats(): void {
   this.stats = {
     pending: this.reservationsToHandle.filter(r => r.statut === StatusReservation.EN_ATTENTE).length,
@@ -381,15 +380,13 @@ toggleSidebar(event: Event) {
 }
 
 
-// Ajoutez ces méthodes dans votre composant
-// Méthodes optimisées
 private loadAcceptedReservations(): void {
   this.loading.approved = true;
   this.secretaryService.getAcceptedReservations().subscribe({
     next: (reservations) => {
     this.approvedReservations = reservations.map(res => ({
         ...res,
-        heureDebut: new Date(res.heureDebut), // Conversion explicite
+        heureDebut: new Date(res.heureDebut), 
         heureFin: new Date(res.heureFin)
       }));
       this.stats.approved = reservations.length;
@@ -426,10 +423,8 @@ canCancel(reservation: Reservation): boolean {
 }
 
 
-// Add this to your component
 cancelLoadingStates: { [id: string]: boolean } = {};
 
-// Modified handleCancel
 handleCancel(reservation: Reservation): void {
   const reason = prompt('Veuillez indiquer la raison de l\'annulation (optionnel)');
   
@@ -476,4 +471,4 @@ toggleEquipmentApproval(reservationId: string, equip: string): void {
 
 
 
-}      
+}

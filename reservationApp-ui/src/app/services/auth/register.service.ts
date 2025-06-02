@@ -9,11 +9,6 @@ export class RegistrationService {
   private apiUrl = 'http://localhost:8080/api/utilisateurs/inscription';
 
   constructor(private http: HttpClient) {}
-/*
-  register(userData: any): Observable<any> {
-    return this.http.post(this.apiUrl, userData);
-  }*/
-
     register(userData: any): Observable<any> {
       return this.http.post(this.apiUrl, userData).pipe(
         catchError((error: HttpErrorResponse) => {

@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { CalendarSlotDTO } from '../../shared/interfaces/calendar-slot.dto';
 import { AuthService } from '../auth/auth.service';
@@ -41,13 +41,7 @@ export class CalendarService {
     }
     return throwError(() => new Error('Something went wrong; please try again later.'));
   }
-
-  /**
-   * Confirms or rejects a reservation
-   * @param id Reservation ID
-   * @param accepted Decision (true to accept, false to reject)
-   * @returns Observable with the updated slot
-   */
+ 
   
   confirmEvent(id: string, accepted: boolean = true): Observable<CalendarSlotDTO> {
     if (!id) {
@@ -56,7 +50,7 @@ export class CalendarService {
 
     return this.http.post<CalendarSlotDTO>(
       `${this.apiUrl}/decision/${id}`,
-      null, // No body needed since we're using request params
+      null, 
       {
         headers: this.getHeaders(),
         params: new HttpParams().set('accepted', accepted.toString())
@@ -95,39 +89,7 @@ export class CalendarService {
     );
   }
 
-  /* Fetches calendar view with time slots
-  getCalendarView(
-    etablissementId: string,
-    espaceId: string,
-    date: string,
-    userId: string,
-    userRole: string
-  ): Observable<CalendarSlotDTO[]> {
-    const cleanEtablissementId = this.cleanId(etablissementId);
-    const cleanEspaceId = this.cleanId(espaceId);
-    
-    if (!cleanEtablissementId || !cleanEspaceId || !date) {
-      return throwError(() => new Error('Invalid parameters: Missing required IDs or date'));
-    }
 
-    const params = new HttpParams()
-      .set('etablissementId', cleanEtablissementId)
-      .set('espaceId', cleanEspaceId)
-      .set('date', date);
-
-    return this.http.get<CalendarSlotDTO[]>(
-      `${this.apiUrl}/view`,
-      {
-        headers: this.getHeaders()
-          .set('X-User-Id', userId)
-          .set('X-User-Role', userRole),
-        params: params
-      }
-    ).pipe(
-      catchError(this.handleError)
-    );
-  }*/
- 
 getCalendarView(
   etablissementId: string,
   date: string
@@ -166,15 +128,8 @@ getCalendarView(
     );
   }
 
-  /*getUnavailableDates(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/reservations/dates`, {
-      headers: this.getHeaders()
-    }).pipe(
-      catchError(this.handleError)
-    );
-  }*/
  
- // Modify the getUnavailableDates method to accept etablissementId
+
 getUnavailableDates(etablissementId: string, espaceId: string): Observable<string[]> {
   if (!etablissementId || !espaceId) {
     return throwError(() => new Error('Both establishment and space IDs are required'));
@@ -190,32 +145,6 @@ getUnavailableDates(etablissementId: string, espaceId: string): Observable<strin
   );
 }
 
- /* getConfirmedEvents(): Observable<CalendarSlotDTO[]> {
-    return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/reservations/confirmed`, {
-      headers: this.getHeaders()
-    }).pipe(
-      map(slots => slots.map(slot => ({
-        ...slot,
-        heureDebut: new Date(slot.heureDebut),
-        heureFin: new Date(slot.heureFin)
-      }))),
-      catchError(this.handleError)
-    );
-  }*/
-
-
- /* getUnconfirmedEvents(): Observable<CalendarSlotDTO[]> {
-    return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/reservations/pending`, {
-      headers: this.getHeaders()
-    }).pipe(
-      map(slots => slots.map(slot => ({
-        ...slot,
-        heureDebut: new Date(slot.heureDebut),
-        heureFin: new Date(slot.heureFin)
-      }))),
-      catchError(this.handleError)
-    );
-  }*/
 getConfirmedEvents(etablissementId: string): Observable<CalendarSlotDTO[]> {
   return this.http.get<CalendarSlotDTO[]>(`${this.apiUrl}/reservations/confirmed`, {
     headers: this.getHeaders(),

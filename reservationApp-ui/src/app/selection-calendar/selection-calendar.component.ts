@@ -126,11 +126,11 @@ currentTimePosition: string = this.getCurrentTimePosition();
     
     for (let hour = startHour; hour <= endHour; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        if (hour === endHour && minute > 0) break; // Don't go past 8 PM
+        if (hour === endHour && minute > 0) break;
         
         const period = hour >= 12 ? 'PM' : 'AM';
         let displayHour = hour > 12 ? hour - 12 : hour;
-        if (displayHour === 0) displayHour = 12; // Handle midnight
+        if (displayHour === 0) displayHour = 12;
         
         slots.push(`${displayHour}:${minute.toString().padStart(2, '0')} ${period}`);
       }
@@ -186,7 +186,7 @@ isDateReserved(date: Date): boolean {
   });
 }
 
-// Add this method to check if current time should be shown
+// check if current time should be shown
 shouldShowCurrentTime(time: string, index: number): boolean {
   if (!this.isToday()) return false;
   
@@ -195,7 +195,7 @@ shouldShowCurrentTime(time: string, index: number): boolean {
   const currentMinute = now.getMinutes();
   const currentTotalMinutes = currentHour * 60 + currentMinute;
   
-  // Parse the time slot (e.g., "7:00 AM" -> 7:00)
+  // Parse the time slot 
   const { hours: slotHour, minutes: slotMinute } = this.parseTime(time);
   const nextSlotHour = index < this.timeSlots.length - 1 
     ? this.parseTime(this.timeSlots[index + 1]).hours
@@ -208,7 +208,7 @@ shouldShowCurrentTime(time: string, index: number): boolean {
          currentTotalMinutes < slotEndMinutes;
 }
 
-// Update your existing getCurrentTimePosition() method:
+
 getCurrentTimePosition(): string {
   const now = new Date();
   const minutes = now.getHours() * 60 + now.getMinutes();
@@ -229,7 +229,6 @@ getCurrentTimePosition(): string {
     }
   }
   
-  // Add this to your component methods
 isSameDay(date1: Date, date2: Date): boolean {
   return date1.getDate() === date2.getDate() && 
          date1.getMonth() === date2.getMonth() && 
@@ -347,7 +346,6 @@ private completeSelection(time: string): void {
   
   if (this.validateTimeSelection()) {
     this.selectionState = 'end-selected';
-    // Afficher directement la boîte de dialogue
     this.navigateToReservation();
   } else {
     this.errorMessage = 'L\'heure de fin doit être après l\'heure de début';
@@ -386,9 +384,8 @@ navigateToReservation(): void {
     }
   });
 
-  // Ajoutez cette souscription
   dialogRef.afterClosed().subscribe(result => {
-    if (result) { // Si l'utilisateur a cliqué sur Confirmer
+    if (result) { 
       this.proceedToReservation();
     }
   });

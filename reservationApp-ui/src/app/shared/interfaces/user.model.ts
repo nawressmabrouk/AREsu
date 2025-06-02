@@ -8,7 +8,7 @@ export interface User {
   fonction: string;
   nomEtablissement: string;
    
-  password?: string; // Optional as it shouldn't be exposed
+  password?: string; 
   structure: string;
   linkedInLink: string;
   enabled?: boolean;

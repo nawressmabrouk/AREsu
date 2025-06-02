@@ -57,7 +57,7 @@ showAnimation = false;
     this.intervalId = setInterval(() => {
       this.currentIndex = (this.currentIndex + 1) % this.etablissements.length;
       this.currentEtablissement = this.etablissements[this.currentIndex];
-    }, 1700); // Changement toutes les 1 seconde
+    }, 1700); 
   }
 
 
@@ -87,13 +87,13 @@ showAnimation = false;
     'Institut des Sciences Infirmières': 'logo_issis.png',
     'Faculté de Médecine': 'medecine.png',
     'Faculté de Droit et des Sciences Politiques': 'droit.png',
-    'Faculté des Lettres et des Sciences Humaines': 'OIP.png', // Ajustez si nécessaire
+    'Faculté des Lettres et des Sciences Humaines': 'OIP.png',
     'Faculté des Sciences Économiques et de Gestion': 'fseg.png',
     'École Nationale des Ingénieurs': 'eniso.png',
     'École des Sciences et Technologies de Hammam Sousse': 'essths.png',
     'École des Sciences et Techniques de la Santé': 'sante.png'
   };
-  return logoMap[etablissement] || 'OIP.png'; // Fallback image
+  return logoMap[etablissement] || 'OIP.png';
 }
 
 getShortName(etablissement: string): string {
@@ -111,4 +111,5 @@ resetCurrentEtablissement() {
     this.currentEtablissement = this.etablissements[0];
   }
 }
+
 }

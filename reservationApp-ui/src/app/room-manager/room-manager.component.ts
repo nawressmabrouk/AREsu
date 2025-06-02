@@ -133,7 +133,7 @@ export class RoomManagerComponent implements OnInit {
   currentPageSubtitle: string = 'Validation et contrôle des réservations des espaces';
 
   searchTerm: string = '';
- activeSection: 'access' | 'space' | 'calendar' = 'access'; // Ajout de 'calendar'
+ activeSection: 'access' | 'space' | 'calendar' = 'access'; 
 approvedEquipment: { [reservationId: string]: string[] } = {};
   managedSpaces: Espace[] = [];
 currentSpace: Espace = {
@@ -165,15 +165,13 @@ editingSpace: Espace | null = null;
 showAddSpaceModal = false;
 isLoadingSpaces = false;
 
-  spaces: any[] = []; // Créer une interface Space appropriée
+  spaces: any[] = []; 
  
-   // Nouveaux états
    reservations: Reservation[] = [];
    currentStatus: StatusReservation = StatusReservation.EN_ATTENTE;
    isLoading = false;
    errorMessage?: string;
  
-   // Nouveau mapping des statuts
    statusTabs = [
      { key: StatusReservation.EN_ATTENTE, label: 'En attente' },
      { key: StatusReservation.ACCEPTEE, label: 'Acceptées' },
@@ -227,10 +225,6 @@ rejectedCount: number = 0;
       this.loadReservations(tab.key);
     });
   }
-
-
-  
-
   @HostListener('document:click', ['$event'])
   onClick(event: MouseEvent) {
     if (this.profileContainer?.nativeElement && !this.profileContainer.nativeElement.contains(event.target)) {
@@ -239,14 +233,11 @@ rejectedCount: number = 0;
   }
   private loadSpaces(): void {
     this.isLoadingSpaces = true;
-    // Implémenter l'appel API via un service
-    // this.roomManagerService.getSpaces().subscribe(...)
     setTimeout(() => {
       this.isLoadingSpaces = false;
-    }, 1000); // Simulation de chargement
+    }, 1000); 
   }
 
-// Add these methods to the existing component (code 1)
 private loadManagedSpaces(): void {
   this.isLoadingSpaces = true;
   this.roomManagerService.getManagedSpaces()
@@ -319,9 +310,7 @@ toggleEquipment(equip: string): void {
 }
 
 addSpace(): void {
-  this.isLoadingSpaces = true;
-  // Implémentez l'ajout via votre service
-  // this.roomManagerService.addSpace(this.currentSpace).subscribe(...)
+  this.isLoadingSpaces = true; 
   this.closeSpaceModal();
   this.loadManagedSpaces();
 }
@@ -352,21 +341,16 @@ confirmDeleteSpace(spaceId: string): void {
     });
 }
 
-
-
-    // Nouvelle méthode de chargement
 loadReservations(status: StatusReservation): void {
     this.isLoading = true;
     this.errorMessage = undefined;
     
-    // Charge les réservations pour le statut demandé
     this.roomManagerService.getReservationsByStatus(status)
         .pipe(finalize(() => this.isLoading = false))
         .subscribe({
             next: (reservations) => {
                 this.reservations = reservations;
                 
-                // En parallèle, charge les comptes pour tous les statuts
                 this.loadAllCounts();
             },
             error: (err) => this.errorMessage = err.message
@@ -390,10 +374,8 @@ private loadAllCounts(): void {
 
 
 handleDecision(reservationId: string, accept: boolean): void {
-  // Récupérer les équipements approuvés pour cette réservation
   const approvedEquipments = this.approvedEquipment[reservationId] || [];
   
-  // Ajouter une confirmation si acceptation sans équipement
   if (accept && approvedEquipments.length === 0) {
     if (!confirm('Aucun équipement sélectionné. Voulez-vous accepter sans équipement ?')) return;
   }
@@ -407,7 +389,6 @@ handleDecision(reservationId: string, accept: boolean): void {
     finalize(() => this.isLoading = false)
   ).subscribe({
     next: () => {
-      // Supprimer le cache des équipements approuvés après décision
       delete this.approvedEquipment[reservationId];
       this.loadReservations(this.currentStatus);
     },
@@ -452,17 +433,17 @@ switchSection(section: 'access' | 'space' | 'calendar'): void {
   }
 }
 
-// In your component.ts
 toggleSidebar(event: Event) {
-  event.stopPropagation(); // Prevents event bubbling
+  // Prevents event bubbling
+  event.stopPropagation(); 
   this.isSidebarExpanded = !this.isSidebarExpanded;
 }
 
 
 
-readonly StatusReservation = StatusReservation; // Pour l'utiliser dans le template
+readonly StatusReservation = StatusReservation; 
 
-// Remplacer par
+
 getStatusClass(status: StatusReservation) {
   return {
     'status-en_attente': status === StatusReservation.EN_ATTENTE,
@@ -471,10 +452,9 @@ getStatusClass(status: StatusReservation) {
   };
 }
 
-// Implémenter la recherche
 onSearch() {
   if (this.searchTerm) {
-    // Filtrer les réservations existantes ou faire une nouvelle requête API
+   
     this.reservations = this.reservations.filter(r =>
       r.intituleAction.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
       r.responsableAction.toLowerCase().includes(this.searchTerm.toLowerCase())
@@ -492,11 +472,9 @@ onSearch() {
   logout() {
     this.authService.logout().subscribe({
       next: () => {
-        // Optional: Show success message
       },
       error: (err) => {
         console.error('Logout error:', err);
-        // Optional: Show error message
       }
     });
   }
@@ -504,7 +482,6 @@ onSearch() {
  
 
   onPasswordInput(field: string) {
-    // Gestion supplémentaire si nécessaire
   }
 
   getStatusIcon(status: StatusReservation) {
@@ -516,7 +493,7 @@ onSearch() {
       [StatusReservation.ATTRIBUEE]: faCheckCircle,
       [StatusReservation.TERMINEE]: faClock
     };
-    return icons[status] || faClock; // Fallback pour les cas non gérés
+    return icons[status] || faClock; 
   }
   
 getReservationCount(status: StatusReservation): number {
@@ -539,7 +516,6 @@ getReservationCount(status: StatusReservation): number {
     return labels[status] || 'Inconnu';
   }
 
-  // Vérifie si une réservation peut être annulée
 canCancel(reservation: Reservation): boolean {
   const now = new Date();
   return reservation.statut === StatusReservation.ACCEPTEE && 
@@ -549,7 +525,7 @@ canCancel(reservation: Reservation): boolean {
 handleCancel(reservation: Reservation): void {
   const reason = prompt('Veuillez indiquer la raison de l\'annulation (optionnel)');
   
-  if (reason === null) return; // L'utilisateur a annulé
+  if (reason === null) return; 
   
   if (!confirm(`Êtes-vous sûr de vouloir annuler cette réservation?`)) return;
 
@@ -558,7 +534,6 @@ handleCancel(reservation: Reservation): void {
     .pipe(finalize(() => this.isLoading = false))
     .subscribe({
       next: () => {
-        // Recharger les données
         this.loadReservations(this.currentStatus);
         this.loadAllCounts();
       },
@@ -586,6 +561,7 @@ toggleEquipmentApproval(reservationId: string, equip: string): void {
     this.approvedEquipment[reservationId].splice(index, 1);
   }
 }
+
 }
 
 

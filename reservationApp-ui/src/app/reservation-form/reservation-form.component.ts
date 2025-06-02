@@ -258,7 +258,7 @@ private loadEspaceDetails(espaceId: string): void {
   }
 
   linkedInIsValid(): boolean {
-    if (!this.reservation.lienLinkedInR) return true; // Optional field
+    if (!this.reservation.lienLinkedInR) return true; 
     
     try {
       new URL(this.reservation.lienLinkedInR);
@@ -293,7 +293,7 @@ private loadEspaceDetails(espaceId: string): void {
       );
     }
     
-    return true; // If capacity isn't loaded yet, don't fail validation
+    return true;
   }
 
   timeSlotIsValid(): boolean {
@@ -389,7 +389,9 @@ private loadEspaceDetails(espaceId: string): void {
       );
 
       this.notificationService.showSuccess('Réservation créée et envoyée avec succès !');
-      
+       setTimeout(() => {
+      this.router.navigate(['/spaces']);
+    }, 2000);
     } catch (error: any) {
       console.error('Submission error:', error);
       this.errorMessage = error.message;

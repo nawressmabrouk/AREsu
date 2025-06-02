@@ -54,7 +54,6 @@ export class ProfileComponent {
     confirmPassword: ''
   };
 
-  // propriétés pour consulter réservations 
   reservations: any[] = [];
   loadingReservations = false;
   errorReservations = '';
@@ -86,7 +85,7 @@ export class ProfileComponent {
         if (data) {
           this.profileData = data;
           this.resetEditForm();
-          console.log('Rôle chargé:', this.profileData.role); // Ajout pour debug
+          console.log('Rôle chargé:', this.profileData.role); 
         } else {
           console.error('Aucune donnée reçue');
         }
@@ -134,7 +133,6 @@ export class ProfileComponent {
     this.showDropdown = false;
     this.loadReservations();
   }
-  // Modifiez la méthode logout() existante pour :
 openLogoutModal(): void {
   this.showLogoutModal = true;
   this.showDropdown = false;
@@ -165,13 +163,11 @@ resetEditForm(): void {
     nomEtablissement: this.profileData?.nomEtablissement || '',
     structure: this.profileData?.structure || '',
     linkedInLink: this.profileData?.linkedInLink || '',
-    role: this.profileData?.role || '' // Ajoutez cette ligne
+    role: this.profileData?.role || '' 
   };
 }
 
-  // modifier profil 
 saveProfile(): void {
-    // Vérification des champs obligatoires
     const requiredFields = {
         'Nom': this.editData.nom,
         'Prénom': this.editData.prenom,
@@ -181,7 +177,6 @@ saveProfile(): void {
         'Structure': this.editData.structure
     };
 
-    // Trouver le premier champ vide
     const emptyField = Object.entries(requiredFields).find(([_, value]) => !value);
 
     if (emptyField) {
@@ -190,10 +185,9 @@ saveProfile(): void {
         return;
     }
 
-    // Créer une copie des données à envoyer
     const dataToSend = {
         ...this.editData,
-        role: this.isDemandeur() ? this.editData.role : this.profileData.role // Garder le rôle actuel si non demandeur
+        role: this.isDemandeur() ? this.editData.role : this.profileData.role 
     };
 
     console.log('Données avant envoi:', JSON.stringify(dataToSend, null, 2));
@@ -203,16 +197,15 @@ saveProfile(): void {
             console.log('Réponse complète du backend:', updatedProfile);
            
             if (updatedProfile) {
-                // Mettre à jour le profileData avec la réponse complète du backend
                 this.profileData = { 
                     ...this.profileData, 
                     ...updatedProfile,
-                    role: updatedProfile.role || this.profileData.role // Conserver le rôle si non retourné
+                    role: updatedProfile.role || this.profileData.role 
                 };
                 this.profileUpdated.emit(this.profileData);
                 this.notificationService.showSuccess('Profil mis à jour avec succès!');
-                this.closeModal(); // Fermer le modal après la mise à jour
-                this.loadProfile(); // Recharger les données du profil
+                this.closeModal(); 
+                this.loadProfile();
             } else {
                 console.error('Réponse vide du backend');
                 this.notificationService.showError('Le serveur a répondu sans données');
@@ -235,7 +228,6 @@ saveProfile(): void {
         }
     });
 }
-// modification de mot de passe
 changePassword(): void {
   
 
@@ -291,7 +283,7 @@ private loadReservations(): void {
 canCancel(reservation: any): boolean {
   return reservation.statut === 'EN_ATTENTE';
 }
-//annuler réservation
+
 onCancelReservation(reservationId: string): void {
   if (confirm('Êtes-vous sûr de vouloir annuler cette réservation ?')) {
     this.userService.cancelReservation(reservationId).subscribe({
@@ -310,17 +302,16 @@ onCancelReservation(reservationId: string): void {
   logout(): void {
     this.userService.logout().subscribe({
       next: () => {
-        // Force la suppression complète du cache
-       
+        // Clear session storage and redirect to login
         window.sessionStorage.clear();
-        window.location.href = '/login'; // Redirection FULL PAGE
+        window.location.href = '/login'; 
         // Désactive le cache navigateur
         this.router.navigateByUrl('/login', { 
           replaceUrl: true,
           state: { noCache: true } 
         });
         
-        // Supprime l'historique
+        // delete history state to prevent going back to profile
         history.pushState(null, '', window.location.href);
         window.addEventListener('popstate', () => {
           history.pushState(null, '', window.location.href);

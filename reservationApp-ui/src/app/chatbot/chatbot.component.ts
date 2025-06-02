@@ -1,12 +1,12 @@
 
 
-import { Component , OnInit , ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-import { ChatService } from '../services/chatbot/chat.service';
-import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
+import { AfterViewChecked, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faRobot , faCommentDots} from '@fortawesome/free-solid-svg-icons';
+import { faCommentDots, faRobot } from '@fortawesome/free-solid-svg-icons';
+import { ChatService } from '../services/chatbot/chat.service';
 interface Message {
   from: 'user' | 'bot';
   text: string;
@@ -32,10 +32,14 @@ isOpen = false;
 isExpanded = false;
 faRobot = faRobot ;
 faCommentDots = faCommentDots;
+
+ // Toggles chat window visibility
 toggleChat() {
   this.isOpen = !this.isOpen;
-  // Simplifié, ça marche pareil
+
 }
+
+ // Scrolls to bottom of chat after view changes
  ngAfterViewChecked() {
     this.scrollToBottom();
   }
@@ -47,15 +51,15 @@ toggleChat() {
     } catch(err) { }
   }
 
+   // Initializes component with welcome message
  ngOnInit() {
-    // Ajouter le message de bienvenue quand le composant est initialisé
     this.messages.push({ 
       from: 'bot', 
       text: 'Salut ! Comment puis-je t\'\aider aujourd\'\hui ?' 
     });
   }
 
-
+// Toggles chat window expansion
 toggleExpand() {
   this.isExpanded = !this.isExpanded;
 }
@@ -63,22 +67,24 @@ toggleExpand() {
 
   constructor(private chatService: ChatService) {}
 
+  // Handles sending user messages and receiving bot responses
   sendMessage() {
     const question = this.userMessage.trim();
     if (!question) return;
 
-    // Ajoute le message utilisateur
+    // Add user message
     this.messages.push({ from: 'user', text: question });
 
-    // Ajoute une bulle de chargement du bot
+    // Add bot loading indicator
     const loadingMsg: Message = { from: 'bot', text: '', loading: true };
     this.messages.push(loadingMsg);
 
+
     this.chatService.askBot(question).subscribe({
       next: (response) => {
-        // Retire la bulle de chargement
+        // Remove loading indicator
         this.messages.pop();
-        // Ajoute la réponse réelle
+        // Add actual bot response
         this.messages.push({ from: 'bot', text: response });
       },
       error: () => {
@@ -88,7 +94,7 @@ toggleExpand() {
     });
 
 
-    // Vide le champ utilisateur
+   // Clear input field
     this.userMessage = '';
   }
 

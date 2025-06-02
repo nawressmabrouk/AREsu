@@ -1,8 +1,3 @@
-
-
-
-
-
 import { Routes } from '@angular/router';
 import { AdminComponent } from './admin/admin.component';
 import { AuthComponent } from './auth/auth.component';
@@ -14,7 +9,6 @@ import { ResetPasswordComponent } from './mot-de-passe-oubliée/reset-password/r
 import { NavbarComponent } from './navbar/navbar.component';
 import { RegisterComponent } from './register/register.component';
 import { ReservationFormComponent } from './reservation-form/reservation-form.component';
-//import { ReservationsCalendarComponent } from './reservations-calendar/reservations-calendar.component';
 import { RoomManagerComponent } from './room-manager/room-manager.component';
 import { SecretaryComponent } from './secretary/secretary.component';
 import {
@@ -46,7 +40,6 @@ export const routes: Routes = [
     path: 'reset-password', 
     component: ResetPasswordComponent 
   },
-  // Protected routes below
   { 
     path: 'admin',
     component: AdminComponent,
@@ -91,10 +84,5 @@ export const routes: Routes = [
     component: SelectionCalendarComponent,
     canActivate: [AuthGuard]
   },
-  /*{ 
-  path: 'reservations-calendar',
-  component: ReservationsCalendarComponent,
-  canActivate: [AuthGuard]
-},*/
   { path: '**', redirectTo: '' }
 ];

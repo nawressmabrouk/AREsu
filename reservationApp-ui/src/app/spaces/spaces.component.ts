@@ -19,7 +19,6 @@ import { Espace, Etablissement, EtablissementService } from '../services/etablis
 import { UserService } from '../services/user/user.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
 import { ChatComponent } from '../chatbot/chatbot.component';
-//import { ChatbotComponent } from '../chatbot/chatbot.component';
 interface SpaceCategory {
   label: string;
   types: string[];
@@ -137,11 +136,10 @@ export class SpacesComponent implements OnInit {
     return labels[zone] || zone;
   }
 
-// Update your loadEtablissements method
 
 loadEtablissements() {
   this.loading = true;
-  this.etablissements = [];  // <-- Clear previous data to avoid stacking duplicates
+  this.etablissements = [];
   this.etablissementService.getAllEtablissements().subscribe({
     next: (data) => {
       console.log('Raw data from backend:', data);
@@ -155,15 +153,7 @@ loadEtablissements() {
   });
 }
 
-
-
-
-
-
-
-
-
-// Add this helper method
+// helper method
 removeDuplicates(array: any[], key: string): any[] {
   const seen = new Set();
   return array.filter(item => {
@@ -176,9 +166,8 @@ removeDuplicates(array: any[], key: string): any[] {
   });
 }
 
-// Ensure your trackBy function is correct
 trackByEtabId(index: number, etab: Etablissement): string {
-  return etab.id; // Make sure this matches your ID property name
+  return etab.id; 
 }
 
 
@@ -236,8 +225,8 @@ trackByEtabId(index: number, etab: Etablissement): string {
       });
     }
 
+    
 // When clicking a space card
-
 navigateToSelectionCalendar(espace: Espace): void {
   if (!this.selectedEtablissement || !espace.id) return;
   

@@ -8,8 +8,8 @@ import { faHome, faSignInAlt, faUserPlus } from '@fortawesome/free-solid-svg-ico
   selector: 'app-navbar',
   standalone: true,
   imports: [
-    CommonModule,    // Required for *ngIf
-    RouterModule,    // Required for routerLink and router-outlet
+    CommonModule,    
+    RouterModule,   
     FontAwesomeModule
   ],
   templateUrl: './navbar.component.html',
@@ -22,7 +22,7 @@ export class NavbarComponent {
   faHome = faHome;
   faSignInAlt = faSignInAlt;
   faUserPlus = faUserPlus;
-  faPageIcon = faSignInAlt; // You can change this to the appropriate icon
+  faPageIcon = faSignInAlt;
 
   // Page info
   updatePageName() {
@@ -45,11 +45,7 @@ export class NavbarComponent {
     }
   }
 
-
-
-
 constructor(private router: Router) {
-    // Surveiller les changements de route
     this.router.events.subscribe(() => {
       this.currentRoute = this.router.url.split('?')[0].split('/').pop() || '';
 
