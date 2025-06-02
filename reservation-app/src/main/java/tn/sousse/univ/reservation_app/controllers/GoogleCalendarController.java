@@ -61,6 +61,7 @@ public class GoogleCalendarController {
     @Autowired
     private tn.sousse.univ.reservation_app.repositories.EspaceRepository espaceRepository;
 
+    // Get all reserved dates for a specific establishment and space
     @GetMapping("/reservations/dates")
     public ResponseEntity<List<String>> getReservedDates(
             @RequestParam String etablissementId,
@@ -72,13 +73,7 @@ public class GoogleCalendarController {
         }
     }
 
-    /*
-     * @GetMapping("/reservations/confirmed")
-     * public ResponseEntity<List<Reservation>> getConfirmedReservations() {
-     * return ResponseEntity.ok(googleCalendarService.getConfirmedReservations());
-     * }
-     */
-
+    // Get all confirmed reservations for an establishment
     @GetMapping("/reservations/confirmed")
     public ResponseEntity<List<Reservation>> getConfirmedReservations(
             @RequestParam String etablissementId) {
@@ -87,6 +82,7 @@ public class GoogleCalendarController {
                 etablissementId, StatusReservation.ACCEPTÉE));
     }
 
+    // Get all pending reservations for an establishment
     @GetMapping("/reservations/pending")
     public ResponseEntity<List<Reservation>> getPendingReservations(
             @RequestParam String etablissementId) {
@@ -95,6 +91,7 @@ public class GoogleCalendarController {
                 etablissementId, StatusReservation.EN_ATTENTE));
     }
 
+    // Cancel a reservation by ID
     @DeleteMapping("/reservations/{id}")
     public ResponseEntity<Void> cancelReservation(@PathVariable String id) {
         try {
@@ -105,8 +102,7 @@ public class GoogleCalendarController {
         }
     }
 
-    /* -------------------- Time Slot Endpoint -------------------- */
-
+    // Get available time slots for a specific date and establishment
     @GetMapping("/view")
     public ResponseEntity<?> getTimeSlots(
             @RequestParam @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$") String date,
@@ -120,6 +116,7 @@ public class GoogleCalendarController {
         }
     }
 
+    // Verify all establishment calendars are properly configured
     @GetMapping("/verify")
     public ResponseEntity<String> verifyCalendars() {
         List<Etablissement> etabs = etablissementRepo.findAll();
@@ -136,7 +133,7 @@ public class GoogleCalendarController {
                 : ResponseEntity.badRequest().body(String.join("\n", problems));
     }
 
-    // Add this temporary endpoint
+    // Test calendar visibility (admin only)
     @GetMapping("/test-visibility/{calendarId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> testVisibility(
@@ -195,6 +192,7 @@ public class GoogleCalendarController {
         }
     }
 
+    // Helper method to check calendar visibility
     private String getCalendarVisibility(String calendarId) throws IOException, GeneralSecurityException {
         try {
             CalendarListEntry entry = googleCalendarService.getCalendarService()
@@ -207,7 +205,7 @@ public class GoogleCalendarController {
         }
     }
 
-    // Check Calendar Visibility Settings
+    // Get calendar visibility status
     @GetMapping("/visibility-status/{calendarId}")
     public ResponseEntity<?> getVisibilityStatus(@PathVariable String calendarId) {
         try {
@@ -226,7 +224,7 @@ public class GoogleCalendarController {
         }
     }
 
-    // For more detailed calendar info
+    // Get detailed calendar information
     @GetMapping("/calendar-details/{calendarId}")
     public ResponseEntity<?> getCalendarDetails(@PathVariable String calendarId) {
         try {
@@ -247,7 +245,7 @@ public class GoogleCalendarController {
         }
     }
 
-    // Additional verification endpoint
+    // Check calendar UI display status
     @GetMapping("/check-ui-status/{calendarId}")
     public ResponseEntity<?> checkUIStatus(@PathVariable String calendarId) {
         try {
@@ -265,6 +263,7 @@ public class GoogleCalendarController {
         }
     }
 
+    // Grant access to a calendar for a specific user
     @PostMapping("/grant-access/{calendarId}")
     public ResponseEntity<?> grantAccess(
             @PathVariable String calendarId,
@@ -283,6 +282,7 @@ public class GoogleCalendarController {
         }
     }
 
+    // Check visibility of all establishment calendars
     @GetMapping("/check-all-visibility")
     public ResponseEntity<?> checkAllCalendars() {
         List<Etablissement> etabs = etablissementRepo.findAll();
@@ -311,6 +311,7 @@ public class GoogleCalendarController {
         return ResponseEntity.ok(results);
     }
 
+    // Share all calendars with a specific user
     @PostMapping("/share-all-with-user")
     public ResponseEntity<?> shareAllCalendars(@RequestParam String userEmail) {
         List<Etablissement> etabs = etablissementRepo.findAll();
@@ -351,6 +352,7 @@ public class GoogleCalendarController {
                 "userEmail", userEmail));
     }
 
+    // Force all calendars to be visible in UI
     @PostMapping("/force-all-ui-visibility")
     public ResponseEntity<?> forceAllUIVisibility() {
         List<Etablissement> etabs = etablissementRepo.findAll();
@@ -474,6 +476,7 @@ public class GoogleCalendarController {
         }
     }
 
+    // Get espace name by etablissement id endpoint
     @GetMapping("/espace-name")
     public ResponseEntity<Map<String, String>> getEspaceNameByEtablissement(
             @RequestParam String etablissementId) {

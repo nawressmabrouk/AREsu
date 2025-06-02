@@ -1,4 +1,3 @@
-
 package tn.sousse.univ.reservation_app.services;
 
 import java.util.Date;
@@ -24,6 +23,7 @@ public class PasswordRecoveryService {
     private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
 
+    // Processes a password reset request by generating and sending a reset token
     public void processPasswordResetRequest(String email) {
         System.out.println("Traitement de l'email : " + email);
         Optional<User> userOptional = userRepository.findByEmail(email);
@@ -44,6 +44,7 @@ public class PasswordRecoveryService {
         }
     }
 
+    // Validates a reset token and updates the user's password if valid
     public void validateTokenAndResetPassword(String token, String newPassword) {
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Token invalide"));
@@ -62,6 +63,7 @@ public class PasswordRecoveryService {
         tokenRepository.delete(resetToken);
     }
 
+    // Sends a password reset email containing the reset token
     private void sendResetEmail(String toEmail, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("REDACTED_OLD_APP_EMAIL");

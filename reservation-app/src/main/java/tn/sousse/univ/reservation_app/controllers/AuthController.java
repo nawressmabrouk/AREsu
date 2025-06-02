@@ -36,6 +36,7 @@ public class AuthController {
         this.passwordRecoveryService = passwordRecoveryService;
     }
 
+    // users login endpoint
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
         try {
@@ -61,6 +62,7 @@ public class AuthController {
         }
     }
 
+    // users logout endpoint
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
@@ -79,18 +81,19 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Successfully logged out"));
     }
 
+    // forgot password endpoint
     @PostMapping("/forgot-password")
     public ResponseEntity<?> handleForgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         passwordRecoveryService.processPasswordResetRequest(email);
 
-        // Réponse générique même si l'email n'existe pas
+      
         return ResponseEntity.ok().body(
                 Map.of("message", "Si cet email est enregistré, vous recevrez un lien sous 15 minutes."));
     }
 
-    // Dans AuthController.java
 
+    // reset password endpoint
     @PostMapping("/reset-password")
     public ResponseEntity<?> handleResetPassword(@RequestBody Map<String, String> request) {
         try {
@@ -98,25 +101,23 @@ public class AuthController {
             String newPassword = request.get("newPassword");
             String confirmPassword = request.get("confirmPassword");
 
-            // 1. Vérifier la correspondance des mots de passe
             if (!newPassword.equals(confirmPassword)) {
                 return ResponseEntity.badRequest().body(
                         Map.of("error", "Les mots de passe ne correspondent pas"));
             }
 
-            // 2. Valider et appliquer le nouveau mot de passe
             passwordRecoveryService.validateTokenAndResetPassword(token, newPassword);
 
             return ResponseEntity.ok().body(
                     Map.of("message", "Mot de passe réinitialisé avec succès"));
 
         } catch (RuntimeException e) {
-            // Gestion des erreurs spécifiques
+
             String errorMessage = "Échec de la réinitialisation : " + e.getMessage();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", errorMessage));
         } catch (Exception e) {
-            // Erreur générale
+
             return ResponseEntity.internalServerError().body(
                     Map.of("error", "Erreur interne du serveur"));
         }

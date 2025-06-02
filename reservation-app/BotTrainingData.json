@@ -240,46 +240,6 @@
     "completion": "Oui, il suffit de remplir le formualire ."
   },
   {
-    "prompt": "Qui joindre en cas de problème technique dans une salle ?",
-    "completion": "Composez le 1234 depuis un téléphone interne ou contactez le service technique au service.technique@univ-sousse.tn"
-  },
-  {
-    "prompt": "À qui s'adresser pour un problème technique dans une salle ?",
-    "completion": "Composez le 1234 depuis un téléphone interne ou contactez le service technique au service.technique@univ-sousse.tn"
-  },
-  {
-    "prompt": "Quel contact utiliser si un problème technique survient dans une salle ?",
-    "completion": "Composez le 1234 depuis un téléphone interne ou contactez le service technique au service.technique@univ-sousse.tn"
-  },
-  {
-    "prompt": "En cas de panne technique dans une salle, qui contacter ?",
-    "completion": "Composez le 1234 depuis un téléphone interne ou contactez le service technique au service.technique@univ-sousse.tn"
-  },
-  {
-    "prompt": "Qui doit-on appeler en cas de problème technique en salle ?",
-    "completion": "Composez le 1234 depuis un téléphone interne ou contactez le service technique au service.technique@univ-sousse.tn"
-  },
-  {
-    "prompt": "Quel service contacter pour un problème technique dans une salle ?",
-    "completion": "Composez le 1234 depuis un téléphone interne ou contactez le service technique au service.technique@univ-sousse.tn"
-  },
-  {
-    "prompt": "À qui faire remonter un souci technique dans une salle ?",
-    "completion": "Composez le 1234 depuis un téléphone interne ou contactez le service technique au service.technique@univ-sousse.tn"
-  },
-  {
-    "prompt": "Quel numéro composer pour un problème technique dans une salle ?",
-    "completion": "Composez le 1234 depuis un téléphone interne ou contactez le service technique au service.technique@univ-sousse.tn"
-  },
-  {
-    "prompt": "Qui est le contact en cas de problème technique en salle ?",
-    "completion": "Composez le 1234 depuis un téléphone interne ou contactez le service technique au service.technique@univ-sousse.tn"
-  },
-  {
-    "prompt": "Qui contacter en cas de souci technique dans une salle ?",
-    "completion": "Composez le 1234 depuis un téléphone interne ou contactez le service technique au service.technique@univ-sousse.tn"
-  },
-  {
     "prompt": "Y a-t-il de la climatisation dans les salles ?",
     "completion": "Oui, toutes les salles de plus de 30 places sont climatisées."
   },
@@ -4480,12 +4440,25 @@
   },
   {
     "prompt": "tu es qui ?",
-    "completion": "Je suis un assistant virtuel. Je peux répondre à vos questions sur le site."
+    "completion": "Je suis un assistant virtuel. Je peux répondre à vos questions sur le site AREsu."
   },
   {
     "prompt": "que peux-tu faire ?",
     "completion": "Je peux répondre à vos questions sur la réservation, les établissements, les services, etc."
+  },
+  {
+  "prompt": "bye!",
+  "completion": "Au revoir ! À bientôt 👋"
+  },
+  {
+    "prompt": "Comment puis-je réserver une salle ?",
+    "completion": "Pour réserver une salle, vous devez vous connecter à votre compte et suivre les instructions de réservation sur le site."
+  },
+  {
+    "prompt": "Quels sont les horaires d'ouverture ?",
+    "completion": "Les horaires d'ouverture sont généralement de 7h à 20h du lundi au vendredi. Veuillez vérifier sur le site pour des informations spécifiques."
   }
+  
 ]
 
 

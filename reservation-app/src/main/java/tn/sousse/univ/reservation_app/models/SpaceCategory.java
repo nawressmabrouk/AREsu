@@ -5,11 +5,9 @@ public enum SpaceCategory {
     INNOVATION("Espaces_employabilite_innovation", "Espaces d'employabilité & d'innovation");
 
     private final String apiValue;
-    private final String label;
 
     SpaceCategory(String apiValue, String label) {
         this.apiValue = apiValue;
-        this.label = label;
     }
 
     public static SpaceCategory fromApiValue(String apiValue) {

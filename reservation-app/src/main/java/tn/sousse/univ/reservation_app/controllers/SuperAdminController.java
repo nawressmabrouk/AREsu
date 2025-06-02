@@ -1,6 +1,5 @@
 package tn.sousse.univ.reservation_app.controllers;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -22,17 +21,20 @@ public class SuperAdminController {
 
     private final SuperAdminService superAdminService;
 
+    // Retrieves all establishments with their complete details for super admin
+    // oversight
     @GetMapping("/etablissements")
     public ResponseEntity<List<SuperAdminEtablissementDTO>> getAllEtablissements() {
         List<SuperAdminEtablissementDTO> etablissements = superAdminService.getAllEtablissementsWithDetails();
         return ResponseEntity.ok(etablissements);
     }
 
+    // Gets comprehensive details of a specific establishment by ID
     @GetMapping("/etablissements/{id}")
     public ResponseEntity<SuperAdminEtablissementDTO> getEtablissementDetails(
             @PathVariable String id) {
         SuperAdminEtablissementDTO etablissement = superAdminService.getEtablissementDetails(id);
         return ResponseEntity.ok(etablissement);
     }
-  
+
 }

@@ -55,7 +55,7 @@ public class EtablissementController {
                 })
                 .collect(Collectors.toList());
     }
-
+ // Endpoint to filter establishments by type and zone
     @GetMapping("/filter")
     public ResponseEntity<List<Etablissement>> filterEtablissements(
             @RequestParam(required = false) String type,
@@ -79,7 +79,7 @@ public class EtablissementController {
         return ResponseEntity.ok(
                 etablissementService.getEtablissementsFiltered(zoneEnum, typeEnum));
     }
-
+//Get all establishments endpoint
     @GetMapping("/all")
     public ResponseEntity<List<Etablissement>> getAllEtEtablissement() {
         return ResponseEntity.ok(etablissementService.getAllEtablissements());
@@ -129,6 +129,7 @@ public class EtablissementController {
         return ResponseEntity.ok(espaces);
     }
 
+    // GET Single Establishment by id Endpoint
     @GetMapping("/id/{id}")
     public ResponseEntity<Etablissement> getEtablissementById(@PathVariable String id) {
         try {
@@ -143,7 +144,7 @@ public class EtablissementController {
         }
     }
 
-    // Single Space Endpoint
+    // GET Single Space Endpoint
     @GetMapping("/espaces/id/{id}")
     public ResponseEntity<Espace> getEspaceById(@PathVariable String id) {
         try {

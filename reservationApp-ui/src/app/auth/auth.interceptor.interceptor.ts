@@ -1,72 +1,54 @@
-/*import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { AuthService } from '../services/auth/auth.service';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const router = inject(Router);
-  const token = authService.getToken();
-
-  if (token) {
-    req = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` , 
-      'Content-Type': 'application/json' }, 
-      withCredentials: true
-    });
-  }
-  return next(req);
-
-  return next(req).pipe(
-    catchError(err => {
-      if (err.status === 403) {
-        // Redirect to login or show permission error
-        router.navigate(['/unauthorized']);
-      }
-      return throwError(() => err);
-    })
-  );
-};*/import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpHandler } from '@angular/common/http';
-import { inject } from '@angular/core';
 import { AuthService } from '../services/auth/auth.service';
-import { Router } from '@angular/router';
-import { catchError, throwError, Observable } from 'rxjs';
 
+// Define the auth interceptor function
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  // Inject the AuthService and Router dependencies
   const authService = inject(AuthService);
   const router = inject(Router);
   
-  // Liste des endpoints à exclure
+   // List of endpoints that should bypass the interceptor (no JWT added)
   const excludedUrls = [
     '/api/auth/login',
     '/api/auth/forgot-password',
     '/api/auth/reset-password'
   ];
 
-  // Vérifier si la requête doit être exclue
+   // Check if the current request URL matches any excluded URL
   if (excludedUrls.some(url => req.url.includes(url))) {
-    return next(req); // Pas d'ajout du JWT
+
+    // If excluded, pass the request through without modification
+    return next(req); 
   }
 
+  // Get the authentication token from the AuthService
   const token = authService.getToken();
 
-  // Clone et ajout des headers si token existe
+  // If a token exists, clone the request and add authorization headers
   if (token) {
+    // Initialize headers object with Authorization
     const headers: { [key: string]: string } = {
       Authorization: `Bearer ${token}`
     };
 
+    // Add Content-Type header for POST, PUT, and PATCH requests
     if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
       headers['Content-Type'] = 'application/json';
     }
 
+    // Clone the request with new headers and credentials
     req = req.clone({
       setHeaders: headers,
       withCredentials: true
     });
   }
 
+  // Pass the request through and handle potential errors
   return next(req).pipe(
+    // Catch any errors in the response
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
         authService.logout();

@@ -8,40 +8,40 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import java.util.Properties;
 
-@Configuration
+@Configuration // Marks this class as a Spring configuration class
 public class MailConfig {
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username}") // Injects email username from application.properties
     private String username;
 
-    @Value("${spring.mail.password}")
+    @Value("${spring.mail.password}") // Injects email password from application.properties
     private String password;
 
-    @Value("${spring.mail.host}")
+    @Value("${spring.mail.host}") // Injects SMTP host (e.g., smtp.gmail.com)
     private String host;
 
-    @Value("${spring.mail.port}")
+    @Value("${spring.mail.port}") // Injects SMTP port (e.g., 587 for TLS)
     private int port;
 
-    @Value("${spring.mail.properties.mail.smtp.auth}")
+    @Value("${spring.mail.properties.mail.smtp.auth}") // Enables/disables SMTP authentication
     private boolean smtpAuth;
 
-    @Value("${spring.mail.properties.mail.smtp.starttls.enable}")
+    @Value("${spring.mail.properties.mail.smtp.starttls.enable}") // Enables/disables STARTTLS
     private boolean starttlsEnable;
 
-    @Bean
+    @Bean // Creates and configures a JavaMailSender bean
     public JavaMailSender getJavaMailSender() {
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost(host);
-        mailSender.setPort(port);
-        mailSender.setUsername(username);
-        mailSender.setPassword(password);
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl(); // Creates mail sender instance
+        mailSender.setHost(host); // Sets SMTP host
+        mailSender.setPort(port); // Sets SMTP port
+        mailSender.setUsername(username); // Sets email username
+        mailSender.setPassword(password); // Sets email password
 
-        Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.smtp.auth", smtpAuth);
-        props.put("mail.smtp.starttls.enable", starttlsEnable);
-        props.put("mail.transport.protocol", "smtp");
+        Properties props = mailSender.getJavaMailProperties(); // Gets mail properties
+        props.put("mail.smtp.auth", smtpAuth); // Configures SMTP auth
+        props.put("mail.smtp.starttls.enable", starttlsEnable); // Configures STARTTLS
+        props.put("mail.transport.protocol", "smtp"); // Sets protocol to SMTP
 
-        return mailSender;
+        return mailSender; // Returns configured mail sender
     }
 }

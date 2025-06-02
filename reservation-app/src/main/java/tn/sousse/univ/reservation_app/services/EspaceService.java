@@ -26,29 +26,35 @@ public class EspaceService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    // Retrieves all espaces from the repository
     public List<Espace> getAllEspaces() {
         return espaceRepository.findAll();
     }
 
+    // Finds an espace by its ID
     public Espace getEspaceById(String espaceId) {
         return espaceRepository.findById(espaceId)
                 .orElseThrow(() -> new RuntimeException("Espace non trouvé"));
     }
 
+    // Checks the availability status of an espace by its ID
     public boolean verifierDisponibilite(String espaceId) {
         Optional<Espace> espace = espaceRepository.findById(espaceId);
         return espace.map(Espace::isDisponibilite).orElse(false);
     }
 
+    // Retrieves an espace by its name or throws an exception if not found
     public Espace getEspaceByNom(String nom) {
         return espaceRepository.findByNom(nom)
                 .orElseThrow(() -> new RuntimeException("Espace non trouvé avec le nom : " + nom));
     }
 
+    // Finds all spaces belonging to a specific establishment
     public List<Espace> findByEtablissementId(String etablissementId) {
         return espaceRepository.findByEtablissementId(etablissementId);
     }
 
+    // Gets unavailable time slots for a specific espace on a given date
     public List<String> getUnavailableSlotsForSpace(String espaceId, String date) {
         try {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -81,10 +87,10 @@ public class EspaceService {
         }
     }
 
-   
+    // Retrieves reservations for a specific space, optionally filtered by status
     public List<Reservation> getReservationsForSpace(String espaceId, String status) {
         Criteria criteria = Criteria.where("espaceId").is(espaceId);
-    
+
         if (status != null && !status.isBlank()) {
             try {
                 StatusReservation statusEnum = StatusReservation.valueOf(status.toUpperCase());
@@ -93,7 +99,7 @@ public class EspaceService {
                 throw new RuntimeException("Statut de réservation invalide : " + status);
             }
         }
-    
+
         Query query = new Query(criteria);
         return mongoTemplate.find(query, Reservation.class);
     }

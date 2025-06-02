@@ -21,34 +21,10 @@ public class EtablissementService {
     public EtablissementService(EtablissementRepository etablissementRepository, EspaceRepository espaceRepository) {
         this.etablissementRepository = etablissementRepository;
         this.espaceRepository = espaceRepository;
-    }
+    } 
+  
 
-    public List<Espace> filterEspaces(String etablissementId, String categorie, String type) {
-        System.out.println(">>> Filtrage espaces : etablissementId=" + etablissementId + ", categorie=" + categorie);
-
-        // Fetch all espaces for the given établissement
-        List<Espace> espaces = espaceRepository.findByEtablissementId(etablissementId);
-        System.out.println(">>> Espaces trouvés avant filtre : " + espaces.size());
-
-        // Filter based on category string (no more enum used)
-        if (categorie != null && !categorie.isBlank()) {
-            espaces = espaces.stream()
-                    .filter(e -> e.getCategorie().equalsIgnoreCase(categorie))
-                    .collect(Collectors.toList());
-            System.out.println(">>> Après filtre catégorie : " + espaces.size());
-        }
-
-        // Filter based on type string
-        if (type != null && !type.isBlank()) {
-            espaces = espaces.stream()
-                    .filter(e -> e.getType().equalsIgnoreCase(type))
-                    .collect(Collectors.toList());
-            System.out.println(">>> Après filtre type : " + espaces.size());
-        }
-
-        return espaces;
-    }
-
+    // Normalize the ID by removing "ObjectId()" format
     private String normalizeId(String id) {
         if (id == null)
             return null;
@@ -65,6 +41,7 @@ public class EtablissementService {
         return espaces;
     }
 
+    // Get all establishments filtered by zone and type
     public List<Etablissement> getEtablissementsFiltered(Zone zone, TypeEtablissement type) {
         List<Etablissement> etablissements;
 
@@ -83,7 +60,7 @@ public class EtablissementService {
                 .collect(Collectors.toList());
     }
 
-    // Get filtered spaces for an establishment
+    //Get filtered spaces for an establishment
     public List<Espace> getFilteredEspacesForEtablissement(
             String etablissementId,
             String categorie,
@@ -115,19 +92,12 @@ public class EtablissementService {
         return espaces;
     }
 
+    // Get all establishments without any filters
     public List<Etablissement> getAllEtablissements() {
         return etablissementRepository.findAll();
     }
 
-    // This method enriches an Etablissement with its associated espaces
-    private Etablissement enrichWithEspaces(Etablissement etablissement) {
-        List<Espace> espaces = espaceRepository.findByEtablissementId(etablissement.getId());
-        etablissement.setEspaces(espaces);
-        return etablissement;
-    }
-
     // Method to get spaces based on establishment, category, and type
-
     public List<Espace> getEtablissementEspaces(String etablissementId, String categorie, String type) {
         etablissementId = etablissementId.replace("ObjectId(", "").replace(")", "").trim();
         System.out.println("Normalized ID: " + etablissementId);
@@ -150,10 +120,10 @@ public class EtablissementService {
                     .collect(Collectors.toList());
             System.out.println("After type filter: " + espaces.size());
         }
-
         return espaces;
     }
 
+    // Get an establishment by its ID
     public Etablissement getEtablissementById(String id) {
         // Handle ObjectId if using MongoDB
         if (id.startsWith("ObjectId(") && id.endsWith(")")) {
@@ -164,4 +134,5 @@ public class EtablissementService {
                 .orElseThrow(() -> new RuntimeException("Etablissement not found"));
     }
 
+    
 }

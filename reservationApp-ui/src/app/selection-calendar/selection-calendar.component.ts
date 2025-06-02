@@ -19,8 +19,9 @@ import { Etablissement, EtablissementService } from '../services/etablissement/e
 import { ProfileComponent } from '../shared/components/profile/profile.component';
 import { CalendarSlotDTO } from '../shared/interfaces/calendar-slot.dto';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+
 import { ChatComponent } from "../chatbot/chatbot.component";
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 @Injectable()
 export class CustomDateFnsAdapter extends DateFnsAdapter {
   constructor() {
@@ -41,7 +42,7 @@ export class CustomDateFnsAdapter extends DateFnsAdapter {
     MatFormFieldModule,
     MatIconModule,
     ProfileComponent,
-    MatButtonModule, MatDialogModule, ConfirmDialogComponent,
+    MatButtonModule, MatDialogModule, 
     ChatComponent
 ],
   selector: 'app-selection-calendar',

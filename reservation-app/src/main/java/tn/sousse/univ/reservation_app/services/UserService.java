@@ -1,5 +1,3 @@
-
-// nouveau code 
 package tn.sousse.univ.reservation_app.services;
 
 import java.io.IOException;
@@ -27,7 +25,6 @@ import tn.sousse.univ.reservation_app.repositories.VerificationTokenRepository;
 @Service
 public class UserService {
 
-    // Injection des dépendances
     @Autowired
     private VerificationTokenRepository verificationTokenRepository;
 
@@ -40,6 +37,7 @@ public class UserService {
     @Autowired
     private EmailService emailService;
 
+    // Registers a new user with email verification
     public User registerUser(User user) {
         // Check if email exists
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -59,24 +57,21 @@ public class UserService {
         return savedUser;
     }
 
-    // méthode pour les créations par l'admin
+    // Creates user accounts by admin with auto-generated password
     public User registerAdminCreatedUser(User user) {
-        // Générer le mot de passe ici
         String plainPassword = generateRandomPassword(12);
         return handleUserRegistration(user, true, plainPassword);
     }
 
+    // Core user registration logic handling both admin and self-registration
     private User handleUserRegistration(User user, boolean isAdminCreation, String plainPassword) {
-        // Vérification de l'email existant
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Cet email existe déjà");
         }
 
-        // Configuration du compte
-        user.setEnabled(isAdminCreation); // Activé immédiatement si créé par admin
-        user.setPasswordChangeRequired(isAdminCreation); // Forcer le changement de mot de passe
+        user.setEnabled(isAdminCreation);
+        user.setPasswordChangeRequired(isAdminCreation);
 
-        // Gestion du mot de passe
         if (isAdminCreation && plainPassword != null) {
             user.setPassword(passwordEncoder.encode(plainPassword));
         } else {
@@ -85,7 +80,6 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
-        // Envoi des emails appropriés
         if (isAdminCreation) {
             sendAdminCreationEmail(savedUser, plainPassword);
         } else {
@@ -95,6 +89,7 @@ public class UserService {
         return savedUser;
     }
 
+    // Sends account activation email with verification link
     private void sendActivationEmail(User user) {
         try {
             String token = UUID.randomUUID().toString();
@@ -114,6 +109,7 @@ public class UserService {
         }
     }
 
+    // Sends welcome email for admin-created accounts
     private void sendAdminCreationEmail(User user, String plainPassword) {
         try {
             String htmlTemplate = loadEmailTemplate("templates/admin-creation-email.html");
@@ -130,7 +126,7 @@ public class UserService {
         }
     }
 
-    // Méthode pour générer un mot de passe aléatoire
+    // Generates secure random password string
     public String generateRandomPassword(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
         return new Random().ints(length, 0, chars.length())
@@ -138,19 +134,22 @@ public class UserService {
                 .collect(Collectors.joining());
     }
 
-    // Méthodes existantes (inchangées)
+    // Retrieves user by ID
     public User getUserById(String id) {
         return userRepository.findById(id).orElse(null);
     }
 
+    // Finds user by email address
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
+    // Gets all users with specified role
     public List<User> trouverParRole(Role role) {
         return userRepository.findByRole(role);
     }
 
+    // Loads HTML email template from resources
     private String loadEmailTemplate(String path) {
         try {
             ClassPathResource resource = new ClassPathResource(path);
@@ -161,6 +160,7 @@ public class UserService {
         }
     }
 
+    // Validates user credentials
     public User authenticateUser(String email, String password) {
         Optional<User> userOptional = userRepository.findByEmail(email);
         if (userOptional.isEmpty())
@@ -170,6 +170,7 @@ public class UserService {
         return passwordEncoder.matches(password, user.getPassword()) ? user : null;
     }
 
+    // Updates user profile information
     public User updateUserProfile(User updatedData) {
         User currentUser = getCurrentUser();
         currentUser.setNom(updatedData.getNom());
@@ -193,12 +194,14 @@ public class UserService {
         return userRepository.save(currentUser);
     }
 
+    // Gets currently authenticated user
     public User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
     }
 
+    // Handles password change with validation
     public void changerMotDePasse(String email, String ancienMotDePasse, String nouveauMotDePasse) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
@@ -216,6 +219,7 @@ public class UserService {
         userRepository.save(user);
     }
 
+    // Checks if email is already registered
     public boolean emailExists(String email) {
         return userRepository.existsByEmail(email);
     }

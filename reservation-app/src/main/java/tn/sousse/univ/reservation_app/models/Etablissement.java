@@ -26,14 +26,12 @@ public class Etablissement {
     private String adminId;
 
     private String secretaireGeneraleId;
-    private String logo; // base64 string
+    private String logo;
 
-    
     @Transient
     private List<Espace> espaces;
 
-     // New fields for Google Calendar
-    private String googleCalendarId;  // e.g., "abc123@group.calendar.google.com"
-    private String calendarEmail;     // Same as ID unless it's a resource calendar
+    private String googleCalendarId;
+    private String calendarEmail;
 
 }

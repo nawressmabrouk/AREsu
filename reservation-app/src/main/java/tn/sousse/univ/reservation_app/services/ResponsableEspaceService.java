@@ -1,6 +1,5 @@
 package tn.sousse.univ.reservation_app.services;
 
-import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -11,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import tn.sousse.univ.reservation_app.config.GoogleCalendarConfig;
 import tn.sousse.univ.reservation_app.models.Espace;
 import tn.sousse.univ.reservation_app.models.Etablissement;
 import tn.sousse.univ.reservation_app.models.Reservation;
@@ -33,8 +31,6 @@ public class ResponsableEspaceService {
 
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private NotificationService notificationService;
 
     @Autowired
     private GoogleCalendarService googleCalendarService;
@@ -43,29 +39,28 @@ public class ResponsableEspaceService {
     private EspaceRepository espaceRepository;
 
     @Autowired
-    private GoogleCalendarConfig googleCalendarConfig;
-    @Autowired
     private EmailService emailService;
 
     private static final Logger logger = LoggerFactory.getLogger(ResponsableEspaceService.class);
 
+
+    //Processes reservation approval/rejection and updates Google Calendar.
     public void processDecision(String reservationId,
             boolean accepted,
             List<String> approvedEquipements,
             String decidedBy) {
-        // 1) load the reservation
+
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Réservation introuvable: " + reservationId));
-        // Ajoutez cette validation des équipements
         if (accepted && approvedEquipements != null) {
             if (!reservation.getEquipements().containsAll(approvedEquipements)) {
                 throw new IllegalArgumentException("Équipements approuvés non inclus dans la demande");
             }
-            reservation.setApprovedEquipements(approvedEquipements); // ← Ligne manquante
+            reservation.setApprovedEquipements(approvedEquipements);
         } else {
             reservation.setApprovedEquipements(Collections.emptyList());
         }
-        // 2) ensure établissementId is populated
+
         if (reservation.getEtablissementId() == null) {
             Espace espace = espaceRepository.findById(reservation.getEspaceId())
                     .orElseThrow(() -> new RuntimeException("Espace introuvable: " + reservation.getEspaceId()));
@@ -73,7 +68,6 @@ public class ResponsableEspaceService {
             reservationRepository.save(reservation);
         }
 
-        // 3) fetch the établissement’s calendar
         Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
                 .orElseThrow(
                         () -> new RuntimeException("Établissement introuvable: " + reservation.getEtablissementId()));
@@ -89,7 +83,7 @@ public class ResponsableEspaceService {
         } else {
             reservation.setApprovedEquipements(Collections.emptyList());
         }
-        // 4) if accepted, push to Google Calendar & make visible
+
         if (accepted) {
             try {
                 googleCalendarService.confirmReservation(reservation.getId());
@@ -103,15 +97,16 @@ public class ResponsableEspaceService {
             reservation.setStatut(StatusReservation.REFUSÉE);
         }
 
-        // 5) record who decided and save
         reservation.setDecideePar(decidedBy);
         reservationRepository.save(reservation);
 
         sendNotificationsAndEmails(reservation, reservation.getStatut());
     }
 
+
+    //Sends email notifications about reservation status to the user.
     private void sendNotificationsAndEmails(Reservation reservation, StatusReservation status) {
-        // Récupération des données
+
         User demandeur = userRepository.findById(reservation.getDemandeurId())
                 .orElseThrow(() -> new NoSuchElementException("Demandeur non trouvé"));
 
@@ -121,17 +116,8 @@ public class ResponsableEspaceService {
         Etablissement etablissement = etablissementRepository.findById(reservation.getEtablissementId())
                 .orElseThrow(() -> new NoSuchElementException("Établissement non trouvé"));
 
-        // Formatage des messages
         String statusMessage = status == StatusReservation.ACCEPTÉE ? "acceptée" : "refusée";
-        String formattedDate = new SimpleDateFormat("dd/MM/yyyy 'à' HH:mm").format(reservation.getHeureDebut());
 
-        // 1. Notification au demandeur
-        notificationService.sendNotification(
-                reservation.getDemandeurId(),
-                "Décision sur votre réservation - " + espace.getNom(),
-                "Votre demande pour le " + formattedDate + " a été " + statusMessage + " par le responsable");
-
-        // 2. Email au demandeur
         String demandeurSubject = "Décision sur votre réservation - " + espace.getNom();
         String demandeurBody = String.format(
                 "Bonjour,\n\n" +
@@ -147,24 +133,23 @@ public class ResponsableEspaceService {
                 etablissement.getNom());
         emailService.sendEmail(demandeur.getEmail(), demandeurSubject, demandeurBody);
 
-        // 3. Notification au secrétaire général
-        notificationService.sendNotification(
-                etablissement.getSecretaireGeneraleId(),
-                "Décision prise sur réservation #" + reservation.getId(),
-                "Le responsable a " + statusMessage + " une réservation pour " + espace.getNom());
-
     }
 
+
+    //Retrieves all reservations managed by a specific responsible.
     public List<Reservation> getAllReservationsByResponsable(String responsableId) {
         List<String> espaceIds = getEspaceIdsByResponsable(responsableId);
         return reservationRepository.findByEspaceIdIn(espaceIds);
     }
 
+    // Gets reservations filtered by status for a responsible.
     public List<Reservation> getReservationsByResponsableAndStatus(String responsableId, StatusReservation status) {
         List<String> espaceIds = getEspaceIdsByResponsable(responsableId);
         return reservationRepository.findByEspaceIdInAndStatut(espaceIds, status);
     }
 
+
+    //Fetches reservation with authorization checks for the responsible.
     private Reservation getReservationWithAuthorization(String reservationId, String responsableId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new NoSuchElementException("Réservation non trouvée"));
@@ -181,6 +166,8 @@ public class ResponsableEspaceService {
         return reservation;
     }
 
+
+    //Returns list of space IDs managed by a responsible.
     private List<String> getEspaceIdsByResponsable(String responsableId) {
         return espaceRepository.findByResponsableId(responsableId)
                 .stream()
@@ -188,6 +175,8 @@ public class ResponsableEspaceService {
                 .toList();
     }
 
+
+    // Cancels an accepted reservation with validation checks.
     public void annulerReservation(String reservationId, String responsableId, String reason) {
         Reservation reservation = getReservationWithAuthorization(reservationId, responsableId);
 
@@ -204,17 +193,16 @@ public class ResponsableEspaceService {
         reservation.setDecideePar(responsableId);
 
         reservationRepository.save(reservation);
-        notificationService.sendNotification(
-                reservation.getDemandeurId(),
-                "Annulation de réservation",
-                "Votre réservation a été annulée par le responsable. Raison : " + reason);
 
     }
 
+    //Retrieves all spaces managed by a specific responsible.
     public List<Espace> getEspacesByResponsable(String responsableId) {
         return espaceRepository.findByResponsableId(responsableId);
     }
+    
 
+    //Updates space details with authorization check.
     public Espace updateEspace(String espaceId, Espace updatedEspace, String responsableId) {
         Espace espace = espaceRepository.findById(espaceId)
                 .orElseThrow(() -> new NoSuchElementException("Espace non trouvé"));
@@ -235,6 +223,8 @@ public class ResponsableEspaceService {
         return espaceRepository.save(espace);
     }
 
+
+    //Deletes a space after verifying responsible authorization.
     public void deleteEspace(String espaceId, String responsableId) {
         Espace espace = espaceRepository.findById(espaceId)
                 .orElseThrow(() -> new NoSuchElementException("Espace non trouvé"));

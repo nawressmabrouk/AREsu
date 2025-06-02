@@ -9,7 +9,7 @@ public class ReservationMapper {
     // Convert DTO to Entity (for saving reservation)
     public static Reservation toEntity(ReservationRequestDTO dto, String string) {
         Reservation reservation = new Reservation();
-        reservation.setDemandeurId(dto.getDemandeurId()); // Ensure demandeurId is set
+        reservation.setDemandeurId(dto.getDemandeurId()); 
         reservation.setIntituleAction(dto.getIntituleAction());
         reservation.setNbrParticipant(dto.getNbrParticipant());
         reservation.setResponsableAction(dto.getResponsableAction());
@@ -21,7 +21,7 @@ public class ReservationMapper {
         reservation.setDescription(dto.getDescription());
         reservation.setHeureDebut(dto.getHeureDebut());
         reservation.setHeureFin(dto.getHeureFin());
-        reservation.setStatut(StatusReservation.EN_ATTENTE); // Default status
+        reservation.setStatut(StatusReservation.EN_ATTENTE); 
         reservation.setEspaceId(dto.getEspaceId());
         reservation.setEquipements(dto.getEquipements());
         return reservation;
@@ -44,24 +44,25 @@ public class ReservationMapper {
         dto.setDescription(entity.getDescription());
         dto.setHeureDebut(entity.getHeureDebut());
         dto.setHeureFin(entity.getHeureFin());
-        dto.setStatut(entity.getStatut().name()); // Convert enum to String
-        dto.setResponsableEspaceId(entity.getResponsableEspaceId()); // Assuming this field
+        dto.setStatut(entity.getStatut().name()); 
+        dto.setResponsableEspaceId(entity.getResponsableEspaceId()); 
         dto.setEspaceId(entity.getEspaceId());
         dto.setEquipements(entity.getEquipements());
 
         return dto;
     }
 
-public static ReservationResponseDTO toResponseDTOFull(
+    //Convert a Reservation entity to a full Response DTO with additional details 
+    public static ReservationResponseDTO toResponseDTOFull(
         Reservation entity,
         String demandeurEmail,
         String demandeurNom,
         String espaceNom,
-        String demandeurRole) { // Add demandeurRole parameter
+        String demandeurRole) { 
     ReservationResponseDTO dto = toResponseDTO(entity, demandeurEmail, demandeurNom);
     dto.setEspaceNom(espaceNom);
-    dto.setDemandeurRole(demandeurRole); // Set demandeur role
+    dto.setDemandeurRole(demandeurRole); 
     return dto;
-}
+    }
 
 }

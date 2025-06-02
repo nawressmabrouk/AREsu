@@ -1,6 +1,3 @@
-
-
-/* 
 package tn.sousse.univ.reservation_app.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +12,11 @@ import jakarta.mail.internet.MimeMessage;
 @Service
 public class EmailService {
 
+    // Spring's mail sender for email operations
     @Autowired
     private JavaMailSender mailSender;
 
+    // Sends simple text email
     public void sendEmail(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
@@ -26,74 +25,14 @@ public class EmailService {
 
         try {
             mailSender.send(message);
-            System.out.println("Email sent successfully to " + to); // Log success
+            System.out.println("Email sent successfully to " + to);
         } catch (Exception e) {
-            e.printStackTrace(); // Handle the exception (e.g., log it)
-            System.out.println("Error sending email to " + to); // Log error
+            e.printStackTrace(); // Handle the exception
+            System.out.println("Error sending email to " + to);
         }
     }
 
-
-    public void sendHtmlEmail(String to, String subject, String htmlContent) {
-        MimeMessage message = mailSender.createMimeMessage();
-        try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true); // true pour dire que c’est du HTML
-            mailSender.send(message);
-            System.out.println("Email HTML envoyé avec succès à " + to);
-        } catch (MessagingException e) {
-            e.printStackTrace();
-            System.out.println("Erreur d'envoi d'email HTML à " + to);
-        }
-    }
-}
-*/
-
-
-package tn.sousse.univ.reservation_app.services;
-
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.stereotype.Service;
-
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-
-
-
-
-@Service
-public class EmailService {
-
-    @Autowired
-    private JavaMailSender mailSender;
-     @Autowired
-    private TemplateEngine templateEngine;
-
-    public void sendEmail(String to, String subject, String body) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(body);
-
-        try {
-            mailSender.send(message);
-            System.out.println("Email sent successfully to " + to); // Log success
-        } catch (Exception e) {
-            e.printStackTrace(); // Handle the exception (e.g., log it)
-            System.out.println("Error sending email to " + to); // Log error
-        }
-    }
-
-
+    // Sends HTML formatted email
     public void sendHtmlEmail(String to, String subject, String htmlContent) {
         MimeMessage message = mailSender.createMimeMessage();
         try {
@@ -109,35 +48,4 @@ public class EmailService {
         }
     }
 
-public void sendStatusEmail(String to, String userName, String espaceName, String status) {
-    // Créez le contenu HTML directement avec les valeurs
-    String htmlContent = "<!DOCTYPE html>" +
-        "<html>" +
-        "<body>" +
-        "<p>Bonjour " + userName + ",</p>" +
-        "<p>Votre réservation pour " + espaceName + " a le statut : " + status + "</p>" +
-        "</body>" +
-        "</html>";
-
-    sendHtmlEmail(to, "Notification de réservation", htmlContent);
 }
-
-public void sendStatusEmailWithEquipment(String to, String userName, String espaceName, 
-                                       String status, List<String> approvedEquipments) {
-    String equipmentList = approvedEquipments.isEmpty() ? "Aucun équipement approuvé" 
-                           : String.join(", ", approvedEquipments);
-    
-    String htmlContent = "<!DOCTYPE html>" +
-        "<html>" +
-        "<body>" +
-        "<p>Bonjour " + userName + ",</p>" +
-        "<p>Votre réservation pour " + espaceName + " a le statut : " + status + "</p>" +
-        "<p>Équipements approuvés : " + equipmentList + "</p>" +
-        "</body>" +
-        "</html>";
-
-    sendHtmlEmail(to, "Notification de réservation", htmlContent);
-}
-}
-
-

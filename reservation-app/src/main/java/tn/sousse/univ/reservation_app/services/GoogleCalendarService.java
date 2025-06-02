@@ -72,17 +72,10 @@ public class GoogleCalendarService {
     // Unused MongoTemplate (potential future use)
     private MongoTemplate mongoTemplate;
 
-     private final EtablissementRepository etablissementRepo;
+    private final EtablissementRepository etablissementRepo;
 
-    /**
-     * Constructor: Initializes Google Calendar credentials using a service account
-     * key.
-     * 
-     * @param calendarProperties    Configuration properties for Google Calendar
-     * @param reservationRepository Repository for reservation data
-     * @throws IOException If credentials initialization fails
-     */
-    public GoogleCalendarService(GoogleCalendarConfig calendarProperties, ReservationRepository reservationRepository, EtablissementRepository etablissementRepo)
+    public GoogleCalendarService(GoogleCalendarConfig calendarProperties, ReservationRepository reservationRepository,
+            EtablissementRepository etablissementRepo)
             throws IOException {
         this.calendarProperties = calendarProperties;
         this.reservationRepository = reservationRepository;
@@ -98,65 +91,51 @@ public class GoogleCalendarService {
         }
     }
 
-    /**
-     * Fetches all reserved dates from:
-     * 1. Primary calendar (configured in properties)
-     * 2. Tunisian holiday calendars (fallback to multiple IDs)
-     * 
-     * @return List of unique reserved dates in "yyyy-MM-dd" format
-     */
- 
-public List<String> getReservedDates(String etablissementId, String espaceId) {
-    Set<String> reservedDates = new HashSet<>();
-    try {
-        // 1. Get space-specific reservations
-        List<Reservation> reservations = reservationRepository
-            .findByEtablissementIdAndEspaceIdAndStatut(
-                etablissementId, 
-                espaceId,
-                StatusReservation.ACCEPTÉE
-            );
-        
-        // 2. Convert to date strings
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        for (Reservation res : reservations) {
-            if (res.getHeureDebut() != null) {
-                reservedDates.add(sdf.format(res.getHeureDebut()));
+    // Retrieves all reserved dates for a specific establishment and space
+    // (including tunisian holidays)
+    public List<String> getReservedDates(String etablissementId, String espaceId) {
+        Set<String> reservedDates = new HashSet<>();
+        try {
+            // Get space-specific reservations
+            List<Reservation> reservations = reservationRepository
+                    .findByEtablissementIdAndEspaceIdAndStatut(
+                            etablissementId,
+                            espaceId,
+                            StatusReservation.ACCEPTÉE);
+
+            // Convert to date strings
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            for (Reservation res : reservations) {
+                if (res.getHeureDebut() != null) {
+                    reservedDates.add(sdf.format(res.getHeureDebut()));
+                }
             }
-        }
-        
-        // 3. (Optional) Keep holiday checks if needed
-        boolean foundHolidays = false;
-        for (String calendarId : TUNISIAN_HOLIDAY_CALENDAR_IDS) {
-            try {
-                reservedDates.addAll(getReservationsFromCalendar(getCalendarService(), calendarId));
-                foundHolidays = true;
-                break;
-            } catch (IOException e) {
-                logger.warn("Failed to fetch from holiday calendar: {}", calendarId);
+
+            boolean foundHolidays = false;
+            for (String calendarId : TUNISIAN_HOLIDAY_CALENDAR_IDS) {
+                try {
+                    reservedDates.addAll(getReservationsFromCalendar(getCalendarService(), calendarId));
+                    foundHolidays = true;
+                    break;
+                } catch (IOException e) {
+                    logger.warn("Failed to fetch from holiday calendar: {}", calendarId);
+                }
             }
+
+            return new ArrayList<>(reservedDates);
+        } catch (Exception e) {
+            logger.error("Error getting reserved dates", e);
+            throw new RuntimeException("Calendar service error", e);
         }
-        
-        return new ArrayList<>(reservedDates);
-    } catch (Exception e) {
-        logger.error("Error getting reserved dates", e);
-        throw new RuntimeException("Calendar service error", e);
     }
-}
 
-private String formatDate(Date date) {
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    return sdf.format(date);
-}
+    // Formats a Date object into "yyyy-MM-dd" string format
+    private String formatDate(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        return sdf.format(date);
+    }
 
-
-    /**
-     * Fetches event start dates from a Google Calendar.
-     * 
-     * @param service    Authenticated Google Calendar client
-     * @param calendarId ID of the calendar to query
-     * @return List of dates in "yyyy-MM-dd" format
-     */
+    // Fetches event start dates from a specified Google Calendar
     private List<String> getReservationsFromCalendar(Calendar service, String calendarId) throws IOException {
         List<String> dates = new ArrayList<>();
         // Build API request to list events
@@ -179,18 +158,11 @@ private String formatDate(Date date) {
         return dates;
     }
 
-    /**
-     * Confirms a reservation by:
-     * 1. Creating a Google Calendar event
-     * 2. Updating the reservation with the Google event ID
-     * 
-     * @param reservationId ID of the reservation to confirm
-     * @return Updated Reservation entity
-     */
- public Reservation confirmReservation(ObjectId reservationId) {
+    // Confirms a reservation by creating a Google Calendar event (ObjectId version)
+    public Reservation confirmReservation(ObjectId reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-            .orElseThrow(() -> new RuntimeException("Reservation not found"));
-        
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
         try {
             // ADDED VALIDATION
             if (reservation.getEtablissementId() == null) {
@@ -198,8 +170,8 @@ private String formatDate(Date date) {
             }
 
             Etablissement etab = etablissementRepo.findById(reservation.getEtablissementId())
-                .orElseThrow(() -> new RuntimeException("Etablissement not found"));
-            
+                    .orElseThrow(() -> new RuntimeException("Etablissement not found"));
+
             // ADDED CALENDAR ID VALIDATION
             if (etab.getGoogleCalendarId() == null) {
                 throw new IllegalStateException("Establishment has no calendar configured");
@@ -207,9 +179,9 @@ private String formatDate(Date date) {
 
             Event calendarEvent = createCalendarEvent(reservation);
             Event createdEvent = getCalendarService().events()
-                    .insert(etab.getGoogleCalendarId(), calendarEvent) // FIXED: Using specific calendar
+                    .insert(etab.getGoogleCalendarId(), calendarEvent)
                     .execute();
-            
+
             reservation.setGoogleEventId(createdEvent.getId());
             return reservationRepository.save(reservation);
         } catch (Exception e) {
@@ -218,14 +190,7 @@ private String formatDate(Date date) {
         }
     }
 
- 
-
-    /**
-     * Maps a Reservation to a Google Calendar event.
-     * 
-     * @param reservation Reservation to map
-     * @return Google Calendar Event object
-     */
+    // Creates a Google Calendar Event from a Reservation object
     private Event createCalendarEvent(Reservation reservation) {
         return new Event()
                 .setSummary(reservation.getIntituleAction()) // Event title
@@ -234,40 +199,29 @@ private String formatDate(Date date) {
                 .setEnd(new EventDateTime().setDateTime(new DateTime(reservation.getHeureFin()))); // End time
     }
 
-    /**
-     * Cancels a reservation by:
-     * 1. Deleting the Google Calendar event (if exists)
-     * 2. Removing the reservation from the database
-     * 
-     * @param reservationId ID of the reservation to cancel
-     */
- 
- public void cancelReservation(ObjectId reservationId) {
-    Reservation reservation = reservationRepository.findById(reservationId)
-            .orElseThrow(() -> new RuntimeException("Reservation not found"));
-    
-    try {
-        if (reservation.getGoogleEventId() != null) {
-            Etablissement etab = etablissementRepo.findById(reservation.getEtablissementId())
-                .orElseThrow(() -> new RuntimeException("Etablissement not found"));
-                
-            getCalendarService().events()
-                    .delete(etab.getGoogleCalendarId(), reservation.getGoogleEventId())
-                    .execute();
-        }
-        reservationRepository.delete(reservation);
-    } catch (IOException | GeneralSecurityException e) {
-        logger.error("Reservation cancellation failed", e);
-        throw new RuntimeException("Cancellation error", e);
-    }
-}
- 
+    // Cancels a reservation by deleting its Google Calendar event (ObjectId
+    // version)
+    public void cancelReservation(ObjectId reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
-    /**
-     * Initializes the Google Calendar API client.
-     * 
-     * @return Authenticated Calendar service instance
-     */
+        try {
+            if (reservation.getGoogleEventId() != null) {
+                Etablissement etab = etablissementRepo.findById(reservation.getEtablissementId())
+                        .orElseThrow(() -> new RuntimeException("Etablissement not found"));
+
+                getCalendarService().events()
+                        .delete(etab.getGoogleCalendarId(), reservation.getGoogleEventId())
+                        .execute();
+            }
+            reservationRepository.delete(reservation);
+        } catch (IOException | GeneralSecurityException e) {
+            logger.error("Reservation cancellation failed", e);
+            throw new RuntimeException("Cancellation error", e);
+        }
+    }
+
+    // Initializes and returns an authenticated Google Calendar API client
     public Calendar getCalendarService() throws GeneralSecurityException, IOException {
         NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         return new Calendar.Builder(
@@ -278,97 +232,77 @@ private String formatDate(Date date) {
                 .build();
     }
 
-    // -------------------- Repository Queries -------------------- //
-    /** Returns reservations without a Google Calendar event ID */
+    // Retrieves reservations without Google Calendar event IDs
     public List<Reservation> getUnconfirmedReservations() {
         return reservationRepository.findByGoogleEventIdNull();
     }
 
-    /** Returns reservations with a Google Calendar event ID */
+    // Retrieves reservations that have Google Calendar event IDs
     public List<Reservation> getConfirmedReservations() {
         return reservationRepository.findByGoogleEventIdNotNull();
     }
 
-    /** Returns reservations with status EN_ATTENTE (pending) */
+    // Retrieves reservations with EN_ATTENTE (pending) status
     public List<Reservation> getPendingReservations() {
         return reservationRepository.findByStatut(StatusReservation.EN_ATTENTE);
     }
 
-    /** Returns reservations with status ACCEPTÉE (accepted) */
+    // Retrieves reservations with ACCEPTÉE (accepted) status
     public List<Reservation> getAcceptedReservations() {
         return reservationRepository.findByStatut(StatusReservation.ACCEPTÉE);
     }
 
-    // -------------------- Overloaded Methods -------------------- //
-    /**
-     * Confirms a reservation (String ID overload).
-     * Validates the reservation is in a pending state before confirmation.
-     */
- 
- public Reservation confirmReservation(String reservationId) {
-    Reservation reservation = reservationRepository.findById(reservationId)
-            .orElseThrow(() -> new RuntimeException("Reservation not found"));
-    
-    if (reservation.getStatut() != StatusReservation.EN_ATTENTE) {
-        throw new IllegalStateException("Reservation is not in pending state");
-    }
-    
-    try {
-        Etablissement etab = etablissementRepo.findById(reservation.getEtablissementId())
-            .orElseThrow(() -> new RuntimeException("Etablissement not found"));
-        
-        Event calendarEvent = createCalendarEvent(reservation);
-        Event createdEvent = getCalendarService().events()
-                .insert(etab.getGoogleCalendarId(), calendarEvent)
-                .execute();
-        
-        reservation.setStatut(StatusReservation.ACCEPTÉE);
-        reservation.setGoogleEventId(createdEvent.getId());
-        return reservationRepository.save(reservation);
-    } catch (Exception e) {
-        logger.error("Reservation confirmation failed", e);
-        throw new RuntimeException("Reservation confirmation error", e);
-    }
-}
+    // Confirms a reservation (String ID version) with status validation
+    public Reservation confirmReservation(String reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
- 
-
- 
-
-    /**
-     * Cancels a reservation (String ID overload).
-     * Marks the reservation as ANNULÉE (canceled) after deleting the Google event.
-     */
-   
-   public void cancelReservation(String reservationId) {
-    Reservation reservation = reservationRepository.findById(reservationId)
-            .orElseThrow(() -> new RuntimeException("Reservation not found"));
-    
-    try {
-        if (reservation.getGoogleEventId() != null) {
-            // Get the establishment's calendar
-            Etablissement etab = etablissementRepo.findById(reservation.getEtablissementId())
-                .orElseThrow(() -> new RuntimeException("Etablissement not found"));
-            
-            getCalendarService().events()
-                    .delete(etab.getGoogleCalendarId(), reservation.getGoogleEventId())
-                    .execute();
+        if (reservation.getStatut() != StatusReservation.EN_ATTENTE) {
+            throw new IllegalStateException("Reservation is not in pending state");
         }
-        reservation.setStatut(StatusReservation.ANNULÉE);
-        reservationRepository.save(reservation);
-    } catch (IOException | GeneralSecurityException e) {
-        logger.error("Reservation cancellation failed", e);
-        throw new RuntimeException("Cancellation error", e);
-    }
-}
 
-    // -------------------- Time Slot Management -------------------- //
-    /**
-     * Generates 30-minute time slots for a given date in Tunis time zone.
-     * 
-     * @param date Date to generate slots for
-     * @return List of CalendarSlotDTO objects with start/end times
-     */
+        try {
+            Etablissement etab = etablissementRepo.findById(reservation.getEtablissementId())
+                    .orElseThrow(() -> new RuntimeException("Etablissement not found"));
+
+            Event calendarEvent = createCalendarEvent(reservation);
+            Event createdEvent = getCalendarService().events()
+                    .insert(etab.getGoogleCalendarId(), calendarEvent)
+                    .execute();
+
+            reservation.setStatut(StatusReservation.ACCEPTÉE);
+            reservation.setGoogleEventId(createdEvent.getId());
+            return reservationRepository.save(reservation);
+        } catch (Exception e) {
+            logger.error("Reservation confirmation failed", e);
+            throw new RuntimeException("Reservation confirmation error", e);
+        }
+    }
+
+    // Cancels a reservation (String ID version) and updates its status
+    public void cancelReservation(String reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        try {
+            if (reservation.getGoogleEventId() != null) {
+                // Get the establishment's calendar
+                Etablissement etab = etablissementRepo.findById(reservation.getEtablissementId())
+                        .orElseThrow(() -> new RuntimeException("Etablissement not found"));
+
+                getCalendarService().events()
+                        .delete(etab.getGoogleCalendarId(), reservation.getGoogleEventId())
+                        .execute();
+            }
+            reservation.setStatut(StatusReservation.ANNULÉE);
+            reservationRepository.save(reservation);
+        } catch (IOException | GeneralSecurityException e) {
+            logger.error("Reservation cancellation failed", e);
+            throw new RuntimeException("Cancellation error", e);
+        }
+    }
+
+    // Generates 30-minute time slots for a given date in Tunis timezone
     private List<CalendarSlotDTO> generateTimeSlots(Date date) {
         List<CalendarSlotDTO> slots = new ArrayList<>();
         ZonedDateTime zonedDate = date.toInstant().atZone(TUNIS_ZONE);
@@ -400,60 +334,47 @@ private String formatDate(Date date) {
         return slots;
     }
 
-    /**
-     * Returns time slots for a specific date.
-     * 
-     * @param dateString Date in "yyyy-MM-dd" format
-     * @return List of CalendarSlotDTO or empty list on invalid format
-     */ 
+    // Returns time slots for a specific date with reservation status
     public List<CalendarSlotDTO> getCalendarView(String dateString, String etablissementId) throws ParseException {
-    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-    Date date = format.parse(dateString);
-    
-    // Create start and end of day using java.util.Calendar
-    java.util.Calendar calendar = java.util.Calendar.getInstance();
-    calendar.setTime(date);
-    calendar.set(java.util.Calendar.HOUR_OF_DAY, 0);
-    calendar.set(java.util.Calendar.MINUTE, 0);
-    calendar.set(java.util.Calendar.SECOND, 0);
-    Date startOfDay = calendar.getTime();
-    
-    calendar.set(java.util.Calendar.HOUR_OF_DAY, 23);
-    calendar.set(java.util.Calendar.MINUTE, 59);
-    calendar.set(java.util.Calendar.SECOND, 59);
-    Date endOfDay = calendar.getTime();
-    
-    List<CalendarSlotDTO> slots = generateTimeSlots(date);
-    List<Reservation> reservations = reservationRepository
-        .findByEtablissementIdAndHeureDebutBetween(etablissementId, startOfDay, endOfDay);
-    // Mark reserved slots
-    for (Reservation res : reservations) {
-        for (CalendarSlotDTO slot : slots) {
-            if (isSlotReserved(slot, res)) {
-                slot.setReserved(true);
-                slot.setSelectable(res.getStatut() != StatusReservation.ACCEPTÉE);
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = format.parse(dateString);
+
+        // Create start and end of day using java.util.Calendar
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        calendar.set(java.util.Calendar.MINUTE, 0);
+        calendar.set(java.util.Calendar.SECOND, 0);
+        Date startOfDay = calendar.getTime();
+
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 23);
+        calendar.set(java.util.Calendar.MINUTE, 59);
+        calendar.set(java.util.Calendar.SECOND, 59);
+        Date endOfDay = calendar.getTime();
+
+        List<CalendarSlotDTO> slots = generateTimeSlots(date);
+        List<Reservation> reservations = reservationRepository
+                .findByEtablissementIdAndHeureDebutBetween(etablissementId, startOfDay, endOfDay);
+        // Mark reserved slots
+        for (Reservation res : reservations) {
+            for (CalendarSlotDTO slot : slots) {
+                if (isSlotReserved(slot, res)) {
+                    slot.setReserved(true);
+                    slot.setSelectable(res.getStatut() != StatusReservation.ACCEPTÉE);
+                }
             }
         }
+
+        return slots;
     }
-    
-    return slots;
-}
-   
 
-private boolean isSlotReserved(CalendarSlotDTO slot, Reservation res) {
-    return slot.getHeureDebut().equals(res.getHeureDebut()) 
-        && slot.getHeureFin().equals(res.getHeureFin());
-}   
+    // Checks if a time slot is reserved by comparing with a reservation
+    private boolean isSlotReserved(CalendarSlotDTO slot, Reservation res) {
+        return slot.getHeureDebut().equals(res.getHeureDebut())
+                && slot.getHeureFin().equals(res.getHeureFin());
+    }
 
-    // -------------------- Availability Check -------------------- //
-    /**
-     * Checks if a space (calendar) is available during a specified time range.
-     * 
-     * @param espaceId  Calendar ID representing the space
-     * @param startDate Start of the time range
-     * @param endDate   End of the time range
-     * @return true if no overlapping events exist, false otherwise
-     */
+    // Checks if a space is available during a specified time range
     public boolean isEspaceDisponible(ObjectId espaceId, Date startDate, Date endDate) throws IOException {
         try {
             String calendarId = espaceId.toString();
@@ -473,6 +394,7 @@ private boolean isSlotReserved(CalendarSlotDTO slot, Reservation res) {
         }
     }
 
+    // Returns the Google Calendar client (alias for getCalendarService)
     public Calendar getGoogleCalendarClient() throws GeneralSecurityException, IOException {
         return getCalendarService();
     }
@@ -481,198 +403,204 @@ private boolean isSlotReserved(CalendarSlotDTO slot, Reservation res) {
     public String createCalendarForEtablissement(Etablissement etablissement)
             throws GeneralSecurityException, IOException {
 
-        // 1. Initialize Google Calendar API client
+        // Initialize Google Calendar API client
         Calendar service = getCalendarService();
 
-        // 2. Define calendar properties
+        // Define calendar properties
         com.google.api.services.calendar.model.Calendar calendar = new com.google.api.services.calendar.model.Calendar();
 
         calendar.setSummary(etablissement.getNom() + " - Reservations");
         calendar.setTimeZone("Africa/Tunis");
         calendar.setDescription("Reservations for " + etablissement.getNom());
 
-        // 3. Create the calendar
+        // Create the calendar
         com.google.api.services.calendar.model.Calendar createdCalendar = service.calendars().insert(calendar)
                 .execute();
 
-        // 4. Return the calendar ID (e.g., "abc123@group.calendar.google.com")
+        // Return the calendar ID (e.g., "abc123@group.calendar.google.com")
         return createdCalendar.getId();
     }
+
+    // Retrieves the service account email from credentials
     public String getServiceAccountEmail() throws IOException {
-    // Load the service account credentials from the JSON file
-    GoogleCredentials credentials = GoogleCredentials.fromStream(
-            calendarProperties.getServiceAccountKey().getInputStream())
-            .createScoped(SCOPES);
-    
-    if (credentials instanceof ServiceAccountCredentials) {
-        return ((ServiceAccountCredentials) credentials).getClientEmail();
-    }
-    throw new IllegalStateException("Expected service account credentials");
-}
-public void verifyCalendarPermissions(String calendarId) throws IOException, GeneralSecurityException {
-    Calendar service = getCalendarService();
-    Acl acl = service.acl().list(calendarId).execute();
-    
-    logger.info("Permissions for calendar {}:", calendarId);
-    acl.getItems().forEach(rule -> {
-        logger.info("- Scope: {} (Role: {})", 
-            rule.getScope().getValue(), 
-            rule.getRole());
-    });
-    
-    // Check if service account has writer role
-    String serviceAccountEmail = getServiceAccountEmail();
-    boolean hasAccess = acl.getItems().stream()
-        .anyMatch(rule -> 
-            rule.getScope().getType().equals("user") &&
-            rule.getScope().getValue().equals(serviceAccountEmail) &&
-            rule.getRole().equals("writer"));
-    
-    if (!hasAccess) {
-        throw new IllegalStateException(
-            "Service account lacks writer permissions on calendar: " + calendarId);
-    }
-}
+        // Load the service account credentials from the JSON file
+        GoogleCredentials credentials = GoogleCredentials.fromStream(
+                calendarProperties.getServiceAccountKey().getInputStream())
+                .createScoped(SCOPES);
 
- /**
- * Makes a calendar visible in the Google Calendar UI
- * @param calendarId The ID of the calendar to make visible
- * @throws IOException If there's a communication error
- * @throws GeneralSecurityException If there's a security configuration error
- */
-public void makeCalendarVisible(String calendarId) throws IOException, GeneralSecurityException {
-    try {
-        CalendarListEntry calendarListEntry = new CalendarListEntry()
-            .setId(calendarId)
-            .setSelected(true);
-        
-        getCalendarService()
-            .calendarList()
-            .insert(calendarListEntry)
-            .execute();
-        
-        logger.info("Successfully made calendar visible: {}", calendarId);
-    } catch (GoogleJsonResponseException e) {
-        if (e.getStatusCode() == 409) {
-            logger.debug("Calendar {} already visible", calendarId);
-        } else {
-            throw new IOException("Failed to make calendar visible: " + e.getMessage(), e);
+        if (credentials instanceof ServiceAccountCredentials) {
+            return ((ServiceAccountCredentials) credentials).getClientEmail();
+        }
+        throw new IllegalStateException("Expected service account credentials");
+    }
+
+    // Verifies and logs permissions for a specific calendar
+    public void verifyCalendarPermissions(String calendarId) throws IOException, GeneralSecurityException {
+        Calendar service = getCalendarService();
+        Acl acl = service.acl().list(calendarId).execute();
+
+        logger.info("Permissions for calendar {}:", calendarId);
+        acl.getItems().forEach(rule -> {
+            logger.info("- Scope: {} (Role: {})",
+                    rule.getScope().getValue(),
+                    rule.getRole());
+        });
+
+        // Check if service account has writer role
+        String serviceAccountEmail = getServiceAccountEmail();
+        boolean hasAccess = acl.getItems().stream()
+                .anyMatch(rule -> rule.getScope().getType().equals("user") &&
+                        rule.getScope().getValue().equals(serviceAccountEmail) &&
+                        rule.getRole().equals("writer"));
+
+        if (!hasAccess) {
+            throw new IllegalStateException(
+                    "Service account lacks writer permissions on calendar: " + calendarId);
         }
     }
-}
 
-public void grantUserAccess(String calendarId, String userEmail) 
-    throws IOException, GeneralSecurityException {
-    
-    // Set "reader" permissions for the user
-    AclRule userRule = new AclRule()
-        .setScope(new AclRule.Scope()
-            .setType("user")
-            .setValue(userEmail))
-        .setRole("reader"); // Can be "writer" if needed
+    // Makes a calendar visible in the Google Calendar UI
+    public void makeCalendarVisible(String calendarId) throws IOException, GeneralSecurityException {
+        try {
+            CalendarListEntry calendarListEntry = new CalendarListEntry()
+                    .setId(calendarId)
+                    .setSelected(true);
 
-    getCalendarService()
-        .acl()
-        .insert(calendarId, userRule)
-        .execute();
-}
+            getCalendarService()
+                    .calendarList()
+                    .insert(calendarListEntry)
+                    .execute();
 
-public void forceCalendarDisplay(String calendarId) throws IOException, GeneralSecurityException {
-    // Create notification object
-    CalendarNotification notification = new CalendarNotification()
-        .setMethod("email")
-        .setType("eventCreation");
-
-    // Configure calendar list entry
-    CalendarListEntry update = new CalendarListEntry()
-        .setSummary(getUniqueName(calendarId))
-        .setSelected(true)
-        .setHidden(false)
-        .setColorId(getColorForCalendar(calendarId))
-        .setBackgroundColor(getHexColor(calendarId))
-        .setNotificationSettings(new CalendarListEntry.NotificationSettings()
-            .setNotifications(Collections.singletonList(notification)));
-
-    // Apply changes
-    getCalendarService()
-        .calendarList()
-        .update(calendarId, update)
-        .execute();
-}
-
-private String getUniqueName(String calendarId) {
-    // Extract establishment ID from calendar ID
-    String establishmentId = calendarId.substring(0, 8); // First 8 chars of hash
-    Etablissement etab = etablissementRepo.findByGoogleCalendarId(calendarId);
-    return etab.getNom() + " [" + establishmentId + "]"; // e.g., "Medicine [a1b2c3d4]"
-}
-
-private String getColorForCalendar(String calendarId) {
-    // Deterministic color based on calendar ID hash
-    int colorIndex = Math.abs(calendarId.hashCode() % 24) + 1; // Google's 24 color palette
-    return String.valueOf(colorIndex);
-}
-
-private String getHexColor(String calendarId) {
-    // Generate a deterministic hex color
-    return String.format("#%06x", calendarId.hashCode() & 0xFFFFFF);
-}
-public List<Event> getEventsForCalendar(String calendarId, LocalDate date) 
-        throws GeneralSecurityException, IOException {
-    
-    Calendar service = getCalendarService();
-    
-    // Handle date conversion properly
-    DateTime startTime = date != null 
-        ? new DateTime(
-            date.atStartOfDay()          // Convert to LocalDateTime at midnight
-               .atZone(ZoneId.of("Africa/Tunis"))  // Convert to ZonedDateTime
-               .toInstant()              // Convert to Instant
-               .toEpochMilli()          // Convert to milliseconds
-        )
-        : new DateTime(System.currentTimeMillis());
-        
-    DateTime endTime = date != null
-        ? new DateTime(
-            date.plusDays(1)             // Next day
-               .atStartOfDay()           // Midnight of next day
-               .atZone(ZoneId.of("Africa/Tunis"))
-               .toInstant()
-               .toEpochMilli()
-        )
-        : null;
-
-    Events events = service.events().list(calendarId)
-            .setTimeMin(startTime)
-            .setTimeMax(endTime)
-            .setSingleEvents(true)
-            .setOrderBy("startTime")
-            .execute();
-
-    return events.getItems();
-} 
- public int cleanupCalendar(String calendarId, boolean dryRun) 
-        throws GeneralSecurityException, IOException {
-    
-    Calendar service = getCalendarService();
-    int deletedCount = 0;
-    String pageToken = null;
-
-    do {
-        Events events = service.events().list(calendarId)
-            .setPageToken(pageToken)
-            .execute();
-
-        for (Event event : events.getItems()) {
-            if (!dryRun) {
-                service.events().delete(calendarId, event.getId()).execute();
+            logger.info("Successfully made calendar visible: {}", calendarId);
+        } catch (GoogleJsonResponseException e) {
+            if (e.getStatusCode() == 409) {
+                logger.debug("Calendar {} already visible", calendarId);
+            } else {
+                throw new IOException("Failed to make calendar visible: " + e.getMessage(), e);
             }
-            deletedCount++;
         }
+    }
 
-        pageToken = events.getNextPageToken();
-    } while (pageToken != null);
+    // Grants user access (read/write) to a calendar
+    public void grantUserAccess(String calendarId, String userEmail)
+            throws IOException, GeneralSecurityException {
 
-    return deletedCount;
-}
+        // Set "reader" permissions for the user
+        AclRule userRule = new AclRule()
+                .setScope(new AclRule.Scope()
+                        .setType("user")
+                        .setValue(userEmail))
+                .setRole("reader"); // Can be "writer" if needed
+
+        getCalendarService()
+                .acl()
+                .insert(calendarId, userRule)
+                .execute();
+    }
+
+    // Forces calendar display with custom settings
+    public void forceCalendarDisplay(String calendarId) throws IOException, GeneralSecurityException {
+        // Create notification object
+        CalendarNotification notification = new CalendarNotification()
+                .setMethod("email")
+                .setType("eventCreation");
+
+        // Configure calendar list entry
+        CalendarListEntry update = new CalendarListEntry()
+                .setSummary(getUniqueName(calendarId))
+                .setSelected(true)
+                .setHidden(false)
+                .setColorId(getColorForCalendar(calendarId))
+                .setBackgroundColor(getHexColor(calendarId))
+                .setNotificationSettings(new CalendarListEntry.NotificationSettings()
+                        .setNotifications(Collections.singletonList(notification)));
+
+        // Apply changes
+        getCalendarService()
+                .calendarList()
+                .update(calendarId, update)
+                .execute();
+    }
+
+    // Generates a unique display name for a calendar
+    private String getUniqueName(String calendarId) {
+        // Extract establishment ID from calendar ID
+        String establishmentId = calendarId.substring(0, 8); // First 8 chars of hash
+        Etablissement etab = etablissementRepo.findByGoogleCalendarId(calendarId);
+        return etab.getNom() + " [" + establishmentId + "]"; // e.g., "Medicine [a1b2c3d4]"
+    }
+
+    // Assigns a deterministic color index for calendar display
+    private String getColorForCalendar(String calendarId) {
+        // Deterministic color based on calendar ID hash
+        int colorIndex = Math.abs(calendarId.hashCode() % 24) + 1; // Google's 24 color palette
+        return String.valueOf(colorIndex);
+    }
+
+    // Generates a deterministic hex color code for calendar display
+    private String getHexColor(String calendarId) {
+        // Generate a deterministic hex color
+        return String.format("#%06x", calendarId.hashCode() & 0xFFFFFF);
+    }
+
+    // Retrieves events for a calendar on a specific date
+    public List<Event> getEventsForCalendar(String calendarId, LocalDate date)
+            throws GeneralSecurityException, IOException {
+
+        Calendar service = getCalendarService();
+
+        // Handle date conversion properly
+        DateTime startTime = date != null
+                ? new DateTime(
+                        date.atStartOfDay() // Convert to LocalDateTime at midnight
+                                .atZone(ZoneId.of("Africa/Tunis")) // Convert to ZonedDateTime
+                                .toInstant() // Convert to Instant
+                                .toEpochMilli() // Convert to milliseconds
+                )
+                : new DateTime(System.currentTimeMillis());
+
+        DateTime endTime = date != null
+                ? new DateTime(
+                        date.plusDays(1) // Next day
+                                .atStartOfDay() // Midnight of next day
+                                .atZone(ZoneId.of("Africa/Tunis"))
+                                .toInstant()
+                                .toEpochMilli())
+                : null;
+
+        Events events = service.events().list(calendarId)
+                .setTimeMin(startTime)
+                .setTimeMax(endTime)
+                .setSingleEvents(true)
+                .setOrderBy("startTime")
+                .execute();
+
+        return events.getItems();
+    }
+
+    // deletes all events from a calendar
+    public int cleanupCalendar(String calendarId, boolean dryRun)
+            throws GeneralSecurityException, IOException {
+
+        Calendar service = getCalendarService();
+        int deletedCount = 0;
+        String pageToken = null;
+
+        do {
+            Events events = service.events().list(calendarId)
+                    .setPageToken(pageToken)
+                    .execute();
+
+            for (Event event : events.getItems()) {
+                if (!dryRun) {
+                    service.events().delete(calendarId, event.getId()).execute();
+                }
+                deletedCount++;
+            }
+
+            pageToken = events.getNextPageToken();
+        } while (pageToken != null);
+
+        return deletedCount;
+    }
 }

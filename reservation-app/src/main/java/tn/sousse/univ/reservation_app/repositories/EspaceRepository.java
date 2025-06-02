@@ -12,26 +12,35 @@ import tn.sousse.univ.reservation_app.models.SpaceCategory;
 
 public interface EspaceRepository extends MongoRepository<Espace, String> {
 
-    // Make sure these field names match exactly with your Espace model
+  // Finds all spaces belonging to a specific establishment
     List<Espace> findByEtablissementId(String etablissementId);
 
+    // Finds spaces matching a list of MongoDB ObjectIds
     @Query("{ '_id' : { $in: ?0 } }")
     List<Espace> findAllByObjectIds(List<ObjectId> ids);
 
+    // Finds a space by its name
     Optional<Espace> findByNom(String nom);
     
+    // Finds spaces by their category
     List<Espace> findByCategorie(SpaceCategory categorie);
 
+    // Finds spaces by their type
     List<Espace> findByType(String type);
 
+    // Finds spaces by establishment ID and category
     List<Espace> findByEtablissementIdAndCategorie(String etablissementId, SpaceCategory categorie);
 
+    // Finds spaces by responsible ID
       List<Espace> findByResponsableId(String responsableId);
 
+     // Finds spaces by establishment ID and type
     List<Espace> findByEtablissementIdAndType(String etablissementId, String type);
 
+    // Finds spaces by category and type
     List<Espace> findByCategorieAndType(SpaceCategory categorie, String type);
 
+    // Finds spaces by establishment ID, category, and type
     List<Espace> findByEtablissementIdAndCategorieAndType(
             String etablissementId,
             String categorie,

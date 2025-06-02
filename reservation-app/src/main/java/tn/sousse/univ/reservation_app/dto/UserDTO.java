@@ -25,8 +25,6 @@ public class UserDTO {
 
     private boolean enabled = false;
     private boolean isPartenaire;
-      // Add this field
-
     private List<String> espacesResponsables; 
     private String etablissementId;
 }

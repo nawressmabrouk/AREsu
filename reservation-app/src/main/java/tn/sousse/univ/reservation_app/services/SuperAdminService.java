@@ -25,6 +25,8 @@ public class SuperAdminService {
     private final UserRepository userRepository;
     private final EspaceRepository espaceRepository;
 
+
+    //Retrieves all establishments with their secretaries, managers, and spaces details.
     public List<SuperAdminEtablissementDTO> getAllEtablissementsWithDetails() {
         List<Etablissement> etablissements = etablissementRepository.findAll();
 
@@ -78,6 +80,8 @@ public class SuperAdminService {
                 .collect(Collectors.toList());
     }
 
+
+    // Gets detailed information about a specific establishment including staff and spaces.
     public SuperAdminEtablissementDTO getEtablissementDetails(String etablissementId) {
         Etablissement etablissement = etablissementRepository.findById(etablissementId)
                 .orElseThrow(() -> new NoSuchElementException("Etablissement not found with id: " + etablissementId));

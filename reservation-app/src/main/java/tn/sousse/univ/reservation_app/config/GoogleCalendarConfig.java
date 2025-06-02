@@ -18,65 +18,25 @@ import com.google.auth.oauth2.GoogleCredentials;
 import lombok.Getter;
 import lombok.Setter;
 
-@Configuration
-@ConfigurationProperties(prefix = "google.calendar")
-@Getter
-@Setter
+@Configuration // Spring configuration class for Google Calendar setup
+@ConfigurationProperties(prefix = "google.calendar") // Binds properties with prefix google.calendar
+@Getter // Auto-generates getters
+@Setter // Auto-generates setters
 public class GoogleCalendarConfig {
 
-    // Configuration properties
-    private String apiKey;
-    private Resource serviceAccountKey;
-    //private String calendarId;
-    private String apiBaseUrl = "https://www.googleapis.com/calendar/v3";
+    private String apiKey; // Google Calendar API key
+    private Resource serviceAccountKey; // Service account key file resource
+    private String apiBaseUrl = "https://www.googleapis.com/calendar/v3"; // Default API base URL
 
-    // Bean creation
-    @Bean
+    @Bean // Creates a Google Calendar service bean
     public Calendar calendarService() throws GeneralSecurityException, IOException {
-        final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-
-        GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccountKey.getInputStream())
-                .createScoped("https://www.googleapis.com/auth/calendar");
-
-        return new Calendar.Builder(
-                httpTransport,
-                GsonFactory.getDefaultInstance(),
+        final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport(); // Create secure transport
+        GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccountKey.getInputStream()) // Load
+                                                                                                         // credentials
+                .createScoped("https://www.googleapis.com/auth/calendar"); // Set required scope
+        return new Calendar.Builder(httpTransport, GsonFactory.getDefaultInstance(),
                 new HttpCredentialsAdapter(credentials))
-                .setApplicationName("ReservationApp")
-                .build();
+                .setApplicationName("ReservationApp") // Set app name
+                .build(); // Build Calendar service
     }
-
-    // Getters and setters for properties
-    public String getApiKey() {
-        return apiKey;
-    }
-
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    public Resource getServiceAccountKeyResource() {
-        return serviceAccountKey;
-    }
-
-    public void setServiceAccountKey(Resource serviceAccountKey) {
-        this.serviceAccountKey = serviceAccountKey;
-    }
-
-   /*  public String getCalendarId() {
-        return calendarId;
-    }
-
-    public void setCalendarId(String calendarId) {
-        this.calendarId = calendarId;
-    }*/
-
-    public String getApiBaseUrl() {
-        return apiBaseUrl;
-    }
-
-    public void setApiBaseUrl(String apiBaseUrl) {
-        this.apiBaseUrl = apiBaseUrl;
-    }
-
 }

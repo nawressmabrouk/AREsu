@@ -35,11 +35,8 @@ public class ResponsableEspaceController {
     @Autowired
     private ResponsableEspaceService responsableEspaceService;
 private static final Logger logger = LoggerFactory.getLogger(ResponsableEspaceController.class);
-    /**
-     * Endpoint pour obtenir toutes les réservations ou filtrer par statut
-     * GET /api/responsable/reservations
-     * GET /api/responsable/reservations?statut=EN_ATTENTE
-     */
+  
+    // get all reservations for the responsible
     @GetMapping("/reservations")
     public ResponseEntity<?> getReservations(
             @RequestParam(required = false) StatusReservation statut,
@@ -60,36 +57,7 @@ private static final Logger logger = LoggerFactory.getLogger(ResponsableEspaceCo
         }
     }
 
-    /**
-     * Endpoint pour prendre une décision sur une réservation
-     * POST /api/responsable/decision/{reservationId}?accepted=true|false
-     
-    @PostMapping("/decision/{reservationId}")
-    public ResponseEntity<String> prendreDecision(
-            @PathVariable String reservationId,
-            @RequestParam boolean accepted,
-            Authentication authentication) {
-        
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        String responsableId = userDetails.getUserId();
-        
-        try {
-            responsableEspaceService.processDecision(reservationId, accepted, responsableId);
-            return ResponseEntity.ok("Décision enregistrée avec succès");
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (SecurityException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erreur lors du traitement de la décision");
-        }
-    }*/
-// nouvelle endpoint pour prendre desicion :
-
-
-
-
+// Processes a decision (accept/reject) for a specific reservation
 @PostMapping("/decision/{reservationId}")
 public ResponseEntity<?> prendreDecision(
         @PathVariable String reservationId,
@@ -138,30 +106,23 @@ public ResponseEntity<?> prendreDecision(
 
 
 
-    /**
-     * Endpoint supplémentaire pour voir les réservations acceptées
-     * GET /api/responsable/reservations/acceptees
-     */
+
+
+    //Get all the accepted reservations for the responsible endpoint
     @GetMapping("/reservations/acceptees")
     public ResponseEntity<?> getReservationsAcceptees(Authentication authentication) {
         return getReservationsByStatus(authentication, StatusReservation.ACCEPTÉE);
     }
 
-    /**
-     * Endpoint supplémentaire pour voir les réservations refusées
-     * GET /api/responsable/reservations/refusees
-     */
+    //Get all the rejected reservations for the responsible
     @GetMapping("/reservations/refusees")
     public ResponseEntity<?> getReservationsRefusees(Authentication authentication) {
         return getReservationsByStatus(authentication, StatusReservation.REFUSÉE);
     }
 
-    /**
-     * Endpoint supplémentaire pour voir les réservations en attente
-     * GET /api/responsable/reservations/en-attente
-     */
-@GetMapping("/reservations/en-attente")
-public ResponseEntity<?> getReservationsEnAttente(Authentication authentication) {
+    // Get all the pending reservations for the responsible
+    @GetMapping("/reservations/en-attente")
+    public ResponseEntity<?> getReservationsEnAttente(Authentication authentication) {
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
     String responsableId = userDetails.getUserId();
     
@@ -178,6 +139,8 @@ public ResponseEntity<?> getReservationsEnAttente(Authentication authentication)
     
     return ResponseEntity.ok(reservations);
 }
+
+    // Helper method to fetch reservations for the current responsable, filtered by status (used internally by public endpoints)
     private ResponseEntity<?> getReservationsByStatus(Authentication authentication, StatusReservation status) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         String responsableId = userDetails.getUserId();
@@ -192,7 +155,7 @@ public ResponseEntity<?> getReservationsEnAttente(Authentication authentication)
         }
     }
 
-
+// Cancel a specific reservation (with optional reason) endpoint
 @PostMapping("/reservations/cancel/{reservationId}")
 public ResponseEntity<String> annulerReservation(
         @PathVariable String reservationId,
@@ -212,7 +175,7 @@ public ResponseEntity<String> annulerReservation(
 }
 
 
-
+// Get all the spaces managed by the responsible
 @GetMapping("/espaces")
 public ResponseEntity<?> getEspacesByResponsable(Authentication authentication) {
     CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -227,6 +190,8 @@ public ResponseEntity<?> getEspacesByResponsable(Authentication authentication) 
     }
 }
 
+
+// Update the details of a specific space (administered by the responsible) endpoint
 @PutMapping("/espaces/{espaceId}")
 public ResponseEntity<?> updateEspace(
         @PathVariable String espaceId,
@@ -249,6 +214,7 @@ public ResponseEntity<?> updateEspace(
     }
 }
 
+//Delete a specific space (administered by the responsible) endpoint
 @DeleteMapping("/espaces/{espaceId}")
 public ResponseEntity<?> deleteEspace(
         @PathVariable String espaceId,

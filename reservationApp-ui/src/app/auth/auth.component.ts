@@ -17,10 +17,10 @@ import {
   faUser, faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { NotificationComponent } from '../alert-notif/notification.component';
+import { ChatComponent } from '../chatbot/chatbot.component';
 import { NotificationService } from '../services/alert-notif/notification.service';
 import { AuthService } from '../services/auth/auth.service';
 import { RegistrationService } from '../services/auth/register.service';
-import { ChatComponent } from '../chatbot/chatbot.component';
 
 @Component({
   selector: 'app-auth',
@@ -84,17 +84,21 @@ export class AuthComponent {
     private notificationService: NotificationService
   ) {}
 
+  // === UI CONTROL METHODS ===
+  // Toggle between login and registration views
   toggleView() {
     this.isAccountPage = !this.isAccountPage;
     this.resetFormStates();
   }
 
+  // Reset form states
   private resetFormStates() {
     this.errorMessage = null;
     this.loginErrorMessage = null;
     this.isLoading = false;
   }
 
+  // === LOGIN METHODS ===
   // Login Submit
   onLoginSubmit(event: Event) {
     event.preventDefault();
@@ -115,6 +119,7 @@ export class AuthComponent {
     });
   }
 
+  // Validate login form
   private validateLogin(): boolean {
     if (!this.loginData.email || !this.loginData.password) {
       this.notificationService.showError('Veuillez remplir tous les champs');
@@ -129,6 +134,7 @@ export class AuthComponent {
     return true;
   }
 
+  // Handle login success and redirect based on user role
   private handleLoginSuccess() {
     const token = this.authService.getToken();
     if (token) {
@@ -139,6 +145,7 @@ export class AuthComponent {
     }
   }
 
+  // Handle login error
   private handleLoginError(err: any) {
     this.isLoading = false;
     if (err.status === 401) {
@@ -150,6 +157,7 @@ export class AuthComponent {
     }
   }
 
+  // === REGISTRATION METHODS ===
   // Registration Submit
 onRegisterSubmit(event: Event) {
   event.preventDefault();
@@ -173,6 +181,7 @@ onRegisterSubmit(event: Event) {
   });
 }
 
+  // Validate registration form
   private validateRegistration(): boolean {
     if (Object.values(this.registerData).some(value => !value)) {
       this.notificationService.showError('Veuillez remplir tous les champs obligatoires');
@@ -202,6 +211,7 @@ onRegisterSubmit(event: Event) {
     return true;
   }
 
+  // Handle registration success or error
   private handleRegistrationError(error: any) {
     this.isLoading = false;
     if (error?.error?.includes('email')) {
@@ -211,7 +221,8 @@ onRegisterSubmit(event: Event) {
     }
   }
 
-  // Validation helpers
+  // === VALIDATION HELPERS ===
+
   private isValidEmail(email: string): boolean {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
@@ -242,6 +253,7 @@ onRegisterSubmit(event: Event) {
     return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(text);
   }
 
+  // === REDIRECTION BASED ON ROLE ===
   private redirectUserByRole(roles: any): void {
     let normalizedRole = '';
     

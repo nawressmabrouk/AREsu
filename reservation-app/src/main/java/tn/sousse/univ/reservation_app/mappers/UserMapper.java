@@ -6,6 +6,7 @@ import tn.sousse.univ.reservation_app.models.User;
 
 public class UserMapper {
 
+    // Convert User entity to UserDTO
     public static UserDTO toDTO(User user) {
         if (user == null) return null;
 
@@ -24,6 +25,7 @@ public class UserMapper {
         return dto;
     }
 
+    // Convert UserDTO to User entity
     public static User toEntity(UserDTO dto) {
         if (dto == null) return null;
 

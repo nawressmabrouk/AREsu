@@ -1,5 +1,3 @@
-
-
 package tn.sousse.univ.reservation_app.controllers;
 
 import java.util.Collections;
@@ -34,47 +32,25 @@ public class DemandeurController {
     @Autowired
     private ReservationService reservationService;
 
-    // Demander une réservation
+    // Demand a reservation endpoint
     @PostMapping("/demanderReservation")
-public ResponseEntity<Map<String, Object>> reserveSpace(@RequestBody ReservationRequestDTO reservationDTO) {
-    try {
-        ReservationResponseDTO response = reservationService.creerReservation(reservationDTO);
-        
-        return ResponseEntity.ok()
-            .body(Map.of(
-                "status", "success",
-                "message", "Reservation request submitted",
-                "id", response.getId()
-            ));
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(Map.of(
-                "status", "error",
-                "message", "Error creating reservation: " + e.getMessage()
-            ));
-    }
-}
-
-    /* 
-    @PostMapping("/annulerReservation")
-    public ResponseEntity<String> annulerReservation(
-            @RequestParam String reservationId,
-            @RequestParam Long demandeurId,
-            @RequestParam(required = false) String raison) {
+    public ResponseEntity<Map<String, Object>> reserveSpace(@RequestBody ReservationRequestDTO reservationDTO) {
         try {
-            reservationService.annulerReservation(reservationId, demandeurId);
-            return ResponseEntity.ok(
-                    "La réservation a été annulée avec succès et l'événement a été mis à jour dans Google Calendar.");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Erreur : " + e.getMessage());
+            ReservationResponseDTO response = reservationService.creerReservation(reservationDTO);
+
+            return ResponseEntity.ok()
+                    .body(Map.of(
+                            "status", "success",
+                            "message", "Reservation request submitted",
+                            "id", response.getId()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "status", "error",
+                            "message", "Error creating reservation: " + e.getMessage()));
         }
     }
 
-@GetMapping("/{demandeurId}/reservations")
-    public ResponseEntity<List<ReservationResponseDTO>> getReservationsByDemandeur(@PathVariable String demandeurId) {
-        List<ReservationResponseDTO> reservations = demandeurService.getReservationsByDemandeur(demandeurId);
-        return ResponseEntity.ok(reservations);
-    }*/
     @PostMapping("/annulerReservation")
     @PreAuthorize("#demandeurId == authentication.principal.getUserId()")
     public ResponseEntity<Map<String, String>> annulerReservation(
@@ -84,29 +60,26 @@ public ResponseEntity<Map<String, Object>> reserveSpace(@RequestBody Reservation
         try {
             reservationService.annulerReservation(reservationId, demandeurId);
             return ResponseEntity.ok(
-                Collections.singletonMap("message", "Réservation annulée avec succès.")
-            );
+                    Collections.singletonMap("message", "Réservation annulée avec succès."));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(
-                Collections.singletonMap("error", "Erreur : " + e.getMessage())
-            );
+                    Collections.singletonMap("error", "Erreur : " + e.getMessage()));
         }
     }
 
-@GetMapping("/{demandeurId}/reservations")
-@PreAuthorize("#demandeurId == authentication.principal.userId")
+    // Get all reservations for the demandeur endpoint
+    @GetMapping("/{demandeurId}/reservations")
+    @PreAuthorize("#demandeurId == authentication.principal.userId")
     public ResponseEntity<List<ReservationResponseDTO>> getReservationsByDemandeur(@PathVariable String demandeurId) {
         List<ReservationResponseDTO> reservations = demandeurService.getReservationsByDemandeur(demandeurId);
         return ResponseEntity.ok(reservations);
     }
 
-
-    
-
+    // Get reservation by ID endpoint
     @GetMapping("/reservation/{reservationId}")
     public ResponseEntity<ReservationResponseDTO> getReservationById(@PathVariable String reservationId) {
         ReservationResponseDTO reservation = demandeurService.getReservationDtoById(reservationId);
         return ResponseEntity.ok(reservation);
     }
-    
+
 }

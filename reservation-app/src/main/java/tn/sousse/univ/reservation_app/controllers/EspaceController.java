@@ -21,60 +21,60 @@ public class EspaceController {
     @Autowired
     private EspaceService espaceService;
 
-    // Tous les espaces
+    // Get all spaces
     @GetMapping("/all")
     public ResponseEntity<List<Espace>> getAllEspaces() {
         return ResponseEntity.ok(espaceService.getAllEspaces());
     }
 
-    // Un espace par ID
+    // Get space by ID
     @GetMapping("/id/{id}")
     public ResponseEntity<Espace> getEspaceById(@PathVariable String id) {
         return ResponseEntity.ok(espaceService.getEspaceById(id));
     }
 
-    // Un espace par nom
+    // Get space by name
     @GetMapping("/nom/{nom}")
     public ResponseEntity<Espace> getEspaceByNom(@PathVariable String nom) {
         return ResponseEntity.ok(espaceService.getEspaceByNom(nom));
     }
 
-    // Disponibilité d’un espace
+    // Check space availability
     @GetMapping("/{id}/disponibilite")
     public ResponseEntity<Boolean> verifierDisponibilite(@PathVariable String id) {
         return ResponseEntity.ok(espaceService.verifierDisponibilite(id));
     }
 
-    // Catégories disponibles
+    // Get available categories
     @GetMapping("/categories")
     public ResponseEntity<Map<String, String>> getSpaceCategories() {
         Map<String, String> categories = new LinkedHashMap<>();
-        categories.put("Espaces_administratifs_academiques", "Espaces administratifs & académiques");
-        categories.put("Espaces_employabilite_innovation", "Espaces d'employabilité & d'innovation");
+        categories.put("Espaces_administratifs_academiques", "Administrative & academic spaces");
+        categories.put("Espaces_employabilite_innovation", "Employability & innovation spaces");
         return ResponseEntity.ok(categories);
     }
 
-    // Types d’espaces selon la catégorie
+    // Get space types by category
     @GetMapping("/types")
     public ResponseEntity<?> getSpaceTypesByCategory(@RequestParam String categorie) {
         try {
             Map<String, List<String>> types = new HashMap<>();
 
             if (categorie.equals("Espaces_administratifs_academiques")) {
-                types.put(categorie, List.of("Amphitheatre", "Salle_de_reunion", "Laboratoire"));
+                types.put(categorie, List.of("Amphitheatre", "Meeting_room", "Laboratory"));
             } else if (categorie.equals("Espaces_employabilite_innovation")) {
-                types.put(categorie, List.of("Espace_4C", "Incubateur", "FabLab"));
+                types.put(categorie, List.of("4C_Space", "Incubator", "FabLab"));
             } else {
-                return ResponseEntity.badRequest().body(Map.of("error", "Catégorie invalide : " + categorie));
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid category: " + categorie));
             }
 
             return ResponseEntity.ok(types);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Erreur lors du traitement de la catégorie"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Error processing category"));
         }
     }
 
-    // Créneaux non disponibles
+    // Get unavailable time slots for a space
     @GetMapping("/{id}/unavailable-slots")
     public ResponseEntity<List<String>> getUnavailableSlotsForSpace(
         @PathVariable String id,
@@ -83,7 +83,7 @@ public class EspaceController {
         return ResponseEntity.ok(espaceService.getUnavailableSlotsForSpace(id, date));
     }
 
-    // Réservations pour un espace
+    // Get reservations for a space (restricted to specific roles)
     @GetMapping("/{id}/reservations")
     @PreAuthorize("hasAnyRole('SECRETAIRE_GENERALE', 'RESPONSABLE_SALLE')")
     public ResponseEntity<List<Reservation>> getReservationsForSpace(

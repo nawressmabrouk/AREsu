@@ -14,5 +14,7 @@ public class EtablissementWithEspacesDTO {
 
     private String etablissementNom;
     private List<Espace> espaces;
-    private String logo; // base64 string
+    // base64 string
+    private String logo; 
+    
 }

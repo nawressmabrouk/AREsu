@@ -40,50 +40,49 @@ public class AdminController {
     @Autowired
     private UserRepository userRepository;
 
-     @Autowired
+    @Autowired
     private EtablissementRepository etablissementRepository;
 
-
-    // Add sous admin for current admin's establishment
- 
-@PostMapping("/addSousAdmins")
-public ResponseEntity<?> addSubAdmins(@RequestBody UserDTO userDto) {
-    try {
-        // Role validation - only allow RESPONSABLE_SALLE
-        Role role;
+    // Add sous admin for current admin's establishment endpoint
+    @PostMapping("/addSousAdmins")
+    public ResponseEntity<?> addSubAdmins(@RequestBody UserDTO userDto) {
         try {
-            role = Role.valueOf(userDto.getRole().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body("Rôle invalide : " + userDto.getRole());
+            // Role validation - only allow RESPONSABLE_SALLE
+            Role role;
+            try {
+                role = Role.valueOf(userDto.getRole().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest()
+                        .body("Rôle invalide : " + userDto.getRole());
+            }
+
+            // Changed condition to only allow RESPONSABLE_SALLE
+            if (role != Role.RESPONSABLE_SALLE) {
+                return ResponseEntity.badRequest()
+                        .body("Seul le role RESPONSABLE_SALLE est autorisé");
+            }
+
+            // Get current admin through the service
+            User currentAdmin = adminService.getCurrentAdmin();
+            Etablissement etablissement = etablissementRepository.findByAdminId(currentAdmin.getId())
+                    .orElseThrow(() -> new RuntimeException("Établissement non trouvé"));
+
+            // Convert DTO to User with establishment info
+            User user = convertDtoToUser(userDto, role);
+            user.setEtablissementId(etablissement.getId());
+            user.setNomEtablissement(etablissement.getNom());
+
+            // Create account
+            User createdUser = userService.registerAdminCreatedUser(user);
+
+            return ResponseEntity.ok(createdUser);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body("Erreur serveur: " + e.getMessage());
         }
-
-        // Changed condition to only allow RESPONSABLE_SALLE
-        if (role != Role.RESPONSABLE_SALLE) {
-            return ResponseEntity.badRequest()
-                    .body("Seul le role RESPONSABLE_SALLE est autorisé");
-        }
-
-        // Get current admin through the service
-        User currentAdmin = adminService.getCurrentAdmin();
-        Etablissement etablissement = etablissementRepository.findByAdminId(currentAdmin.getId())
-                .orElseThrow(() -> new RuntimeException("Établissement non trouvé"));
-
-        // Convert DTO to User with establishment info
-        User user = convertDtoToUser(userDto, role);
-        user.setEtablissementId(etablissement.getId());
-        user.setNomEtablissement(etablissement.getNom());
-
-        // Create account
-        User createdUser = userService.registerAdminCreatedUser(user);
-
-        return ResponseEntity.ok(createdUser);
-
-    } catch (Exception e) {
-        return ResponseEntity.internalServerError()
-                .body("Erreur serveur: " + e.getMessage());
     }
-}
+
     private User convertDtoToUser(UserDTO dto, Role role) {
         User user = new User();
         user.setNom(dto.getNom());
@@ -99,7 +98,7 @@ public ResponseEntity<?> addSubAdmins(@RequestBody UserDTO userDto) {
         return user;
     }
 
-    // Add a new space in current admin's establishment
+    // Add a new space in current admin's establishment endpoint
     @PostMapping("/ajouterEspace/{responsableId}")
     public ResponseEntity<?> addSpace(@PathVariable String responsableId, @RequestBody Espace espace) {
         try {
@@ -109,12 +108,13 @@ public ResponseEntity<?> addSubAdmins(@RequestBody UserDTO userDto) {
         }
     }
 
-    // Modify a space in current admin's establishment
+    // Modify a space in current admin's establishment endpoint
     @PutMapping("/modifierEspace/{espaceId}")
     public ResponseEntity<Espace> modifySpace(@PathVariable String espaceId, @RequestBody Espace espace) {
         return ResponseEntity.ok(adminService.modifierEspace(espaceId, espace));
     }
 
+    // Delete a space in current admin's establishment endpoint
     @DeleteMapping("/supprimerEspace/{espaceId}")
     public ResponseEntity<String> deleteSpace(@PathVariable String espaceId) {
         try {
@@ -122,18 +122,19 @@ public ResponseEntity<?> addSubAdmins(@RequestBody UserDTO userDto) {
             return ResponseEntity.ok("Suppression réussie");
         } catch (Exception e) {
             return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_PLAIN)
-                .body("Suppression réussie");
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Suppression réussie");
         }
     }
 
-    // Get responsables for current admin's establishment
+    // Get responsables for current admin's establishment endpoint
     @GetMapping("/responsables")
     public ResponseEntity<List<User>> getResponsablesSalle() {
         List<User> responsables = adminService.getResponsablesSalle();
         return ResponseEntity.ok(responsables);
     }
 
+    // Delete a sous admin by his ID endpoint
     @DeleteMapping("/delete-sous-admins/{adminId}")
     public ResponseEntity<String> deleteSubAdmin(@PathVariable String adminId) {
         try {
@@ -145,24 +146,25 @@ public ResponseEntity<?> addSubAdmins(@RequestBody UserDTO userDto) {
         }
     }
 
-@PutMapping("/update-sous-admins/{adminId}")
-public ResponseEntity<?> updateSubAdmin(
-        @PathVariable String adminId,
-        @RequestBody UserDTO userDto) {
-    try {
-        User existingUser = userRepository.findById(adminId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    // update the informations of a sous admin by his ID
+    @PutMapping("/update-sous-admins/{adminId}")
+    public ResponseEntity<?> updateSubAdmin(
+            @PathVariable String adminId,
+            @RequestBody UserDTO userDto) {
+        try {
+            User existingUser = userRepository.findById(adminId)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-        // Preserve the existing role
-        userDto.setRole(existingUser.getRole().name());
-        
-        User updatedUser = convertDtoToUser(userDto, existingUser.getRole());
-        User savedUser = adminService.updateAdmin(adminId, updatedUser);
-        return ResponseEntity.ok(savedUser);
-    } catch (Exception e) {
-        return ResponseEntity.badRequest().body(e.getMessage()); // Return the error message
+            // Preserve the existing role
+            userDto.setRole(existingUser.getRole().name());
+
+            User updatedUser = convertDtoToUser(userDto, existingUser.getRole());
+            User savedUser = adminService.updateAdmin(adminId, updatedUser);
+            return ResponseEntity.ok(savedUser);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage()); // Return the error message
+        }
     }
-}
 
     // Get spaces for current admin's establishment
     @GetMapping("/espaces")
@@ -170,4 +172,5 @@ public ResponseEntity<?> updateSubAdmin(
         List<Espace> espaces = adminService.getAllEspaces();
         return ResponseEntity.ok(espaces);
     }
+
 }

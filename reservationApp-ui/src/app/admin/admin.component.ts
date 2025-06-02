@@ -7,6 +7,7 @@ import {
   faArrowRight,
   faBriefcase,
   faBuilding,
+  faEdit,
   faEnvelope,
   faHome,
   faLink, faLock,
@@ -14,23 +15,19 @@ import {
   faPlusCircle,
   faTasks,
   faTools,
+  faTrash,
   faUniversity,
   faUser,
   faUsers,
   faUsersCog,
-  faTrash,
-  faEdit,
   faUserTag
 } from '@fortawesome/free-solid-svg-icons';
-import { ElementRef, ViewChild } from '@angular/core';
 import { NotificationComponent } from '../alert-notif/notification.component';
-import { AdminRegistrationService, AdminUser   } from '../services/admin/admin-registration.service';
+import { AdminRegistrationService, AdminUser } from '../services/admin/admin-registration.service';
 import { NotificationService } from '../services/alert-notif/notification.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
-// admin.component.ts
 
 
-// admin.component.ts
 interface Espace {
   id: string;
   nom: string;
@@ -38,13 +35,11 @@ interface Espace {
   disponibilite: boolean;
   equipement: string[];
   responsableId: string;
-  // allow null here, just like your service’s
   responsableNom: string | null;
   etablissementId: string;
   etablissementNom: string;
   categorie: string;
   type: string;
-  // (you can also add the optional fields if you want)
 }
 
 export enum Role {
@@ -62,7 +57,6 @@ export enum Role {
   styleUrls: ['./admin.component.scss']
 })
 export class AdminComponent {
-  // Icons
   faUser = faUser;
   faEnvelope = faEnvelope;
   faBriefcase = faBriefcase;
@@ -82,7 +76,7 @@ export class AdminComponent {
   faPlusCircle = faPlusCircle;
   faUserTag = faUserTag;
 
-  // UI State
+
   showModal: string | null = null;
   currentEspaceView: string | null = null;
   showEspaceOptions: boolean = false;
@@ -92,7 +86,6 @@ export class AdminComponent {
   isEditingEspace: boolean = false;
   selectedCategory: string = '';
 
-  // Data
   espaces: Espace[] = [];
   sousAdmins: AdminUser[] = [];
   currentSousAdmin: AdminUser | null = null;
@@ -150,10 +143,9 @@ export class AdminComponent {
   ngOnInit() {
     this.loadEspaces();
     this.loadSousAdmins();
-    this.loadCurrentAdminEstablishment();
   }
 
-  // UI Methods
+   // Toggles visibility of space management options panel
   toggleEspaceOptions() {
     this.showEspaceOptions = !this.showEspaceOptions;
     if (!this.showEspaceOptions) {
@@ -161,6 +153,7 @@ export class AdminComponent {
     }
   }
 
+  // Toggles visibility of sub-admin management options panel  
   toggleSousAdminOptions() {
     this.showSousAdminOptions = !this.showSousAdminOptions;
     if (!this.showSousAdminOptions) {
@@ -168,18 +161,14 @@ export class AdminComponent {
     }
   }
 
+    // Closes all modals and resets forms
   closeModal() {
     this.showModal = null;
     this.currentEspaceView = null;
     this.resetForms();
   }
-
-  // Data Loading
-  private loadCurrentAdminEstablishment() {
-    // In a real app, you would get this from your auth service
-    // For now we'll assume it's loaded with the current user
-  }
-
+ 
+   // Fetches all spaces from the API
 private loadEspaces() {
   this.adminService.getAllEspaces().subscribe({
     next: spaces => {
@@ -195,7 +184,7 @@ private loadEspaces() {
   });
 }
 
-
+// Fetches all sub-admins (responsables) from the API
   private loadSousAdmins() {
     this.adminService.getResponsables().subscribe({
       next: (responsables) => {
@@ -208,11 +197,10 @@ private loadEspaces() {
     });
   }
 
-  // Sous-admin Methods
+  // Handles sub-admin form submission
   onSubmitSousAdmin(event: Event) {
     event.preventDefault();
 
-    // Validation
     if (!this.validateSousAdminForm()) return;
 
     if (this.isEditingSousAdmin) {
@@ -222,6 +210,7 @@ private loadEspaces() {
     }
   }
 
+  // Validates sub-admin form fields
   private validateSousAdminForm(): boolean {
     const requiredFields = {
       'Nom': this.sousAdminFormData.nom,
@@ -247,6 +236,7 @@ private loadEspaces() {
     return true;
   }
 
+  // Creates a new sub-admin via API
   private createSousAdmin() {
     const userData = {
       ...this.sousAdminFormData,
@@ -265,6 +255,7 @@ private loadEspaces() {
     });
   }
 
+  // Updates existing sub-admin via API
   private updateSousAdmin() {
     if (!this.currentSousAdmin?.id) return;
 
@@ -285,6 +276,7 @@ private loadEspaces() {
     });
   }
 
+    // Parses responsible spaces string into array
 private parseEspacesResponsables(): string[] {
   const espaces = this.sousAdminFormData.espacesResponsables;
   
@@ -307,6 +299,7 @@ private parseEspacesResponsables(): string[] {
   return [];
 }
 
+// Prepares form for editing existing sub-admin
   onEditSousAdmin(admin: AdminUser) {
     this.currentSousAdmin = { ...admin };
     this.isEditingSousAdmin = true;
@@ -326,6 +319,7 @@ private parseEspacesResponsables(): string[] {
     };
   }
 
+  // Deletes a sub-admin after confirmation
   onSupprimerSousAdmin(adminId: string) {
     if (!adminId) {
       this.notificationService.showError('ID non valide');
@@ -345,13 +339,14 @@ private parseEspacesResponsables(): string[] {
     }
   }
 
+  // Cancels sub-admin editing mode
   cancelEditSousAdmin() {
     this.isEditingSousAdmin = false;
     this.currentSousAdmin = null;
     this.resetSousAdminForm();
   }
 
-  // Espace Methods
+  // Handles space form submission
   onSubmitEspace(event: Event) {
     event.preventDefault();
 
@@ -364,6 +359,7 @@ private parseEspacesResponsables(): string[] {
     }
   }
 
+  // Validates space form fields
   private validateEspaceForm(): boolean {
     const requiredFields = {
       'Nom': this.espaceFormData.nom,
@@ -383,6 +379,7 @@ private parseEspacesResponsables(): string[] {
     return true;
   }
 
+  // Creates new space via API
   private createEspace() {
     const espaceData = {
       ...this.espaceFormData,
@@ -402,6 +399,7 @@ private parseEspacesResponsables(): string[] {
     });
   }
 
+  // Updates existing space via API
   private updateEspace() {
     if (!this.currentEspace?.id) return;
 
@@ -423,12 +421,14 @@ private parseEspacesResponsables(): string[] {
     });
   }
 
+  // Parses equipment string into array
   private parseEquipements(): string[] {
     return this.espaceFormData.equipement 
       ? this.espaceFormData.equipement.split(',').map((e: string) => e.trim())
       : [];
   }
 
+   // Prepares form for editing existing space
   onEditEspace(espace: Espace) {
     this.currentEspace = { ...espace };
     this.isEditingEspace = true;
@@ -449,6 +449,7 @@ private parseEspacesResponsables(): string[] {
     this.selectedCategory = espace.categorie;
   }
 
+  // Deletes space after confirmation
   onSupprimerEspace(espaceId: string) {
     if (!espaceId) return;
 
@@ -469,13 +470,14 @@ private parseEspacesResponsables(): string[] {
     }
   }
 
+  // Cancels space editing mode
   cancelEditEspace() {
     this.isEditingEspace = false;
     this.currentEspace = null;
     this.resetEspaceForm();
   }
 
-  // Utility Methods
+  // Filters sub-admins based on search input
   get filteredSousAdmins(): AdminUser[] {
     return this.sousAdmins.filter(admin => {
       const search = this.searchSousAdmin.toLowerCase();
@@ -488,6 +490,7 @@ private parseEspacesResponsables(): string[] {
     });
   }
 
+  // Filters spaces based on search input
   get filteredEspaces(): Espace[] {
     return this.espaces.filter(e =>
       e.nom.toLowerCase().includes(this.searchEspace.toLowerCase()) ||
@@ -495,26 +498,30 @@ private parseEspacesResponsables(): string[] {
     );
   }
 
+  // Gets types for selected category
   getTypesForCategory(categoryName: string): string[] {
     const category = this.categories.find(cat => cat.name === categoryName);
     return category ? category.types : [];
   }
 
+  // Formats type names for display (replaces underscores)
   formatTypeName(type: string): string {
     return type ? type.replace(/_/g, ' ') : '';
   }
 
+  // Validates email format
   isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
 
-  // Form Reset Methods
+ // Resets all forms
   private resetForms() {
     this.resetSousAdminForm();
     this.resetEspaceForm();
   }
 
+  // Resets sub-admin form to default values
   private resetSousAdminForm() {
     this.sousAdminFormData = {
       nom: '',
@@ -530,6 +537,7 @@ private parseEspacesResponsables(): string[] {
     };
   }
 
+   // Resets space form to default values
   private resetEspaceForm() {
     this.espaceFormData = {
       nom: '',

@@ -45,45 +45,33 @@ private UserRepository userRepository;
     @Autowired
     private ReservationRepository reservationRepository;
 
-    // Suivre toutes les réservations
-    @GetMapping("/suivreReservations")
-    public List<Reservation> suivreReservations() {
-        return secretaireGeneraleService.suivreReservations();
-    }
-
-    // Suivre les réservations par statut
+    // Get reservations filtered by specific status endpoint
     @GetMapping("/suivreReservationsParStatut/{statut}")
     public List<Reservation> suivreReservationsParStatut(@PathVariable String statut) {
 
-        // Ajoutez des logs pour déboguer
         System.out.println("Statut reçu: " + statut);
         return secretaireGeneraleService.suivreReservationsParStatut(statut);
     }
 
-    // hedhy tjy liste des reservations ely howa aamalelhom vu sayee
-@GetMapping("/reservations/viewed")
-public ResponseEntity<?> getViewed(@AuthenticationPrincipal CustomUserDetails userDetails) {
-    // 1. Vérification de l'authentification
+    // Retrieve the reservations already viewed by the secretary general endpoint
+    @GetMapping("/reservations/viewed")
+    public ResponseEntity<?> getViewed(@AuthenticationPrincipal CustomUserDetails userDetails) {
     if (userDetails == null) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     try {
-        // 2. Récupération de l'utilisateur complet
         User currentUser = userRepository.findById(userDetails.getUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("Secrétaire non trouvé"));
 
-        // 3. Validation de l'établissement
         if (currentUser.getEtablissementId() == null) {
             return ResponseEntity.badRequest().body("Aucun établissement associé à ce compte");
         }
 
-        // 4. Récupération des réservations vues
         List<Reservation> reservations = secretaireGeneraleService.getReservationsViewedBySG(
             currentUser.getEtablissementId()
         );
 
-        // 5. Réponse formatée
         return ResponseEntity.ok(reservations);
 
     } catch (UsernameNotFoundException e) {
@@ -94,21 +82,17 @@ public ResponseEntity<?> getViewed(@AuthenticationPrincipal CustomUserDetails us
 }
 
 
-    // hedhy tjyblou lista mtaa reservation ely lezm ychoufhom (maaneha mtaa
-    // responsable w howa bch ychoufhom khw)
-@GetMapping("/reservations/toView")
-public ResponseEntity<?> getToVisa(@AuthenticationPrincipal CustomUserDetails userDetails) {
-    // Vérification de l'authentification
+    // Get reservations needing review from the secretary 
+    @GetMapping("/reservations/toView")
+    public ResponseEntity<?> getToVisa(@AuthenticationPrincipal CustomUserDetails userDetails) {
     if (userDetails == null) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     
     try {
-        // Récupération de l'utilisateur complet depuis la base de données
         User currentUser = userRepository.findById(userDetails.getUserId())
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
         
-        // Récupération des réservations pour l'établissement du secrétaire
         List<Reservation> reservations = secretaireGeneraleService.getReservationsToViewBySG(currentUser.getEtablissementId());
         
         return ResponseEntity.ok(reservations);
@@ -118,11 +102,11 @@ public ResponseEntity<?> getToVisa(@AuthenticationPrincipal CustomUserDetails us
     } catch (Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur serveur");
     }
-}
+    }
 
-    // hedhy tjyblou les reservation ely howa bch yetretihom
-@GetMapping("/reservations/toHandle")
-public ResponseEntity<?> getToHandle(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    // Get reservations needing handling from the secretary general
+    @GetMapping("/reservations/toHandle")
+    public ResponseEntity<?> getToHandle(@AuthenticationPrincipal CustomUserDetails userDetails) {
     if (userDetails == null) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
@@ -134,9 +118,9 @@ public ResponseEntity<?> getToHandle(@AuthenticationPrincipal CustomUserDetails 
     return ResponseEntity.ok(
         secretaireGeneraleService.getReservationsToHandleBySG(currentUser.getEtablissementId())
     );
-}
+    }
 
-    // kif yenzel aal 3in
+    // Marks a reservation as viewed by the secretary
     @PostMapping("/reservations/view/{reservationId}")
     public ResponseEntity<Map<String, String>> visaReservation(@PathVariable String reservationId) {
         Reservation reservation = secretaireGeneraleService.findReservationById(reservationId);
@@ -144,49 +128,7 @@ public ResponseEntity<?> getToHandle(@AuthenticationPrincipal CustomUserDetails 
         return ResponseEntity.ok(Collections.singletonMap("message", "Vu par le Secrétaire Général."));
     }
 
-    /*
-     * endpoint decision nawress
-     * 
-     * @PostMapping("/decision/{id}")
-     * public ResponseEntity<Map<String, String>> secretaireDecision(
-     * 
-     * @PathVariable String id,
-     * 
-     * @RequestParam boolean accepted) {
-     * 
-     * try {
-     * Reservation reservation = secretaireGeneraleService.findReservationById(id);
-     * boolean hadResponsable =
-     * secretaireGeneraleService.hasResponsable(reservation.getEspaceId());
-     * 
-     * if (!hadResponsable) {
-     * secretaireGeneraleService.processDecision(id, accepted,
-     * "SecretaireGenerale");
-     * } else {
-     * secretaireGeneraleService.viewReservation(reservation);
-     * secretaireGeneraleService.processDecision(id, accepted,
-     * "SecretaireGenerale");
-     * }
-     * 
-     * return ResponseEntity.ok(Collections.singletonMap("message",
-     * "Décision enregistrée avec succès"));
-     * 
-     * } catch (NoSuchElementException e) {
-     * return ResponseEntity.status(HttpStatus.NOT_FOUND)
-     * .body(Collections.singletonMap("erreur", "Réservation introuvable"));
-     * 
-     * } catch (IllegalStateException | IllegalArgumentException e) {
-     * return ResponseEntity.badRequest()
-     * .body(Collections.singletonMap("erreur", e.getMessage()));
-     * 
-     * } catch (Exception e) {
-     * return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-     * .body(Collections.singletonMap("erreur", "Erreur interne du serveur"));
-     * }
-     * }
-     */
-
-    // endpoint decision nourhen
+    //Processes secretary's decision on a reservation (accept/reject)
     @PostMapping("/decision/{id}")
     public ResponseEntity<Map<String, String>> secretaireDecision(
             @PathVariable String id,
@@ -211,7 +153,6 @@ public ResponseEntity<?> getToHandle(@AuthenticationPrincipal CustomUserDetails 
             boolean isAccepted = decisionDTO != null ? decisionDTO.isAccepted() : accepted;
             List<String> approvedEquipments = decisionDTO != null ? decisionDTO.getApprovedEquipements()
                     : Collections.emptyList();
-            // In your controller, before calling processDecision:
 
             if (reservation.getEtablissementId() == null) {
                 // Get etablissementId from espace
@@ -247,13 +188,14 @@ public ResponseEntity<?> getToHandle(@AuthenticationPrincipal CustomUserDetails 
             return ResponseEntity.badRequest()
                     .body(Collections.singletonMap("erreur", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace(); // Log the full error for debugging
+            e.printStackTrace(); 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("erreur",
                             "Erreur interne du serveur: " + e.getMessage()));
         }
     }
 
+    //Get all the reservations accepted by secretary
     @GetMapping("/reservations/accepted")
     @PreAuthorize("hasRole('SECRETAIRE_GENERALE')")
     public ResponseEntity<List<Reservation>> getReservationsAcceptedBySG() {
@@ -263,6 +205,7 @@ public ResponseEntity<?> getToHandle(@AuthenticationPrincipal CustomUserDetails 
 
     }
 
+    //Get all the reservations refused by secretary
     @GetMapping("/reservations/refused")
     @PreAuthorize("hasRole('SECRETAIRE_GENERALE')")
     public ResponseEntity<List<Reservation>> getReservationsRefusedBySG() {
@@ -272,6 +215,7 @@ public ResponseEntity<?> getToHandle(@AuthenticationPrincipal CustomUserDetails 
 
     }
 
+    // Cancel a reservation by secretary general
     @PostMapping("/reservations/cancel/{reservationId}")
     public ResponseEntity<?> annulerReservation(
             @PathVariable String reservationId,
@@ -280,7 +224,6 @@ public ResponseEntity<?> getToHandle(@AuthenticationPrincipal CustomUserDetails 
         try {
             Reservation reservation = secretaireGeneraleService.findReservationById(reservationId);
 
-            // Vérifier si l'annulation est possible
             if (!secretaireGeneraleService.canCancelReservation(reservation)) {
                 return ResponseEntity.badRequest().body("Annulation non autorisée");
             }

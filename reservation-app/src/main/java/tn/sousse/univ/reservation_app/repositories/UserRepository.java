@@ -15,12 +15,13 @@ import tn.sousse.univ.reservation_app.models.User;
 public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEmail(String email);
 
-    List<User> findByRole(Role role); // Trouver tous les utilisateurs par rôle
+    List<User> findByRole(Role role);
 
     boolean existsByEmail(String email);
-    
+
     @Query("{ 'espacesResponsables': ?0, 'role': ?1 }")
     List<User> findByEspacesResponsablesContainsAndRole(ObjectId espaceId, Role role);
+
     User findByNomEtablissementAndRole(String nomEtablissement, Role role);
 
     List<User> findByRoleAndEtablissementId(Role secretaireGenerale, String id);
