@@ -361,43 +361,43 @@
   },
   {
     "prompt": "Comment peut-on annuler une réservation ?",
-    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites au moins 48h à l'avance."
+    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites avant la décision de responsable ."
   },
   {
     "prompt": "Quelle est la procédure pour annuler une réservation ?",
-    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites au moins 48h à l'avance."
+    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites avant la décision de responsable ."
   },
   {
     "prompt": "Comment faire pour annuler une réservation ?",
-    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites au moins 48h à l'avance."
+    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites avant la décision de responsable ."
   },
   {
     "prompt": "Comment procéder pour annuler une réservation ?",
-    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites au moins 48h à l'avance."
+    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites avant la décision de responsable ."
   },
   {
     "prompt": "De quelle manière annuler une réservation ?",
-    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites au moins 48h à l'avance."
+    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites avant la décision de responsable ."
   },
   {
     "prompt": "Quelle démarche suivre pour annuler une réservation ?",
-    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites au moins 48h à l'avance."
+    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites avant la décision de responsable ."
   },
   {
     "prompt": "Comment se déroule l'annulation d'une réservation ?",
-    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites au moins 48h à l'avance."
+    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites avant la décision de responsable ."
   },
   {
     "prompt": "Comment annuler une réservation en ligne ?",
-    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites au moins 48h à l'avance."
+    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites avant la décision de responsable ."
   },
   {
     "prompt": "Quelles étapes pour annuler une réservation ?",
-    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites au moins 48h à l'avance."
+    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites avant la décision de responsable ."
   },
   {
     "prompt": "Comment puis-je annuler ma réservation ?",
-    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites au moins 48h à l'avance."
+    "completion": "Connectez-vous à votre espace personnel et cliquez sur 'consulter  réservations', puis sélectionnez 'Annuler'. Les annulations doivent être faites avant la décision de responsable ."
   }, 
 {
     "prompt": "La salle 4C existe-t-elle à l'Université de Sousse ?",
@@ -2534,7 +2534,7 @@
     },
     {
         "prompt": "Comment réserver l'Espace Coworking à la Faculté des Sciences Économiques ?",
-        "completion": "Rendez-vous à la Faculté ou utilisez le portail en ligne pour réserver l'Espace Coworking (ouvert de 8h à 20h, Wi-Fi inclus)."
+        "completion": "Rendez-vous à la Faculté ou utilisez le portail en ligne pour réserver l'Espace Coworking ( Wi-Fi inclus)."
     },
     {
         "prompt": "Quels équipements de recherche sont disponibles dans le Laboratoire de Recherche de l'École Nationale d'Ingénieurs ?",
@@ -2542,68 +2542,252 @@
     },
     {
         "prompt": "J'ai besoin d'une salle",
-        "completion": "Pourriez-vous préciser : 1) Nombre de participants 2) Équipement nécessaire 3) Établissement préféré ?"
+        "completion": "pour réserver une salle il faut suivre ces étapes : 1) Demandez la liste des établissements 2) Sélectionnez un espace 3) Choisissez une date 4) Remplissez le formulaire 5) Soumettez et attendez la confirmation par email.  "
+    },
+{
+  "prompt": "Je cherche un espace avec projecteur",
+  "completion": "Les espaces équipés d’un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l’École Supérieure des Sciences et de la Technologie de Hammam Sousse , Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse ,  Salle de conférence à l’Institut Supérieur d’Informatique et des Technologies de Communication de Hammam Sousse."
+}
+,
+    {
+      "prompt": "Je cherche un espace avec des salles de coaching",
+      "completion": "L'espace équipé de salles de coaching est : Pôle étudiant entrepreneur J à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
     },
     {
-        "prompt": "Je cherche un espace avec projecteur",
-        "completion": "Veuillez préciser : 1) Nombre de personnes 2) Établissement 3) Date souhaitée. Exemple : 'Je cherche un espace pour 50 personnes à l'ISG Sousse mardi prochain avec projecteur'."
+      "prompt": "Je cherche un espace avec des espaces de projets",
+      "completion": "L'espace équipé d'espaces de projets est : Pôle étudiant entrepreneur J à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
     },
+    {
+      "prompt": "Je cherche un espace avec des PCs",
+      "completion": "Les espaces équipés de PCs sont : Le Laboratoire de recherche en physique LABEM et Le Laboratoire de recherche en mathématique MAPSFA à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse ; Le Laboratoire de recherche en mathématique LAMMDA à l'Institut Supérieur des Sciences Appliquées et de Technologie de Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec du matériel scientifique",
+      "completion": "Les espaces équipés de matériel scientifique sont : Le Laboratoire de recherche en physique LABEM et Le Laboratoire de recherche en mathématique MAPSFA à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse ; Le Laboratoire de recherche en mathématique LAMMDA à l'Institut Supérieur des Sciences Appliquées et de Technologie de Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec une imprimante 3D",
+      "completion": "Les espaces équipés d'une imprimante 3D sont : Le Laboratoire de recherche en physique LABEM et Le Laboratoire de recherche en mathématique MAPSFA à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec des ordinateurs",
+      "completion": "Les espaces équipés d'ordinateurs sont : Espace 4C F à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse ; FabLab I à l'Institut Supérieur des Sciences Appliquées et de Technologie de Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec une bibliothèque",
+      "completion": "L'espace équipé d'une bibliothèque est : Espace 4C F à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec wifi",
+      "completion": "L'espace équipé de wifi est : Espace 4C F à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec open desk",
+      "completion": "L'espace équipé d'open desk est : Coworking Space I à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec coin détente",
+      "completion": "L'espace équipé d'un coin détente est : Coworking Space I à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec wifi haut débit",
+      "completion": "L'espace équipé de wifi haut débit est : Coworking Space I à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec projecteur",
+      "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec microphone",
+      "completion": "Les espaces équipés d'un microphone sont : Amphi 1 et Amphi 3 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec système audio",
+      "completion": "Les espaces équipés d'un système audio sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec écran géant",
+      "completion": "Les espaces équipés d'un écran géant sont : Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse ; Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec vidéoprojecteur",
+      "completion": "Les espaces équipés d'un vidéoprojecteur sont : Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec caméra visio",
+      "completion": "Les espaces équipés d'une caméra visio sont : Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse ; Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec postes boursiers",
+      "completion": "L'espace équipé de postes boursiers est : Salle de marché E à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec écrans de cotation",
+      "completion": "L'espace équipé d'écrans de cotation est : Salle de marché E à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec simulateur marché",
+      "completion": "L'espace équipé d'un simulateur marché est : Salle de marché E à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec découpe laser",
+      "completion": "Les espaces équipés d'une découpe laser sont : FabLab H et FabLab I à l'Institut Supérieur des Sciences Appliquées et de Technologie de Sousse."
+    },
+    {
+      "prompt": "Je cherche un espace avec Arduino kits",
+      "completion": "L'espace équipé d'Arduino kits est : FabLab I à l'Institut Supérieur des Sciences Appliquées et de Technologie de Sousse."
+    },
+     {
+      "prompt": "Je cherche un espace avec piscine",
+      "completion": "Aucun espace ne dispose d'une piscine dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec salle de sport",
+      "completion": "Aucun espace ne dispose d'une salle de sport dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec cuisine équipée",
+      "completion": "Aucun espace ne dispose d'une cuisine équipée dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec studio d'enregistrement",
+      "completion": "Aucun espace ne dispose d'un studio d'enregistrement dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec télescope",
+      "completion": "Aucun espace ne dispose d'un télescope dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec machines CNC",
+      "completion": "Aucun espace ne dispose de machines CNC dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec salle de cinéma",
+      "completion": "Aucun espace ne dispose d'une salle de cinéma dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec équipement VR",
+      "completion": "Aucun espace ne dispose d'équipement VR (réalité virtuelle) dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec salle de jeux",
+      "completion": "Aucun espace ne dispose d'une salle de jeux dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec équipement médical",
+      "completion": "Aucun espace ne dispose d'équipement médical dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec salle de danse",
+      "completion": "Aucun espace ne dispose d'une salle de danse dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec atelier poterie",
+      "completion": "Aucun espace ne dispose d'un atelier poterie dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec studio photo",
+      "completion": "Aucun espace ne dispose d'un studio photo dans nos établissements."
+    },
+    {
+      "prompt": "Je cherche un espace avec salle de répétition musicale",
+      "completion": "Aucun espace ne dispose d'une salle de répétition musicale dans nos établissements."
+    },
+    {
+    "prompt": "Quelle salle a une capacité de 10 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 10 places, mais voici des espaces avec plus de places :\n- Le Laboratoire de recherche en physique LABEM (15 personnes) et \n- Le Pôle étudiant entrepreneur J (30 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 20 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 20 places, mais voici des espaces avec plus de places :\n- Le Laboratoire de recherche en mathématique LAMMDA (15 personnes) et \n- La Salle de marché E (30 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 40 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 40 places, mais voici des espaces avec plus de places :\n- L'Espace_4C_F (50 personnes) et \n- Le Coworking_Space_I (60 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 70 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 70 places, mais voici des espaces avec plus de places :\n- Le Coworking_Space_I (60 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse\n- La Salle de conférence (100 personnes) à la Faculté des Sciences Économiques et de Gestion de Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 80 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 80 places, mais voici des espaces avec plus de places :\n- La Salle de conférence (100 personnes) à la Faculté des Sciences Économiques et de Gestion de Sousse\n- L'Amphi 5 (150 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 90 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 90 places, mais voici des espaces avec plus de places :\n- La Salle de conférence (100 personnes) à la Faculté des Sciences Économiques et de Gestion de Sousse\n- L'Amphi 2 (150 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 110 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 110 places, mais voici des espaces avec plus de places :\n- L'Amphi 4 (150 personnes)  et \n- L'Amphi 1 (200 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 120 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 120 places, mais voici des espaces avec plus de places :\n- L'Amphi 5 (150 personnes) et \n- L'Amphi 3 (200 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 130 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 130 places, mais voici des espaces avec plus de places :\n- L'Amphi 2 (150 personnes)  et \n- L'Amphi 1 (200 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 140 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 140 places, mais voici des espaces avec plus de places :\n- L'Amphi 4 (150 personnes)  et \n- L'Amphi 3 (200 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 160 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 160 places, mais voici des espaces avec plus de places :\n- L'Amphi 1 (200 personnes) et \n- L'Amphi 5 (150 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 170 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 170 places, mais voici des espaces avec plus de places :\n- L'Amphi 3 (200 personnes) et \n- L'Amphi 2 (150 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 180 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 180 places, mais voici des espaces avec plus de places :\n- L'Amphi 1 (200 personnes)  et \n- L'Amphi 4 (150 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
+{
+    "prompt": "Quelle salle a une capacité de 190 personnes ?",
+    "completion": "Nous n'avons pas exactement des salles avec 190 places, mais voici des espaces avec plus de places :\n- L'Amphi 3 (200 personnes) et \n- L'Amphi 5 (150 personnes) à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse"
+},
     {
         "prompt": "Comment savoir si ma réservation est confirmée ?",
         "completion": "1) Vérifiez votre email (y compris les spams) 2) Dans l'application, consultez 'Mes réservations' 3) Le statut 'acceptée' apparaît clairement."
     },
     {
         "prompt": "Quelle salle a une capacité de 30 personnes ?",
-        "completion": "La salle \"Pôle étudiant entrepreneur J\" a une capacité de 30 personnes."
+        "completion": "La salle \"Pôle étudiant entrepreneur J\" et La salle \"Salle de marché E\" ont  une capacité de 30 personnes dans École Supérieure des Sciences et de la Technologie de Hammam Sousse."
     },
     {
         "prompt": "Quelle salle a une capacité de 15 personnes ?",
-        "completion": "La salle \"Le Laboratoire de recherche en physique LABEM\" a une capacité de 15 personnes."
+        "completion": "La salle \"Le Laboratoire de recherche en physique LABEM\" , La salle \"Le Laboratoire de recherche en mathématique LAMMDA\" et La salle \"Le Laboratoire de recherche en mathématique MAPSFA\" a une capacité de 15 personnes dans École Supérieure des Sciences et de la Technologie de Hammam Sousse ."
     },
     {
         "prompt": "Quelle salle a une capacité de 50 personnes ?",
-        "completion": "La salle \"Espace_4C_F\" a une capacité de 50 personnes."
+        "completion": "La salle \"Espace_4C_F\" a une capacité de 50 personnes dans École Supérieure des Sciences et de la Technologie de Hammam Sousse ."
     },
     {
         "prompt": "Quelle salle a une capacité de 60 personnes ?",
-        "completion": "La salle \"Coworking_Space_I\" a une capacité de 60 personnes."
+        "completion": "La salle \"Coworking_Space_I\" a une capacité de 60 personnes dans École Supérieure des Sciences et de la Technologie de Hammam Sousse ."
     },
     {
         "prompt": "Quelle salle a une capacité de 200 personnes ?",
-        "completion": "La salle \"Amphi 1\" a une capacité de 200 personnes."
-    },
-    {
-        "prompt": "Quelle salle a une capacité de 30 personnes ?",
-        "completion": "La salle \"Salle de marché E\" a une capacité de 30 personnes."
+        "completion": "La salle \"Amphi 1\"  et La salle \"Amphi 3\" ont  une capacité de 200 personnes dans École Supérieure des Sciences et de la Technologie de Hammam Sousse ."
     },
     {
         "prompt": "Quelle salle a une capacité de 150 personnes ?",
-        "completion": "La salle \"Amphi 2\" a une capacité de 150 personnes."
+        "completion": "La salle \"Amphi 2\" ,  La salle \"Amphi 4\" et La salle \"Amphi 5\"  ont  une capacité de 150 personnes dans École Supérieure des Sciences et de la Technologie de Hammam Sousse .."
     },
-    {
-        "prompt": "Quelle salle a une capacité de 200 personnes ?",
-        "completion": "La salle \"Amphi 3\" a une capacité de 200 personnes."
-    },
-    {
-        "prompt": "Quelle salle a une capacité de 150 personnes ?",
-        "completion": "La salle \"Amphi 4\" a une capacité de 150 personnes."
-    },
-    {
-        "prompt": "Quelle salle a une capacité de 150 personnes ?",
-        "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-    },
-    {
-        "prompt": "Quelle salle a une capacité de 15 personnes ?",
-        "completion": "La salle \"Le Laboratoire de recherche en mathématique MAPSFA\" a une capacité de 15 personnes."
-    },
-    {
-        "prompt": "Quelle salle a une capacité de 15 personnes ?",
-        "completion": "La salle \"Le Laboratoire de recherche en mathématique LAMMDA\" a une capacité de 15 personnes."
-    },
+
     {
         "prompt": "Quelle salle a une capacité de 100 personnes ?",
-        "completion": "La salle \"Salle de conférence\" a une capacité de 100 personnes."
+        "completion": "La salle \"Salle de conférence\" a une capacité de 100 personnes Faculté des Sciences Économiques et de Gestion de Sousse ."
     },
+
+    {
+        "prompt": "Quelle salle a une capacité de 300  personnes ?",
+        "completion": "Désolé aucune salle ne dépose ce nombre des personnes ."
+    },
+ 
     {
         "prompt": "Quels sont les instituts de Sousse ?",
         "completion": "Liste des instituts :\n- Institut Supérieur d’Informatique et des Technologies de Communication\n- Institut Supérieur du Transport et de la Logistique de Sousse\n- Institut Supérieur des Sciences Appliquées et de Technologie de Sousse\n- Institut Supérieur de Gestion de Sousse\n- Institut Supérieur des Beaux-Arts de Sousse\n- Institut Supérieur de Finance et de Fiscalité de Sousse\n- Institut Supérieur Agronomique de Chott Mariem\n- Institut Supérieur des Sciences Infirmières de Sousse\n- Institut Supérieur de Musique de Sousse\n- Institut des Hautes Études Commerciales de Sousse."
@@ -2654,11 +2838,11 @@
     },
     {
         "prompt": "Je cherche une salle avec vidéoprojecteur. Quelles sont les options ?",
-        "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
     },
     {
         "prompt": "Quelles salles disposent d'un projecteur ?",
-        "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
     },
     {
         "prompt": "Où trouver une salle avec imprimante 3D ?",
@@ -2684,21 +2868,18 @@
         "prompt": "Quels espaces proposent des salles de coaching ?",
         "completion": "Espace équipé de salles de coaching :\n- Pôle étudiant entrepreneur J (30 places)"
     },
-    {
-        "prompt": "Je cherche une salle avec caméra visio. Des suggestions ?",
-        "completion": "Salles équipées d'une caméra visio :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)"
-    },
+    
     {
         "prompt": "Je cherche une salle de 100 places avec vidéoprojecteur et caméra visio. Quelles sont les options ?",
         "completion": "La Salle de conférence D (100 places) dans la  Faculté des Sciences Économiques et de Gestion de Sousse  ou la Salle de conférence  (100 places) dans Institut Supérieur d’Informatique et des Technologies de Communication de Hammam Sousse répondent à vos critères."
     },
     {
         "prompt": "Quels amphithéâtres de 150 places ont un projecteur et un système audio ?",
-        "completion": "Amphi 2 (150 places) et Amphi 4 (150 places) dans ."
+        "completion": "Amphi 2 (150 places) et Amphi 4 (150 places) dans dans École Supérieure des Sciences et de la Technologie de Hammam Sousse .."
     },
     {
         "prompt": "Y a-t-il un laboratoire avec imprimante 3D et PCs pour 15 personnes ?",
-        "completion": "Oui : Le Laboratoire de recherche en physique LABEM et le Laboratoire de recherche en mathématique MAPSFA."
+        "completion": "Oui : Le Laboratoire de recherche en physique LABEM et le Laboratoire de recherche en mathématique MAPSFA dans École Supérieure des Sciences et de la Technologie de Hammam Sousse . ."
     },
     {
         "prompt": "Puis-je réserver l'Espace 4C F pour une durée de 4 heures ?",
@@ -2718,7 +2899,7 @@
     },
     {
         "prompt": "Je cherche une salle pour 300 personnes avec 10 ordinateurs. Existe-t-il ?",
-        "completion": "Aucune salle ne correspond exactement à ces critères. L'Amphi 1 (200 places) est la plus grande salle disponible."
+        "completion": "Aucune salle ne correspond exactement à ces critères. L'Amphi 1 (200 places) est la plus grande salle disponible dans dans École Supérieure des Sciences et de la Technologie de Hammam Sousse .."
     },
     {
         "prompt": "Y a-t-il des salles disponibles à minuit ?",
@@ -2726,11 +2907,11 @@
     },
     {
         "prompt": "Je cherche un espace avec *à la fois* un simulateur de marché et des écrans de cotation. Existe-t-il ?",
-        "completion": "Oui : La Salle de marché E (30 places) propose ces équipements."
+        "completion": "Oui : La Salle de marché E (30 places) propose ces équipements  dans École Supérieure des Sciences et de la Technologie de Hammam Sousse .."
     },
     {
         "prompt": "Y a-t-il une salle avec *imprimante 3D* ET *découpe laser* ?",
-        "completion": "Non, ces équipements sont disponibles dans des espaces différents :\n- Imprimante 3D : LABEM, MAPSFA\n- Découpe laser : FabLab I (indisponible)."
+        "completion": "Non, ces équipements sont disponibles dans des espaces différents :\n- Imprimante 3D : LABEM, MAPSFA\n- dans École Supérieure des Sciences et de la Technologie de Hammam Sousse .  Découpe laser : FabLab I dans Institut Supérieur des Sciences Appliquées et de Technologie de Sousse ."
     },
     {
         "prompt": "Quels espaces de l'École Supérieure des Sciences et de la Technologie de Hammam Sousse ont du Wi-Fi ?",
@@ -2738,7 +2919,7 @@
     },
     {
         "prompt": "Listez les amphithéâtres de la zone SAHLOUL_HAMMAM_SOUSSE.",
-        "completion": "Amphis en zone SAHLOUL_HAMMAM_SOUSSE :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)."
+        "completion": "Amphis en zone SAHLOUL_HAMMAM_SOUSSE :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places) dans  École Supérieure des Sciences et de la Technologie de Hammam Sousse  ."
     },
     {
         "prompt": "Quelle est la différence entre l'Espace 4C F et le Coworking Space I ?",
@@ -2746,15 +2927,15 @@
     },
     {
         "prompt": "Quel amphithéâtre a le plus d'équipements : Amphi 1 ou Amphi 3 ?",
-        "completion": "Amphi 1 et Amphi 3 ont tous deux 3 équipements (projecteur, microphone, système audio)."
+        "completion": "Amphi 1 et Amphi 3 ont tous deux 3 équipements (projecteur, microphone, système audio) dans  l' École Supérieure des Sciences et de la Technologie de Hammam Sousse .."
     },
     {
         "prompt": "Je suis entrepreneur. Quel espace me conseillez-vous ?",
-        "completion": "Le Pôle étudiant entrepreneur J (30 places) ou le Coworking Space I (60 places)."
+        "completion": "Le Pôle étudiant entrepreneur J (30 places) ou le Coworking Space I (60 places) dans  École Supérieure des Sciences et de la Technologie de Hammam Sousse  ."
     },
     {
         "prompt": "Je veux organiser une conférence en ligne. Quelle salle choisir ?",
-        "completion": "Optez pour la Salle de conférence D ou la Salle de conférence  (100 places), équipées de caméra visio."
+        "completion": "Optez pour la Salle de conférence D ou la Salle de conférence  (100 places), équipées de caméra visio dans Faculté des Sciences Économiques et de Gestion de Sousse ."
     },
 
     {
@@ -2763,31 +2944,28 @@
     },
     {
         "prompt": "Je cherche un amphithéâtre de 150 places avec projecteur. Quelles options ?",
-        "completion": "Amphi 2 et Amphi 4 (150 places chacun) disposent d'un projecteur."
+        "completion": "Amphi 2 et Amphi 4 (150 places chacun) disposent d'un projecteur dans l' École Supérieure des Sciences et de la Technologie de Hammam Sousse ."
     },
     {
         "prompt": "Où puis-je trouver une imprimante 3D à l'Université de Sousse ?",
-        "completion": "Le Laboratoire de recherche en physique LABEM et le Laboratoire MAPSFA (15 places chacun) ont des imprimantes 3D."
+        "completion": "Le Laboratoire de recherche en physique LABEM et le Laboratoire MAPSFA (15 places chacun) ont des imprimantes 3D dans l'École Supérieure des Sciences et de la Technologie de Hammam Sousse  ."
     },
-    {
-        "prompt": "Quelles salles de conférence ont une capacité de 100 personnes ?",
-        "completion": "La Salle de conférence D et la Salle de conférence (100 places chacune) sont disponibles."
-    },
+   
     {
         "prompt": "Listez les laboratoires de recherche avec matériel scientifique.",
-        "completion": "LABEM, MAPSFA et LAMMDA proposent du matériel scientifique (PCs, microscopes, etc.)."
+        "completion": "LABEM, MAPSFA et LAMMDA proposent du matériel scientifique (PCs, microscopes, etc.) dans l' École Supérieure des Sciences et de la Technologie de Hammam Sousse ."
     },
     {
         "prompt": "Y a-t-il des FabLabs avec découpe laser à Sousse ?",
-        "completion": "Oui, le FabLab H et le FabLab I proposent une découpe laser (actuellement indisponibles)."
+        "completion": "Oui, le FabLab H  dans l' École Supérieure des Sciences et de la Technologie de Hammam Sousse  et le FabLab I dans Institut Supérieur des Sciences Appliquées et de Technologie de Sousse   proposent une découpe laser (actuellement indisponibles)."
     },
     {
         "prompt": "Quel espace recommandez-vous pour un groupe de 30 entrepreneurs ?",
-        "completion": "Le Pôle étudiant entrepreneur J (30 places) avec salles de coaching et espaces de projets."
+        "completion": "Le Pôle étudiant entrepreneur J (30 places) avec salles de coaching et espaces de projets dans l' École Supérieure des Sciences et de la Technologie de Hammam Sousse ."
     },
     {
         "prompt": "Où organiser une simulation boursière pour 30 étudiants ?",
-        "completion": "La Salle de marché E (30 places) avec postes boursiers et écrans de cotation."
+        "completion": "La Salle de marché E (30 places) avec postes boursiers et écrans de cotation dans l' École Supérieure des Sciences et de la Technologie de Hammam Sousse .."
     },
     {
         "prompt": "Quels établissements ont des amphithéâtres de 200 places ?",
@@ -2815,15 +2993,15 @@
     },
     {
         "prompt": "Quel est le plus grand amphithéâtre disponible ?",
-        "completion": "Amphi 1 et Amphi 3 (200 places chacun)."
+        "completion": "Amphi 1 et Amphi 3 (200 places chacun) dans l' École Supérieure des Sciences et de la Technologie de Hammam Sousse ."
     },
     {
         "prompt": "Je dois organiser un hackathon pour 60 participants avec besoin d'imprimantes 3D, de PCs et d'un espace collaboratif. Quelles sont mes options ?",
-        "completion": "Le Coworking Space I (60 places) offre un espace collaboratif avec Wi-Fi haut débit. Pour les imprimantes 3D et PCs, vous pouvez compléter avec le Laboratoire LABEM ou MAPSFA (15 places chacun), mais attention à la capacité limitée. Une réservation groupée est recommandée."
+        "completion": "Le Coworking Space I (60 places) dans l' École Supérieure des Sciences et de la Technologie de Hammam Sousse  offre un espace collaboratif avec Wi-Fi haut débit. Pour les imprimantes 3D et PCs, vous pouvez compléter avec le Laboratoire LABEM ou MAPSFA (15 places chacun) qui sont dans le meme établissment , mais attention à la capacité limitée. Une réservation groupée est recommandée."
     },
     {
         "prompt": "Quels amphithéâtres de plus de 150 places dans la zone SAHLOUL_HAMMAM_SOUSSE ont à la fois un projecteur ET un système audio, et sont disponibles actuellement ?",
-        "completion": "En zone SAHLOUL_HAMMAM_SOUSSE : Amphi 1 (200 places) et Amphi 3 (200 places) répondent à ces critères (projecteur + système audio + disponibilité). Amphi 2 et 4 n'ont que 150 places."
+        "completion": "En zone SAHLOUL_HAMMAM_SOUSSE dans l' École Supérieure des Sciences et de la Technologie de Hammam Sousse : Amphi 1 (200 places) et Amphi 3 (200 places) répondent à ces critères (projecteur + système audio + disponibilité). Amphi 2 et 4 n'ont que 150 places."
     },
     {
         "prompt": "Comment organiser une conférence hybride (présentiel + en ligne) pour 100 personnes avec accès handicapé dans un établissement du centre-ville ?",
@@ -2839,7 +3017,7 @@
     },
     {
         "prompt": "Quel est l'espace le plus polyvalent pour accueillir successivement : une réunion de 10h (15 pers), un déjeuner, et un atelier créatif l'après-midi ?",
-        "completion": "Le Pôle étudiant entrepreneur J (30 places) : salles de coaching pour la réunion, espace modulable pour le déjeuner/atelier. Vérifiez la disponibilité via la calendrier."
+        "completion": "Le Pôle étudiant entrepreneur J (30 places) dans l' École Supérieure des Sciences et de la Technologie de Hammam Sousse : salles de coaching pour la réunion, espace modulable pour le déjeuner/atelier. Vérifiez la disponibilité via la calendrier."
     },
     {
         "prompt": "Comparez les FabLabs disponibles en termes d'équipements et de contraintes.",
@@ -2851,7 +3029,7 @@
     },
     {
         "prompt": "Je veux une salle avec PCs pour 15 personnes, disponible 3 jours consécutifs, de préférence près d'un amphithéâtre de secours. Options ?",
-        "completion": "Laboratoire LAMMDA (15 pers, PCs) + Amphi 5 (150 pers) à l'ISITCom. Vérifiez la disponibilité sur 3 jours via le calendrier"
+        "completion": "Laboratoire LAMMDA (15 pers, PCs) dans l' École Supérieure des Sciences et de la Technologie de Hammam Sousse  + Amphi 5 (150 pers) à l'ISITCom. Vérifiez la disponibilité sur 3 jours via le calendrier"
     },
         {
         "prompt": "Y a-t-il un laboratoire informatique à l'École Nationale d'Ingénieurs de Sousse ?",
@@ -3616,26 +3794,7 @@
     "prompt": "Quels outils sont disponibles dans le laboratoire de recherche de l’ENISo ?",
     "completion": "Le laboratoire dispose d'imprimantes 3D, de kits robotiques et de stations de travail informatiques avancées."
   },
-  {
-    "prompt": "Je cherche une salle, comment puis-je vous donner plus d’infos ?",
-    "completion": "Pourriez-vous préciser : 1) Nombre de participants 2) Équipement nécessaire 3) Établissement préféré ?"
-  },
-  {
-    "prompt": "Pouvez-vous m’aider à trouver une salle adaptée ?",
-    "completion": "Pourriez-vous préciser : 1) Nombre de participants 2) Équipement nécessaire 3) Établissement préféré ?"
-  },
-  {
-    "prompt": "J’ai besoin d’un espace, que faut-il vous indiquer ?",
-    "completion": "Pourriez-vous préciser : 1) Nombre de participants 2) Équipement nécessaire 3) Établissement préféré ?"
-  },
-  {
-    "prompt": "Je cherche une salle équipée d’un projecteur",
-    "completion": "Veuillez préciser : 1) Nombre de personnes 2) Établissement 3) Date souhaitée. Exemple : 'Je cherche un espace pour 50 personnes à l'ISG Sousse mardi prochain avec projecteur'."
-  },
-  {
-    "prompt": "Y a-t-il une salle disponible avec projecteur ?",
-    "completion": "Veuillez préciser : 1) Nombre de personnes 2) Établissement 3) Date souhaitée. Exemple : 'Je cherche un espace pour 50 personnes à l'ISG Sousse mardi prochain avec projecteur'."
-  },
+ 
   {
     "prompt": "Comment savoir si ma demande de réservation a été acceptée ?",
     "completion": "1) Vérifiez votre email (y compris les spams) 2) Dans l'application, consultez 'Mes réservations' 3) Le statut 'acceptée' apparaît clairement."
@@ -3644,169 +3803,7 @@
     "prompt": "Où puis-je vérifier le statut de ma réservation ?",
     "completion": "1) Vérifiez votre email (y compris les spams) 2) Dans l'application, consultez 'Mes réservations' 3) Le statut 'acceptée' apparaît clairement."
   },
-  {
-    "prompt": "Quelle salle peut accueillir 30 personnes ?",
-    "completion": "La salle \"Pôle étudiant entrepreneur J\" a une capacité de 30 personnes."
-  },
-  {
-    "prompt": "J’ai besoin d’un espace pour 30 personnes. Quelle salle me recommandez-vous ?",
-    "completion": "La salle \"Pôle étudiant entrepreneur J\" a une capacité de 30 personnes."
-  },
-  {
-    "prompt": "Quelle salle est prévue pour 15 personnes ?",
-    "completion": "La salle \"Le Laboratoire de recherche en physique LABEM\" a une capacité de 15 personnes."
-  },
-  {
-    "prompt": "Quelle salle peut accueillir un petit groupe de 15 personnes ?",
-    "completion": "La salle \"Le Laboratoire de recherche en physique LABEM\" a une capacité de 15 personnes."
-  },
-  {
-    "prompt": "Je cherche une salle pour environ 50 personnes, laquelle convient ?",
-    "completion": "La salle \"Espace_4C_F\" a une capacité de 50 personnes."
-  },
-  {
-    "prompt": "Quelle salle est adaptée pour 50 personnes ?",
-    "completion": "La salle \"Espace_4C_F\" a une capacité de 50 personnes."
-  },
-  {
-    "prompt": "Quelle salle est disponible pour 60 participants ?",
-    "completion": "La salle \"Coworking_Space_I\" a une capacité de 60 personnes."
-  },
-  {
-    "prompt": "Je cherche une salle avec une capacité de 60 personnes. Que proposez-vous ?",
-    "completion": "La salle \"Coworking_Space_I\" a une capacité de 60 personnes."
-  },
-  {
-    "prompt": "Quelle salle peut accueillir 200 personnes ?",
-    "completion": "La salle \"Amphi 1\" a une capacité de 200 personnes."
-  },
-  {
-    "prompt": "J’ai besoin d’un grand amphithéâtre pour 200 personnes. Que recommandez-vous ?",
-    "completion": "La salle \"Amphi 1\" a une capacité de 200 personnes."
-  },
-  {
-    "prompt": "Quelle autre salle a une capacité de 30 personnes ?",
-    "completion": "La salle \"Salle de marché E\" a une capacité de 30 personnes."
-  },
-  {
-    "prompt": "Je veux une autre salle de 30 places, avez-vous une suggestion ?",
-    "completion": "La salle \"Salle de marché E\" a une capacité de 30 personnes."
-  },
-  {
-    "prompt": "Quelle salle peut accueillir jusqu’à 150 personnes ?",
-    "completion": "La salle \"Amphi 2\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Quel amphi dispose de 150 places assises ?",
-    "completion": "La salle \"Amphi 2\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Je cherche un amphithéâtre pour 200 personnes. Lequel est adapté ?",
-    "completion": "La salle \"Amphi 3\" a une capacité de 200 personnes."
-  },
-  {
-    "prompt": "Quel autre amphi peut accueillir 200 personnes ?",
-    "completion": "La salle \"Amphi 3\" a une capacité de 200 personnes."
-  },
-  {
-    "prompt": "Quelle salle nommée Amphi peut accueillir 150 personnes ?",
-    "completion": "La salle \"Amphi 4\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Je veux une salle type amphithéâtre avec 150 places. Des suggestions ?",
-    "completion": "La salle \"Amphi 4\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Je cherche une salle pouvant accueillir 150 personnes.",
-    "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Quelle salle peut contenir 150 personnes ?",
-    "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "As-tu une salle adaptée pour 150 participants ?",
-    "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Quelle est la salle disponible pour 150 personnes ?",
-    "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Quelle salle choisir pour une conférence de 150 personnes ?",
-    "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Donnez-moi le nom d'une salle pour 150 personnes.",
-    "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Quelle salle universitaire peut accueillir 150 personnes ?",
-    "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "J’ai besoin d’une grande salle pour 150 personnes. Que recommandez-vous ?",
-    "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Existe-t-il une salle pour 150 personnes ?",
-    "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-  },
-  {
-    "prompt": "Quelle salle est disponible pour un public de 150 personnes ?",
-    "completion": "La salle \"Amphi 5\" a une capacité de 150 personnes."
-  },
-
-  {
-    "prompt": "Je cherche une petite salle de 15 personnes.",
-    "completion": "La salle \"Le Laboratoire de recherche en mathématique MAPSFA\" a une capacité de 15 personnes."
-  },
-  {
-    "prompt": "Quelle salle a exactement 15 places ?",
-    "completion": "La salle \"Le Laboratoire de recherche en mathématique MAPSFA\" a une capacité de 15 personnes."
-  },
-  {
-    "prompt": "Quelle salle convient pour 15 personnes ?",
-    "completion": "La salle \"Le Laboratoire de recherche en mathématique MAPSFA\" a une capacité de 15 personnes."
-  },
-  {
-    "prompt": "Y a-t-il une salle pour un petit groupe de 15 personnes ?",
-    "completion": "La salle \"Le Laboratoire de recherche en mathématique MAPSFA\" a une capacité de 15 personnes."
-  },
-
-  {
-    "prompt": "Je cherche une salle de 15 personnes dans un laboratoire.",
-    "completion": "La salle \"Le Laboratoire de recherche en mathématique LAMMDA\" a une capacité de 15 personnes."
-  },
-  {
-    "prompt": "Une autre salle de 15 places est-elle disponible ?",
-    "completion": "La salle \"Le Laboratoire de recherche en mathématique LAMMDA\" a une capacité de 15 personnes."
-  },
-  {
-    "prompt": "As-tu une salle similaire à MAPSFA avec 15 places ?",
-    "completion": "La salle \"Le Laboratoire de recherche en mathématique LAMMDA\" a une capacité de 15 personnes."
-  },
-
-  {
-    "prompt": "Je souhaite une salle pour 100 personnes.",
-    "completion": "La salle \"Salle de conférence\" a une capacité de 100 personnes."
-  },
-  {
-    "prompt": "Quelle salle permet d'accueillir 100 personnes ?",
-    "completion": "La salle \"Salle de conférence\" a une capacité de 100 personnes."
-  },
-  {
-    "prompt": "Quelle est la salle prévue pour les événements de 100 personnes ?",
-    "completion": "La salle \"Salle de conférence\" a une capacité de 100 personnes."
-  },
-  {
-    "prompt": "Quel espace peut être utilisé pour 100 participants ?",
-    "completion": "La salle \"Salle de conférence\" a une capacité de 100 personnes."
-  },
-  {
-    "prompt": "As-tu une suggestion pour une conférence de 100 personnes ?",
-    "completion": "La salle \"Salle de conférence\" a une capacité de 100 personnes."
-  },
+ 
   {
     "prompt": "Quels sont les instituts présents à Sousse ?",
     "completion": "Liste des instituts :\n- Institut Supérieur d’Informatique et des Technologies de Communication\n- Institut Supérieur du Transport et de la Logistique de Sousse\n- Institut Supérieur des Sciences Appliquées et de Technologie de Sousse\n- Institut Supérieur de Gestion de Sousse\n- Institut Supérieur des Beaux-Arts de Sousse\n- Institut Supérieur de Finance et de Fiscalité de Sousse\n- Institut Supérieur Agronomique de Chott Mariem\n- Institut Supérieur des Sciences Infirmières de Sousse\n- Institut Supérieur de Musique de Sousse\n- Institut des Hautes Études Commerciales de Sousse."
@@ -4279,84 +4276,84 @@
   },
   {
     "prompt": "Je cherche une salle avec vidéoprojecteur. Quelles sont les options ?",
-    "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Pouvez-vous me donner la liste des salles qui ont un vidéoprojecteur ?",
-    "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+     "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Quelles salles sont équipées d’un vidéoprojecteur ?",
-    "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Quelles sont les salles disposant d'un vidéoprojecteur ?",
-    "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Où puis-je trouver une salle équipée d’un vidéoprojecteur ?",
-    "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Listez les salles avec vidéoprojecteur disponibles.",
-    "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Je souhaite une salle équipée d'un vidéoprojecteur, quelles sont mes possibilités ?",
-    "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Quelles salles offrent un vidéoprojecteur pour les présentations ?",
-    "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Y a-t-il des salles avec vidéoprojecteur disponibles ?",
-    "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Quelles salles disposent de la technologie vidéoprojecteur ?",
-    "completion": "Salles équipées d'un vidéoprojecteur :\n- Salle de conférence D (100 places)\n- Salle de conférence  (100 places)\n- espace2 (50 places - non disponible)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
 
   {
     "prompt": "Quelles salles disposent d'un projecteur ?",
-    "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Peux-tu me donner la liste des salles équipées d’un projecteur ?",
-    "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Quels sont les amphithéâtres avec un projecteur ?",
-    "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Où puis-je trouver des salles avec un projecteur ?",
-    "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Liste des salles disposant d’un projecteur ?",
-    "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Quelles salles ont un projecteur disponible ?",
-    "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Quelles sont les salles équipées d’un projecteur ?",
-    "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Je cherche une salle avec projecteur, quelles sont mes options ?",
-    "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Y a-t-il des amphithéâtres avec projecteur ?",
-    "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
   {
     "prompt": "Quelles salles offrent un projecteur pour les présentations ?",
-    "completion": "Salles équipées d'un projecteur :\n- Amphi 1 (200 places)\n- Amphi 2 (150 places)\n- Amphi 3 (200 places)\n- Amphi 4 (150 places)\n- Amphi 5 (150 places)"
+        "completion": "Les espaces équipés d'un projecteur sont : Amphi 1, Amphi 2, Amphi 3, Amphi 4, Amphi 5 à l'École Supérieure des Sciences et de la Technologie de Hammam Sousse et Salle de conférence D à la Faculté des Sciences Économiques et de Gestion de Sousse et  Salle de conférence à l'Institut Supérieur d'Informatique et des Technologies de Communication de Hammam Sousse."
   },
  {
     "prompt": "Quels amphithéâtres de plus de 150 places, situés en SAHLOUL_HAMMAM_SOUSSE, disposent à la fois d’un projecteur et d’un système audio et sont disponibles ?",
@@ -4450,14 +4447,12 @@
   "prompt": "bye!",
   "completion": "Au revoir ! À bientôt 👋"
   },
-  {
-    "prompt": "Comment puis-je réserver une salle ?",
-    "completion": "Pour réserver une salle, vous devez vous connecter à votre compte et suivre les instructions de réservation sur le site."
-  },
+  
   {
     "prompt": "Quels sont les horaires d'ouverture ?",
     "completion": "Les horaires d'ouverture sont généralement de 7h à 20h du lundi au vendredi. Veuillez vérifier sur le site pour des informations spécifiques."
   }
+  
   
 ]
 
