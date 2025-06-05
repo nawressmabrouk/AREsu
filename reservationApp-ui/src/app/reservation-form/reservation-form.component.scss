@@ -160,17 +160,7 @@
   color: #999;
   font-style: italic;
 }
-/* Styles responsives */
-@media (max-width: 768px) {
-  .split-form-container {
-      flex-direction: column;
-      height: auto;
-  }
-  
-  .welcome-section, .form-section {
-      padding: 40px 20px;
-  }
-}
+
  
   /* Ajoutez ces styles à votre fichier SCSS existant */
 
@@ -266,101 +256,6 @@
 
 
 
-
-
-
-
-
-
-  //nouveau desing 
-  .spaces-header {
-  
- 
-   background: linear-gradient(135deg, hsl(213, 66%, 83%) ,#3b4f90, #3b4f90  );
-    color: white;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    position: relative;
-    z-index: 1000;
-    height: 100px;
-    box-shadow: 
-     
-      0 5px 10px rgba(0, 0, 0, 0.6);
-      
-    transition: box-shadow 0.3s ease;
-  color: white;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  box-shadow: 
- 
-    0 5px 10px rgba(0, 0, 0, 0.6),
-    0 15px 35px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s ease;
-
-
-}
-
-
-
-.profile-icon
-{
-  position: relative;
-  right: -1900px;
-  top: -240px;
-
-}
-
-  .page-subtitle {
-    font-size: 1.2rem;
-    position: relative;
-   left: 700px;
-   top: -175px;
-    color: rgb(252, 247, 247);
-    transition: inherit;
-  }
- .page-title {
-  font-size: 1.9rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  right: 100px;
-  top: -170px;
-  color: #fdf9f9; /* Couleur de texte profonde */
-  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.526); /* Ombre subtile */
-  letter-spacing: 0.5px; /* Espacement des lettres */
-  margin: 0.5em 0; /* Marge améliorée */
-  position: relative; /* Pour les effets optionnels */
-
-
-  &:hover {
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée au survol */
-    
-    &::after {
-      width: 80px; /* Animation du soulignement au survol */
-    }
-  }
-
-}
-
-
-
-
-  .logo-image {
-  max-width: 160px; /* 15% de la largeur de l'écran */
-  height: auto;
-  right: 0px;
-  position: relative;
-  top: -20px;
-}
-
 .capacity-hint {
   display: block;
   color: #666;
@@ -385,16 +280,63 @@ input.invalid {
 .form-container {
   background-color: rgb(237, 233, 233);
   border-radius: 18px;
-position: relative;
-  width: 100%; // Utilisez un pourcentage au lieu d'une valeur fixe
-  min-width: 1000px; // Largeur minimale
-  max-width: 2000px; // Largeur maximale si vous voulez limiter
-   z-index: 1;
-  padding: 30px; // Réduire un peu le padding si nécessaire
-  margin: 0 auto; // Centrer le conteneur
+  position: relative;
+  width: 100%;
+  min-width: 1000px;
+  max-width: 2000px;
+  z-index: 1;
+  padding: 30px;
+  margin: 0 auto;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.451);
   right: 200px;
 
+  /* Responsive adjustments */
+  @media (max-width: 1600px) {
+    right: 150px;
+    min-width: 900px;
+    padding: 25px;
+  }
+  @media (max-width: 1400px) {
+    right: 100px;
+    min-width: 800px;
+    padding: 22px;
+  }
+  @media (max-width: 1200px) {
+    right: 50px;
+    min-width: 700px;
+    padding: 20px;
+  }
+  @media (max-width: 992px) {
+    right: 30px;
+    min-width: 600px;
+    padding: 18px;
+    border-radius: 16px;
+  }
+  @media (max-width: 768px) {
+    right: 20px;
+    min-width: 500px;
+    padding: 15px;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+  @media (max-width: 600px) {
+    right: 10px;
+    min-width: 400px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+  @media (max-width: 480px) {
+    right: 5px;
+    min-width: 300px;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+  }
+  @media (max-width: 360px) {
+    right: 0;
+    min-width: 280px;
+    padding: 8px;
+  }
 }
 
 
@@ -777,4 +719,179 @@ position: relative;
 .main {
 height: 1050px;
 }
+
+
+
+.spaces-header {
+  
+ 
+    background: linear-gradient(135deg, hsl(213, 66%, 83%) ,#3b4f90, #232f56  );
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    position: relative;
+    z-index: 1000;
+    height: 100px;
+    box-shadow: 
+     
+      0 5px 10px rgba(0, 0, 0, 0.6);
+      
+    transition: box-shadow 0.3s ease;
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 
+ 
+    0 5px 10px rgba(0, 0, 0, 0.6),
+    0 15px 35px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+
+
+}
+
+
+/* Base styles (your existing code) */
+.header-content {
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  flex-wrap: wrap;
+  display: flex;
+  flex-wrap: nowrap;
+  padding: 0 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .header-brand {
+    flex: 0 0 auto;
+    margin-right: auto;
+  }
+   
+  .logo-image {
+    max-width: 160px;
+    height: auto;
+    margin-top: 15px;
+    margin-left: -350px;
+  }
+
+  .header-text {
+    flex: 1 1 auto;
+    text-align: center;
+    margin-left: -160px;
+    
+    .page-subtitle {
+      font-size: 1rem;
+      color: white;
+      margin-top: 6px;
+      margin-left: 10px;
+    }
+  }
+
+  .page-title {
+    font-size: 1.9rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    color: #ffffff;
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.526);
+    letter-spacing: 0.5px;
+    margin: 0.5em 0;
+    
+    &:hover {
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+      
+      &::after {
+        width: 80px;
+      }
+    }
+  }
+
+
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+  .header-content .logo-image {
+    margin-left: 50px;
+  }
+}
+
+
+@media (max-width: 2000px) {
+
+ 
+    
+
+  }
+
+
+
+
+@media (max-width: 2000px) {
+  .header-content .logo-image {
+    margin-left: -200px;
+  }
+  .header-content .header-text {
+    margin-left: -120px;
+  }
+}
+
+
+@media (max-width: 1200px) {
+  .header-content .logo-image {
+    margin-left: -200px;
+  }
+  .header-content .header-text {
+    margin-left: -120px;
+  }
+}
+
+@media (max-width: 1400px) {
+  
+    .logo-image {
+      margin-left: -40px !important;
+      margin-top: 10px;
+    }
+    
+
+    
+    .header-text {
+      order: 2;
+      margin-left: 0 !important;
+      width: 100%;
+    }
+  
+  }
+
+
+@media (max-width: 2000px) {
+  .header-content .page-title {
+    font-size: 1.7rem;
+      margin-left: -200px !important;
+      margin-top: 20px;
+  }
+
+    .header-content .page-subtitle {
+    font-size: 0.9rem;
+
+      margin-left: -200px !important;
+      margin-top: 20px;
+  }
+       
+      
+
+    }
+   
+
 

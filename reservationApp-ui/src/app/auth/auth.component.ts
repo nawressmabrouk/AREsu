@@ -159,6 +159,7 @@ export class AuthComponent {
 
   // === REGISTRATION METHODS ===
   // Registration Submit
+// register.component.ts
 onRegisterSubmit(event: Event) {
   event.preventDefault();
   this.errorMessage = null;
@@ -167,18 +168,57 @@ onRegisterSubmit(event: Event) {
 
   this.isLoading = true;
 
-  this.registrationService.register(this.registerData).subscribe({
-    next: () => {
+  // Prepare the data in the format expected by the backend
+  const registrationData = {
+    nom: this.registerData.nom,
+    prenom: this.registerData.prenom,
+    email: this.registerData.email,
+    fonction: this.registerData.fonction,
+    numTel: this.registerData.numTel,
+    nomEtablissement: this.registerData.nomEtablissement,
+    linkedin: this.registerData.linkedin,
+    structure: this.registerData.structure,
+    role: this.registerData.role,
+    password: this.registerData.password,
+    isPartenaire: this.registerData.isPartenaire
+  };
+
+  this.registrationService.register(registrationData).subscribe({
+    next: (response) => {
       this.isLoading = false;
       this.notificationService.showSuccess(
         'Inscription réussie ! Veuillez vérifier votre email pour activer votre compte.'
       );
       this.toggleView();
+      this.resetRegisterForm();
     },
     error: (error) => {
-      this.handleRegistrationError(error);
+      this.isLoading = false;
+      if (error === 'Cet email est déjà utilisé') {
+        this.notificationService.showError(error);
+      } else {
+        this.notificationService.showError('Erreur lors de l\'inscription');
+      }
+      console.error('Registration error:', error);
     }
   });
+}
+
+private resetRegisterForm() {
+  this.registerData = {
+    nom: '',
+    prenom: '',
+    email: '',
+    fonction: '',
+    numTel: '',
+    nomEtablissement: '',
+    linkedin: '',
+    structure: '',
+    role: '',
+    password: '',
+    isPartenaire: null
+  };
+  this.confirmPassword = '';
 }
 
   // Validate registration form

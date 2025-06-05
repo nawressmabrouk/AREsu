@@ -14,8 +14,10 @@
     justify-content: center;
     cursor: pointer;
     font-weight: bold;
+    position: relative;
     font-size: 24px;
     transition: all 0.3s ease;
+    right: -200px;
     &:hover {
       background-color: hsl(213, 38%, 53%);
     }
@@ -23,8 +25,8 @@
 
   .profile-dropdown {
     position: absolute;
-    right: 0;
-    top: 50px;
+    right: -180px;
+    top: 70px;
     width: 400px;
     background: white;
      padding: 10px; 
@@ -36,7 +38,7 @@
     box-shadow: 0 6px 12px rgba(12, 12, 12, 0.15),
                 0 4px 8px rgba(5, 5, 5, 0.2),
                 0 0 15px rgba(21, 21, 21, 0.1);
-
+    
     .profile-header {
       padding: 20px;
       display: flex;
@@ -84,6 +86,7 @@ margin-bottom: 8px;
     }
 
     .dropdown-content {
+   
       .dropdown-item {
         padding: 16px 20px;
         display: flex;
@@ -117,6 +120,79 @@ margin-bottom: 8px;
         }
       }
     }
+  }
+  
+/* Version responsive mobile */
+@media (max-width: 1200px) {
+
+ 
+    
+    .profile-dropdown {
+      position: relative;
+      right: -500px;
+      top: 300px !important; /* Espace entre l'icône et le dropdown */
+      width: 100%;
+      max-width: 500px;
+      margin-top: 10px;
+    }
+  
+}
+
+/* Version tablette */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .profile-container {
+    .profile-dropdown {
+      right: 500px;
+      top: 60px;
+      width: 350px;
+    }
+  }
+}
+}
+@media (min-width: 900px) and (max-width: 1200px) {
+  .profile-container .profile-icon {
+    right: -750px;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+}
+@media (min-width: 1200px) and (max-width: 1500px) {
+  .profile-container .profile-icon {
+    right: -900px;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+}
+
+@media (min-width: 1500px) and (max-width: 2000px) {
+  .profile-container .profile-icon {
+   left: 500px;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .profile-container .profile-icon {
+    right: -600px;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+}
+
+
+
+@media (max-width: 768px) {
+  .profile-container .profile-icon {
+    right: -450px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
 

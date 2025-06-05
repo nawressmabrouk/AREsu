@@ -1,23 +1,29 @@
 
 <div class="main">
 <div class="reservation-container">
-  <header class="spaces-header">
-    <div class="header-content">
-      <div class="header-brand">
-        <img src="/logo2.png" alt="Université de Sousse" class="logo-image">
-      </div>
+<header class="spaces-header">
+  <div class="header-content">
 
+    <!-- Logo à gauche -->
+    <div class="header-brand">
+      <img src="/logo2.png" alt="Université de Sousse" class="logo-image">
+    </div>
+
+    <!-- Titre et sous-titre au centre -->
+    <div class="header-text">
       <h1 class="page-title">
-        Formulaire de Réservation
+           Formulaire de Réservation
       </h1>
       <p class="page-subtitle">
-        Complétez les informations nécessaires pour votre événement
+         Complétez les informations nécessaires pour votre événement
       </p>
-
-      <app-profile class="profile-icon" [user]="currentUser"></app-profile>
     </div>
-  </header>
 
+    <!-- Profil à droite -->
+    <app-profile class="profile-icon" [user]="currentUser"></app-profile>
+
+  </div>
+</header>
 <div class="form-container">
    <form class="reservation-form" #reservationForm="ngForm" (ngSubmit)="onSubmit(reservationForm)">
     <!-- Première ligne : Responsable + Email -->

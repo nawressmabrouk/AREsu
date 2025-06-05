@@ -1,26 +1,32 @@
 <div class="main">
 <div class="spaces-container">
   <!-- Header -->
-  <header class="spaces-header">
+<header class="spaces-header">
   <div class="header-content">
+
+    <!-- Logo à gauche -->
     <div class="header-brand">
-      <img src="/logo2.png" alt="Université de Sousse" class="logo-image" >
-     
+      <img src="/logo2.png" alt="Université de Sousse" class="logo-image">
     </div>
 
- <h1 class="page-title">
+    <!-- Titre et sous-titre au centre -->
+    <div class="header-text">
+      <h1 class="page-title">
         {{ selectedEtablissement ? 'Espaces Disponibles' : 'Établissements disponibles' }}
       </h1>
-        <p class="page-subtitle">
+      <p class="page-subtitle">
         {{ selectedEtablissement 
            ? 'Sélectionnez un espace dans ' + selectedEtablissement.nom 
            : 'Sélectionnez un établissement et réservez l\'espace qui vous convient' }}
       </p>
+    </div>
 
-    <app-profile   class="profile-icon" [user]="currentUser"></app-profile>
+    <!-- Profil à droite -->
+    <app-profile class="profile-icon" [user]="currentUser"></app-profile>
+
   </div>
-   
 </header>
+
 
 
 

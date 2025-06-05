@@ -150,49 +150,107 @@ onRegisterSubmit(event: Event) {
 
   this.isLoading = true;
 
-  this.registrationService.register(this.registerData).subscribe({
-    next: () => {
+  // Prepare the data in the format expected by the backend
+  const registrationData = {
+    nom: this.registerData.nom,
+    prenom: this.registerData.prenom,
+    email: this.registerData.email,
+    fonction: this.registerData.fonction,
+    numTel: this.registerData.numTel,
+    nomEtablissement: this.registerData.nomEtablissement,
+    linkedin: this.registerData.linkedin,
+    structure: this.registerData.structure,
+    role: this.registerData.role,
+    password: this.registerData.password,
+    isPartenaire: this.registerData.isPartenaire
+  };
+
+  this.registrationService.register(registrationData).subscribe({
+    next: (response) => {
       this.isLoading = false;
       this.notificationService.showSuccess(
         'Inscription réussie ! Veuillez vérifier votre email pour activer votre compte.'
       );
       this.toggleView();
+      this.resetRegisterForm();
     },
     error: (error) => {
-      this.handleRegistrationError(error);
+      this.isLoading = false;
+      if (error === 'Cet email est déjà utilisé') {
+        this.notificationService.showError(error);
+      } else {
+        this.notificationService.showError('Erreur lors de l\'inscription');
+      }
+      console.error('Registration error:', error);
     }
   });
 }
 
-  private validateRegistration(): boolean {
-    if (Object.values(this.registerData).some(value => !value)) {
-      this.notificationService.showError('Veuillez remplir tous les champs obligatoires');
+private resetRegisterForm() {
+  this.registerData = {
+    nom: '',
+    prenom: '',
+    email: '',
+    fonction: '',
+    numTel: '',
+    nomEtablissement: '',
+    linkedin: '',
+    structure: '',
+    role: '',
+    password: '',
+    isPartenaire: null
+  };
+  this.confirmPassword = '';
+}
+
+private validateRegistration(): boolean {
+  // Check required fields
+  const requiredFields = [
+    'nom', 'prenom', 'email', 'fonction', 'numTel',
+    'nomEtablissement', 'structure', 'role', 'password'
+  ];
+  
+  for (const field of requiredFields) {
+    if (!this.registerData[field as keyof typeof this.registerData]) {
+      this.notificationService.showError(`Le champ ${field} est obligatoire`);
       return false;
     }
-
-    if (!this.isValidEmail(this.registerData.email)) {
-      this.notificationService.showError('Veuillez entrer une adresse email valide');
-      return false;
-    }
-
-    if (this.registerData.linkedin && !this.isValidLinkedInUrl(this.registerData.linkedin)) {
-      this.notificationService.showError('Veuillez entrer une URL LinkedIn valide');
-      return false;
-    }
-
-    if (this.registerData.password !== this.confirmPassword) {
-      this.notificationService.showError('Les mots de passe ne correspondent pas');
-      return false;
-    }
-
-    if (!this.isPasswordStrong(this.registerData.password)) {
-      this.notificationService.showError('Le mot de passe doit contenir au moins 8 caractères avec majuscule, chiffre et symbole');
-      return false;
-    }
-
-    return true;
   }
 
+  // Check isPartenaire is set
+  if (this.registerData.isPartenaire === null) {
+    this.notificationService.showError('Veuillez spécifier si vous êtes partenaire');
+    return false;
+  }
+
+  // Email validation
+  if (!this.isValidEmail(this.registerData.email)) {
+    this.notificationService.showError('Veuillez entrer une adresse email valide');
+    return false;
+  }
+
+  // LinkedIn URL validation
+  if (this.registerData.linkedin && !this.isValidLinkedInUrl(this.registerData.linkedin)) {
+    this.notificationService.showError('Veuillez entrer une URL LinkedIn valide');
+    return false;
+  }
+
+  // Password confirmation
+  if (this.registerData.password !== this.confirmPassword) {
+    this.notificationService.showError('Les mots de passe ne correspondent pas');
+    return false;
+  }
+
+  // Password strength
+  if (!this.isPasswordStrong(this.registerData.password)) {
+    this.notificationService.showError(
+      'Le mot de passe doit contenir au moins 8 caractères avec majuscule, chiffre et symbole'
+    );
+    return false;
+  }
+
+  return true;
+}
   private handleRegistrationError(error: any) {
     this.isLoading = false;
     if (error?.error?.includes('email')) {

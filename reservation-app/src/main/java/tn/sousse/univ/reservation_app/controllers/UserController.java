@@ -29,7 +29,8 @@ import tn.sousse.univ.reservation_app.repositories.UserRepository;
 import tn.sousse.univ.reservation_app.repositories.VerificationTokenRepository;
 import tn.sousse.univ.reservation_app.security.JwtUtil;
 import tn.sousse.univ.reservation_app.services.UserService;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @RestController
 @RequestMapping("/api/utilisateurs")
 public class UserController {
@@ -40,6 +41,8 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil; // Nom de variable cohérent
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    
     @Autowired
     private UserRepository userRepository;
 
@@ -47,19 +50,32 @@ public class UserController {
     private VerificationTokenRepository verificationTokenRepository;
 
     // Register a new user after checking if the email already exists
-    @PostMapping("/inscription")
+@PostMapping("/inscription")
     public ResponseEntity<?> inscrireUtilisateur(@RequestBody UserDTO userDTO) {
-        // Check if email exists first
-        if (userService.emailExists(userDTO.getEmail())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Cet email existe déjà");
-        }
+        try {
+            logger.info("Starting registration for: {}", userDTO.getEmail());
+            
+            if (userService.emailExists(userDTO.getEmail())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Cet email existe déjà");
+            }
 
-        User user = UserMapper.toEntity(userDTO);
-        User savedUser = userService.registerUser(user);
-        return ResponseEntity.ok(UserMapper.toDTO(savedUser));
+            User user = UserMapper.toEntity(userDTO);
+            User savedUser = userService.registerUser(user);
+            
+            logger.info("Registration successful for: {}", savedUser.getEmail());
+            return ResponseEntity.ok(UserMapper.toDTO(savedUser));
+            
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("Cet email existe déjà")) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
+            logger.error("Registration failed", e);
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
+
 
     // Retrieve all users filtered by specific role (converted to DTOs)
     @GetMapping("/parRole/{role}")

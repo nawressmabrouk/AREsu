@@ -8,13 +8,17 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import tn.sousse.univ.reservation_app.models.Role;
 import tn.sousse.univ.reservation_app.models.User;
@@ -22,6 +26,9 @@ import tn.sousse.univ.reservation_app.models.VerificationToken;
 import tn.sousse.univ.reservation_app.repositories.UserRepository;
 import tn.sousse.univ.reservation_app.repositories.VerificationTokenRepository;
 
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 @Service
 public class UserService {
 
@@ -37,26 +44,52 @@ public class UserService {
     @Autowired
     private EmailService emailService;
 
+    
+
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+
     // Registers a new user with email verification
-    public User registerUser(User user) {
-        // Check if email exists
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("Cet email existe déjà");
+@Transactional
+   public User registerUser(User user) {
+        try {
+            // 1. Validate and save user
+            if (userRepository.existsByEmail(user.getEmail())) {
+                throw new RuntimeException("Cet email existe déjà");
+            }
+            
+            user.setEnabled(false);
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            User savedUser = userRepository.save(user);
+            
+            // 2. Create and save verification token
+            String token = UUID.randomUUID().toString();
+            verificationTokenRepository.save(new VerificationToken(token, savedUser.getId()));
+            
+            // 3. Send email asynchronously (won't affect transaction)
+            try {
+                sendActivationEmailAsync(savedUser, token);
+            } catch (Exception e) {
+                logger.error("Failed to send activation email, but user was registered", e);
+            }
+            
+            return savedUser;
+        } catch (Exception e) {
+            logger.error("Registration failed", e);
+            throw e;
         }
-        user.setEnabled(false);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        User savedUser = userRepository.save(user);
-        String token = UUID.randomUUID().toString();
-        verificationTokenRepository.save(new VerificationToken(token, savedUser.getId()));
+    }
+
+    @Async
+    public void sendActivationEmailAsync(User user, String token) {
         String activationLink = "http://localhost:8080/api/utilisateurs/activer?token=" + token;
         String htmlTemplate = loadEmailTemplate("templates/activation-email.html");
         String htmlContent = htmlTemplate.replace("{{activation_link}}", activationLink);
-        emailService.sendHtmlEmail(savedUser.getEmail(),
+        emailService.sendHtmlEmail(user.getEmail(),
                 "Activation de votre compte",
                 htmlContent);
-        return savedUser;
     }
 
+    
     // Creates user accounts by admin with auto-generated password
     public User registerAdminCreatedUser(User user) {
         String plainPassword = generateRandomPassword(12);

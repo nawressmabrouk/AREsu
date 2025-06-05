@@ -172,74 +172,147 @@ position: relative;
 position: relative;
 top: -500px;
 }
-.profile-icon
-{
-  position: relative;
-right: -280px;
 
-}
+
+
+
+
+
+
+/* Base styles (your existing code) */
 .header-content {
-  display: flex;
   justify-content: space-between;
   align-items: center;
   height: 100%;
   width: 100%;
+  position: relative;
+  flex-wrap: wrap;
+  display: flex;
+  flex-wrap: nowrap;
+  padding: 0 20px;
   max-width: 1200px;
   margin: 0 auto;
-  position: relative;
-}
 
-.header-brand {
-  position: absolute;
-  top: -20px;
-  left: -140px;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-right: auto;
-  padding-left: 0;
-
-  
-  .site-name {
-    font-size: 1.6rem;
-    font-weight: bold;
-    white-space: nowrap;
+  .header-brand {
+    flex: 0 0 auto;
+    margin-right: auto;
   }
-}
-
-  .page-subtitle {
-    font-size: 1.2rem;
-    position: relative;
-    top: 30px;
-    right: 150px;
-    color: rgb(255, 255, 255);
-    transition: inherit;
+   
+  .logo-image {
+    max-width: 160px;
+    height: auto;
+    margin-top: 15px;
+    margin-left: -350px;
   }
- .page-title {
-  font-size: 1.9rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  right: -400px;
-  top: -15px;
-  color: #ffffff; /* Couleur de texte profonde */
-  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.526); /* Ombre subtile */
-  letter-spacing: 0.5px; /* Espacement des lettres */
-  margin: 0.5em 0; /* Marge améliorée */
-  position: relative; /* Pour les effets optionnels */
 
-
-  &:hover {
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée au survol */
+  .header-text {
+    flex: 1 1 auto;
+    text-align: center;
+    margin-left: -160px;
     
-    &::after {
-      width: 80px; /* Animation du soulignement au survol */
+    .page-subtitle {
+      font-size: 1rem;
+      color: white;
+      margin-top: 6px;
+      margin-left: 10px;
     }
   }
 
+  .page-title {
+    font-size: 1.9rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    color: #ffffff;
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.526);
+    letter-spacing: 0.5px;
+    margin: 0.5em 0;
+    
+    &:hover {
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+      
+      &::after {
+        width: 80px;
+      }
+    }
+  }
+
+
 }
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+  .header-content .logo-image {
+    margin-left: 50px;
+  }
+}
+
+
+@media (max-width: 2000px) {
+
+ 
+    
+
+  }
+
+
+
+
+
+
+@media (max-width: 1200px) {
+  .header-content .logo-image {
+    margin-left: -200px;
+  }
+  .header-content .header-text {
+    margin-left: -120px;
+  }
+}
+
+@media (max-width: 1400px) {
+  
+    .logo-image {
+      margin-left: -40px !important;
+      margin-top: 10px;
+    }
+    
+
+    
+    .header-text {
+      order: 2;
+      margin-left: 0 !important;
+      width: 100%;
+    }
+  
+  }
+
+
+@media (max-width: 2000px) {
+  .header-content .page-title {
+    font-size: 1.7rem;
+      margin-left: -200px !important;
+      margin-top: 20px;
+  }
+
+    .header-content .page-subtitle {
+    font-size: 0.9rem;
+
+      margin-left: -200px !important;
+      margin-top: 20px;
+  }
+       
+      
+
+    }
+   
+
+
+
+
+
+
 
 .filters-section {
   text-align: center;
@@ -585,10 +658,6 @@ right: -280px;
     }
   }
 
-  .etablissements-grid {
-    grid-template-columns: 1fr;
-    max-width: 500px;
-  }
 
   .espaces-grid {
     grid-template-columns: 1fr;
@@ -599,42 +668,22 @@ right: -280px;
   }
 }
 
-@media (max-width: 480px) {
-  .etablissement-card {
-    padding: 15px;
-
-    .card-header .card-title {
-      font-size: 1.1rem;
-    }
-  }
-
-  .espace-card {
-    padding: 15px;
-  }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 
 
-  .logo-image {
-  max-width: 160px; /* 15% de la largeur de l'écran */
-  height: auto;
-  right: 280px;
-  position: relative;
-  top: 0px;
-}
+
 
 
 .filter-icon {
-position: relative;
-right: 450px;
-top: 50px;
-font-size: 1.4rem;
-font-weight: 800;
-color: rgb(13, 13, 73);
+ position: relative;
+  right: -450px;
+  top: 50px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: rgb(13, 13, 73);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
 }
 
 
@@ -647,3 +696,24 @@ color: rgb(13, 13, 73);
 .main {
 height: 1050px;
 }
+
+@media (max-width: 1024px) {
+  .filter-icon {
+    top: -20px;
+    right: 00px; // Less extreme on medium screens
+    font-size: 1.3rem;
+  }
+}
+
+
+
+
+@media (max-width:1800px) {
+  .filter-icon {
+    top: -10px;
+    right: -50px; // Less extreme on medium screens
+    font-size: 1.3rem;
+  }
+}
+
+

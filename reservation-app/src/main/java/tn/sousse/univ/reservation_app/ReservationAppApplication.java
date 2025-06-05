@@ -4,6 +4,7 @@ import java.util.TimeZone;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 //import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 //import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -11,6 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import jakarta.annotation.PostConstruct;
 
 @SpringBootApplication(scanBasePackages = "tn.sousse.univ.reservation_app")
+@EnableAsync
 @EnableScheduling // Add this annotation
 // @EnableMongoRepositories("tn.sousse.univ.reservation_app.repositories")
 // @EnableReactiveMongoRepositories("tn.sousse.univ.reservation_app.repositories")

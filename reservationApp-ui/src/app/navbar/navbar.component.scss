@@ -1,147 +1,138 @@
 /* Style global */
 .auth-header {
-
-    background: linear-gradient(135deg, hsl(213, 66%, 83%) ,#3b4f90, #232f56  );
+    background: linear-gradient(135deg, hsl(213, 66%, 83%), #3b4f90, #232f56);
     color: white;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 50px;
-    z-index: 1000;
     height: 120px;
-    box-shadow: 
-     
-      0 5px 10px rgba(0, 0, 0, 0.6);
-      
+    z-index: 1000;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);
     transition: box-shadow 0.3s ease;
-    
-  
-   
-  
-  }
-  .page-title {
-    font-size: 1.45rem; /* Réduit de 2rem à 1.4rem */
+}
+
+.page-title {
+    font-size: 1.45rem;
     font-weight: bold;
     margin: 0;
-   color: rgba(202, 197, 197, 0.8);
+    color: rgba(202, 197, 197, 0.8);
     display: flex;
     align-items: center;
-    gap: 0.6rem; /* Espacement réduit entre icône et texte */
+    gap: 0.6rem;
     position: relative;
     right: -40px;
-    .page-icon {
-      font-size: 1rem; /* Réduit de 1.2rem à 1rem */
-      color: #17A2B8;
-    }
-  }
-  .header-content {
+}
+
+.page-title .page-icon {
+    font-size: 1rem;
+    color: #17A2B8;
+}
+
+.header-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
     max-width: 1200px;
     margin: 0 auto;
     gap: 2rem;
-  }
-  
-  /* Section gauche */
-  .left-section {
+}
+
+.left-section {
     display: flex;
     align-items: center;
-    gap: 2rem; /* Espacement augmenté entre logo et titre */
-  }
-  
-  /* Section logo */
-  .logo-section {
+    gap: 2rem;
+}
+
+.logo-section {
     display: flex;
     align-items: center;
     gap: 1.5rem;
     flex-shrink: 0;
-  }
-   
-  .logo {
+}
+
+.logo {
     font-size: 2.5rem;
     color: #17A2B8;
-    
-  }
-  
-  .site-name {
+}
+
+.site-name {
     font-size: 2rem;
     font-weight: bold;
     margin: 0;
     color: white;
-    margin-bottom: 0; // Remplace le margin-bottom original
+    margin-bottom: 0;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
     letter-spacing: 1px;
     transition: all 0.3s ease;
-    &:hover {
-      transform: scale(1.05);
-      opacity: 0.9;
-    }
-  }
-  h2 {
+}
+
+.site-name:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+h2 {
     color: white;
-    position: absolute; // Garde le positionnement absolu existant
+    position: absolute;
     top: 10px;
     left: 20px;
     font-size: 2rem;
-    margin-bottom: 0; // Remplace le margin-bottom original
+    margin-bottom: 0;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
     letter-spacing: 1px;
     transition: all 0.3s ease;
-    
-    &:hover {
-      transform: scale(1.05);
-      opacity: 0.9;
-    }
-  }
-  
-  /* Section droite */
-  .right-section {
+}
+
+h2:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.right-section {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 1.5rem; /* Espacement vertical augmenté */
-  }
-  
+    gap: 1.5rem;
+}
+
 .nav-links {
-  display: flex;
-  gap: 2rem;
-  flex-shrink: 0;
-  font-weight: 800;
-  position: relative;
-  right: -150px;
-  top: 10px;
+    display: flex;
+    gap: 2rem;
+    flex-shrink: 0;
+    font-weight: 800;
+    position: relative;
+    right: -150px;
+    top: 10px;
 }
 
 .nav-link {
-  color: #ffffff;
-  text-decoration: none;
-  font-size: 1.3rem;
-  font-weight: 800;
-  
-  padding: 0.5rem 0;
-  transition: all 0.3s ease;
-  position: relative; // Important pour le pseudo-élément
-  
-  &:hover {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 1.3rem;
+    font-weight: 800;
+    padding: 0.5rem 0;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-link:hover {
     color: black;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      width: 100%;
-      height: 2px;
-      background-color: black;
-      bottom: 0;
-      left: 0;
-      transform: scaleX(1);
-      transform-origin: center;
-    }
-  }
-  
-  // Animation optionnelle pour l'apparition de la ligne
-  &::after {
+}
+
+.nav-link:hover::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background-color: black;
+    bottom: 0;
+    left: 0;
+    transform: scaleX(1);
+    transform-origin: center;
+}
+
+.nav-link::after {
     content: '';
     position: absolute;
     width: 100%;
@@ -151,317 +142,204 @@
     left: 0;
     transform: scaleX(0);
     transition: transform 0.3s ease;
-  }
-  
-  &.router-link-active {
-    color: #17A2B8;
-    
-    &::after {
-      background-color: #17A2B8;
-      transform: scaleX(1);
-    }
-  }
 }
 
-  
-  /* Informations de page */
-  .page-info {
-    margin-left: auto; /* Pousse vers la droite */
-    margin-right: 3rem; /* Empêche d'aller trop à droite */
+.nav-link.router-link-active {
+    color: #17A2B8;
+}
+
+.nav-link.router-link-active::after {
+    background-color: #17A2B8;
+    transform: scaleX(1);
+}
+
+.page-info {
+    margin-left: auto;
+    margin-right: 3rem;
     text-align: left;
     position: relative;
     right: -450px;
     top: -20px;
-    
-  }
-  
-  
-  
-  .breadcrumb {
+}
+
+.breadcrumb {
     font-size: 1rem;
     font-weight: 800;
     color: rgba(202, 197, 197, 0.8);
     margin-top: 0.5rem;
     right: 200px;
-   
-  }
-  
-  
-  .breadcrumb span {
+}
+
+.breadcrumb span {
     margin: 0 0.3rem;
-    
-  }
-  
-  /* Contenu principal */
-  router-outlet {
+}
+
+router-outlet {
     margin-top: 150px;
     display: block;
     padding: 2rem 5%;
-  }
-  
-  /* Responsive */
-  @media (max-width: 992px) {
+}
+
+.logo-image {
+    max-width: 160px;
+    height: auto;
+    right: 400px;
+    position: relative;
+    top: -10px;
+}
+
+/* Responsive adjustments (from code 2) */
+@media (max-width: 1700px) {
     .header-content {
-      flex-direction: column;
-      gap: 1.5rem;
+        gap: 1rem;
+        padding: 0 20px;
     }
     
-    .right-section {
-      align-items: flex-start;
+    .logo-image {
+        right: 30px;
+    }
+    
+    .nav-links {
+        right: 100px;
     }
     
     .page-info {
-      margin-right: 0;
-      text-align: left;
+        right: -60px;
     }
-  }
-  
-  @media (max-width: 768px) {
-    .nav-links {
-      flex-wrap: wrap;
-      gap: 1.5rem;
-    }
-    
-    .left-section {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-    
-    router-outlet {
-      margin-top: 220px;
-    }
-  }
-  
-  /* Add these media queries at the end of your existing CSS */
-  
-  @media (max-width: 1200px) {
-    .header-content {
-      padding: 0 2%;
-    }
-  }
-  
-  @media (max-width: 992px) {
-    .site-name {
-      font-size: 1.8rem;
-    }
-    
-    .nav-link {
-      font-size: 1rem;
-    }
-    
-    .page-title {
-      font-size: 1.3rem;
-    }
-  }
-  
-  @media (max-width: 768px) {
+}
+
+@media (max-width: 768px) {
     .auth-header {
-      padding: 1rem 5%;
+        height: 100px;
     }
     
-    .logo {
-      font-size: 2rem;
-    }
-    
-    .site-name {
-      font-size: 1.6rem;
+    .logo-image {
+        right: 30px;
+        max-width: 140px;
     }
     
     .nav-links {
-      gap: 1.2rem;
-    }
-    
-    router-outlet {
-      margin-top: 180px;
-    }
-  }
-  
-  @media (max-width: 576px) {
-    .left-section {
-      gap: 1rem;
-    }
-    
-    .logo-section {
-      gap: 1rem;
-    }
-    
-    .site-name {
-      font-size: 1.4rem;
+        right: 50px;
+        gap: 1.5rem;
     }
     
     .nav-link {
-      font-size: 0.9rem;
+        font-size: 1.1rem;
+    }
+    
+    .page-info {
+        right: -70px;
+        top: -25px;
     }
     
     .page-title {
-      font-size: 1.1rem;
-      
-      .page-icon {
+        font-size: 1.2rem;
+        right: -30px;
+    }
+    
+    .breadcrumb {
         font-size: 0.9rem;
-      }
-    }
-    
-    .breadcrumb {
-      font-size: 0.85rem;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .header-content {
-      gap: 1rem;
-    }
-    
-    .nav-links {
-      gap: 1rem;
-      justify-content: center;
-    }
-    
-    .logo {
-      font-size: 1.8rem;
     }
     
     router-outlet {
-      margin-top: 160px;
-      padding: 1.5rem 5%;
+        margin-top: 130px;
     }
-  }
-  
-  @media (max-width: 360px) {
-    .site-name {
-      font-size: 1.2rem;
+}
+
+@media (max-width: 600px) {
+    .header-content {
+        flex-wrap: wrap;
+        justify-content: center;
+        padding-bottom: 10px;
     }
     
-    .nav-link {
-      font-size: 0.85rem;
+    .logo-image {
+        right: 0;
+        position: static;
+        margin: 0 auto;
+    }
+    
+    .right-section {
+        width: 100%;
+        align-items: center;
+    }
+    
+    .nav-links {
+        right: 0;
+        position: static;
+        justify-content: center;
+        margin-top: 5px;
+    }
+    
+    .page-info {
+        right: 0;
+        position: static;
+        text-align: center;
+        margin: 10px auto 0;
     }
     
     .page-title {
-      font-size: 1rem;
+        right: 0;
+        justify-content: center;
     }
     
     .breadcrumb {
-      font-size: 0.8rem;
+        right: 0;
+        justify-content: center;
+        display: flex;
     }
-  }
-  
-  
-  .logo-image {
-  max-width: 160px; /* 15% de la largeur de l'écran */
-  height: auto;
-  right: 400px;
-  position: relative;
-  top: -10px;
+    
+    router-outlet {
+        margin-top: 160px;
+    }
 }
 
-
-
-
-
-/* 🔁 Responsive design */
-@media (max-width: 1200px) {
-  .main-container {
-    width: 90%;
-    flex-direction: column;
-    height: auto;
-  }
-
-  .main-content {
-    width: 95%;
-    flex-direction: column;
-    height: auto;
-    padding: 20px;
-  }
-
-  .greeting-container {
-    width: 100%;
-    height: auto;
-    padding: 20px;
-  }
-
-  .signup-content,
-  .signin-content {
-    flex-direction: column;
-    width: 100% !important;
-  }
-
-  .form-content {
-    width: 90% !important;
-    left: 0 !important;
-    right: 0 !important;
-    margin: auto;
-    padding: 20px;
-    top: 0 !important;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr !important;
-    gap: 15px;
-    right: 0 !important;
-  }
-
-  .btn-sumbit,
-  .main-button,
-  .main-button1 {
-    right: 0 !important;
-    left: 0 !important;
-    margin: 0 auto !important;
-    top: 20px;
-  }
-
-  .register-title,
-  .register1-title,
-  .title {
-    right: 0 !important;
-    text-align: center;
-  }
-
-  .form1-grid .input-container {
-    width: 100% !important;
-    left: 0 !important;
-  }
-
-  .forgot-password {
-    left: 0 !important;
-    text-align: center;
-  }
-
-  .login-section {
-    width: 95%;
-    right: 0 !important;
-    margin: auto;
-    padding: 20px;
-  }
-
-  .slide-shape {
-    display: none;
-  }
+@media (max-width: 480px) {
+    .auth-header {
+        height: auto;
+        padding-bottom: 10px;
+    }
+    
+    .nav-links {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .nav-link {
+        font-size: 1rem;
+        padding: 0.3rem 0;
+    }
+    
+    .page-title {
+        font-size: 1.1rem;
+    }
+    
+    .breadcrumb {
+        font-size: 0.8rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    router-outlet {
+        margin-top: 180px;
+        padding: 1rem;
+    }
 }
 
-@media (max-width: 576px) {
-  .title,
-  .register-title,
-  .register1-title {
-    font-size: 1.4rem !important;
-  }
-
-  .form-content {
-    padding: 10px !important;
-  }
-
-  .form1-grid .input-container {
-    height: 40px !important;
-  }
-
-  .btn-sumbit,
-  .main-button,
-  .main-button1 {
-    width: 90% !important;
-  }
-
-  .forgot-password {
-    font-size: 0.9rem !important;
-  }
+@media (max-width: 360px) {
+    .nav-links {
+        gap: 0.8rem;
+    }
+    
+    .nav-link {
+        font-size: 0.9rem;
+    }
+    
+    .page-title {
+        font-size: 1rem;
+    }
+    
+    .breadcrumb {
+        font-size: 0.7rem;
+    }
 }
-
-
