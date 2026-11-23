@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+# pre-commit: block commits that contain secrets.
+#
+# Enable once per clone (from the repository root):
+#     git config core.hooksPath .githooks
+#
+# 1. If gitleaks is installed, it scans the staged changes.
+# 2. A built-in check always runs as well (no install needed). It blocks:
+#    - secret files: .env, credential JSON files, keys, secrets/, .history/
+#    - secret-looking values in the staged lines (MongoDB URI with password,
+#      Google API key, private key, OAuth client secret, literal passwords /
+#      secrets in YAML or .properties files, common cloud tokens).
+#
+# Only the file, line and type are printed, never the value.
+# A line can be allowed explicitly with the marker:  pragma: allowlist secret
+# ---------------------------------------------------------------------------
+set -u
+fail=0
+
+# --- 1. gitleaks (optional) ------------------------------------------------
+if command -v gitleaks >/dev/null 2>&1; then
+  if gitleaks git --help >/dev/null 2>&1; then
+    gitleaks git --pre-commit --staged --redact --no-banner || fail=1
+  else
+    gitleaks protect --staged --redact --no-banner || fail=1
+  fi
+fi
+
+# --- 2. built-in check ------------------------------------------------------
+staged_files=$(git diff --cached --name-only --diff-filter=ACMR)
+
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    *.env.example) ;;
+    .env|*/.env|.env.*|*/.env.*)
+      echo "BLOCKED  $f  (fichier .env : il ne doit jamais être commité)"; fail=1 ;;
+  esac
+  if echo "$f" | grep -q -i -E '(client_secret[^/]*\.json|service-account[^/]*\.json|credentials[^/]*\.json|\.(p12|pfx|pem|jks|key)$|(^|/)secrets/|(^|/)\.history/|StoredCredential)'; then
+    echo "BLOCKED  $f  (fichier de clé / identifiants ou sauvegarde .history)"; fail=1
+  fi
+done <<< "$staged_files"
+
+findings=$(git diff --cached -U0 --no-color --diff-filter=ACMR | awk '
+  function report(type) { printf "BLOCKED  %s:%d  (%s)\n", file, line, type; found=1 }
+  /^\+\+\+ / { file=substr($0,7); next }
+  /^@@/ { match($0, /\+[0-9]+/); line=substr($0, RSTART+1, RLENGTH-1)-1; next }
+  /^\+/ {
+    line++; s=substr($0,2)
+    if (s ~ /pragma: allowlist secret/) next
+    if (file ~ /\.env\.example$/) next
+    if (s ~ /mongodb(\+srv)?:\/\/[^\/[:space:]:@"]+:[^@[:space:]"]+@/ && s !~ /<password>|\$\{/) report("URI MongoDB avec mot de passe")
+    if (s ~ /AIza[0-9A-Za-z_-]{35}/) report("clé API Google")
+    if (s ~ /-----BEGIN ([A-Z]+ )?PRIVATE KEY-----/) report("clé privée")
+    if (s ~ /"(client_secret|private_key_id)"[[:space:]]*:[[:space:]]*"[^"]+"/ || s ~ /GOCSPX[-]/) report("secret OAuth / compte de service Google")
+    if (s ~ /(ghp_[0-9A-Za-z]{30,}|github_pat_[0-9A-Za-z_]{30,}|AKIA[0-9A-Z]{16}|xox[baprs]-[0-9A-Za-z-]{10,}|sk-[0-9A-Za-z]{32,})/) report("jeton d acces (GitHub / AWS / Slack / OpenAI)")
+    if (file ~ /\.(ya?ml|properties)$/) {
+      if (s ~ /^[[:space:]]*[A-Za-z0-9_.-]*(password|passwd|secret|secret-key|api-key|apikey|token)[[:space:]]*[:=][[:space:]]*[^[:space:]$#{]/ && s !~ /[:=][[:space:]]*(true|false|""|'"''"')[[:space:]]*$/)
+        report("valeur secrète en clair (utilisez ${VARIABLE})")
+    }
+    next
+  }
+  END { exit found ? 1 : 0 }
+') || fail=1
+[ -n "$findings" ] && echo "$findings"
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "Commit refusé : des secrets semblent présents dans les changements indexés."
+  echo "Mettez les valeurs dans reservation-app/.env (ignoré par git) et référencez-les"
+  echo "avec \${VARIABLE}. Voir README.md, section « Configuration and secrets »."
+  exit 1
+fi
+exit 0
