@@ -24,7 +24,7 @@ const ICONS: Record<ToastType, string> = { success: 'check_circle', error: 'erro
   `,
   styles: `
     .toasts {
-      position: fixed; z-index: 2000; right: var(--space-4); bottom: var(--space-4);
+      position: fixed; z-index: 2000; right: var(--space-4); top: calc(var(--topbar-height) + var(--space-3));
       display: flex; flex-direction: column; gap: var(--space-2);
       width: min(400px, calc(100vw - 2 * var(--space-4)));
       pointer-events: none;

@@ -1,67 +1,59 @@
+@if (!inline) {
+  <button type="button" class="launcher" [class.open]="isOpen" (click)="toggleChat()"
+          [attr.aria-expanded]="isOpen" aria-controls="spacey-panel"
+          [attr.aria-label]="isOpen ? 'Fermer l\'assistant' : 'Ouvrir l\'assistant de réservation'">
+    <mat-icon>{{ isOpen ? 'close' : 'chat' }}</mat-icon>
+  </button>
+}
 
-<button class="chat-toggle-btn" (click)="toggleChat()">
-  <!-- Icône de chat (fermé) - Version originale -->
-  <svg *ngIf="!isOpen" xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 64 64" fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="2">
-    <path d="M10 12h44a6 6 0 0 1 6 6v20a6 6 0 0 1-6 6H22l-12 8V18a6 6 0 0 1 6-6z" fill="white" />
-    <circle cx="28" cy="28" r="5" fill="#3b4f90" />
-    <rect x="23" y="33" width="10" height="9" fill="#3b4f90" rx="2" ry="2" />
-    <circle cx="37" cy="28" r="5" fill="white" stroke="#3b4f90" stroke-width="2" />
-    <rect x="32" y="33" width="10" height="9" fill="white" stroke="#3b4f90" stroke-width="2" rx="2" ry="2" />
-  </svg>
-
-  <!-- Icône de flèche vers le bas (ouverte) - Taille proportionnelle et blanche -->
-  <svg *ngIf="isOpen" xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: scale(0.6);">
-    <path d="M6 9l6 6 6-6"/>
-  </svg>
-</button>
-
-
-
-
-
-<!-- Fenêtre de chat -->
-<!-- Fenêtre de chat -->
-<div class="chat-container" *ngIf="isOpen" [class.expanded]="isExpanded">
-  <!-- Titre en haut -->
-  <div class="chat-header">
-     <fa-icon [icon]="faCommentDots" size="2x" style="color: #ffffff;"></fa-icon>
-  <fa-icon [icon]="faRobot" size="1x" style="color: #3b4f90; position: absolute; top: 18px; left: 20px;"></fa-icon>
-    <h3>Spacey</h3>
-    <!-- Bouton agrandir/réduire -->
-    <button class="expand-toggle-btn" (click)="toggleExpand()">
-  <!-- Icône "fermée" (flèches horizontales) -->
-  <svg *ngIf="!isExpanded" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="7 8 3 12 7 16"></polyline>
-    <polyline points="17 8 21 12 17 16"></polyline>
-  </svg>
-
-  <!-- Icône "ouverte" (flèches verticales) -->
-  <svg *ngIf="isExpanded" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="8 7 12 3 16 7"></polyline>
-    <polyline points="8 17 12 21 16 17"></polyline>
-  </svg>
-</button>
-  </div>
-
-  <!-- Zone des messages -->
-  <div class="messages" #messagesContainer>
-    <div *ngFor="let msg of messages">
-      <div class="message-bubble" [ngClass]="msg.from">
-        <img *ngIf="msg.from === 'bot'" src="/bot-avatar.png" alt="bot" class="avatar" />
-        <div *ngIf="msg.loading" class="loading-indicator">
-          <div class="dot-flashing"></div>
-        </div>
-        <span *ngIf="!msg.loading">{{ msg.text }}</span>
+@if (isOpen) {
+  <section id="spacey-panel" class="panel" [class.expanded]="isExpanded" role="dialog" aria-label="Assistant Spacey">
+    <header class="panel-head">
+      <img src="/bot-avatar.png" alt="" class="bot-avatar" width="36" height="36" />
+      <div class="title">
+        <h2>Spacey</h2>
+        <p><span class="dot" aria-hidden="true"></span>Assistant de réservation</p>
       </div>
+      @if (!inline) {
+        <button mat-icon-button type="button" class="head-btn" (click)="toggleExpand()"
+                [matTooltip]="isExpanded ? 'Réduire' : 'Agrandir'"
+                [attr.aria-label]="isExpanded ? 'Réduire la fenêtre' : 'Agrandir la fenêtre'">
+          <mat-icon>{{ isExpanded ? 'close_fullscreen' : 'open_in_full' }}</mat-icon>
+        </button>
+        <button mat-icon-button type="button" class="head-btn" (click)="toggleChat()" aria-label="Fermer l'assistant">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </header>
+
+    <div class="messages" #messagesContainer aria-live="polite">
+      @for (msg of messages; track $index) {
+        <div class="msg" [class.user]="msg.from === 'user'">
+          @if (msg.from === 'bot') { <img src="/bot-avatar.png" alt="" class="msg-avatar" width="28" height="28" /> }
+          @if (msg.loading) {
+            <div class="bubble typing" aria-label="Spacey écrit…"><span></span><span></span><span></span></div>
+          } @else {
+            <div class="bubble">{{ msg.text }}</div>
+          }
+        </div>
+      }
+
+      @if (!hasConversation) {
+        <div class="suggestions" aria-label="Questions fréquentes">
+          @for (s of suggestions; track s) {
+            <button type="button" (click)="ask(s)">{{ s }}</button>
+          }
+        </div>
+      }
     </div>
-  </div>
 
-  <!-- Zone de saisie (reste en bas) -->
-  <div class="input-area">
-    <input type="text" [(ngModel)]="userMessage" 
-           (keyup.enter)="sendMessage()" placeholder="Message">
-    <button (click)="sendMessage()">Envoyer</button>
-  </div>
-</div>
-
-
+    <form class="composer" (ngSubmit)="sendMessage()">
+      <label for="spacey-input" class="sr-only">Votre message</label>
+      <input #input id="spacey-input" type="text" name="message" [(ngModel)]="userMessage"
+             placeholder="Posez votre question…" autocomplete="off" />
+      <button mat-icon-button type="submit" class="send" [disabled]="!userMessage.trim() || waiting" aria-label="Envoyer">
+        <mat-icon>send</mat-icon>
+      </button>
+    </form>
+  </section>
+}

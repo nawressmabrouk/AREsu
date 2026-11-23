@@ -7,6 +7,7 @@ import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterLinkAc
 import { filter } from 'rxjs';
 import { AuthService } from '../services/auth/auth.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
+import { ChatComponent } from '../chatbot/chatbot.component';
 import { ThemeToggleComponent } from '../shared/ui/theme-toggle.component';
 import { NAV_BY_ROLE, NavItem, roleLabel } from './nav';
 
@@ -15,7 +16,7 @@ const COLLAPSED_KEY = 'aresu-sidebar-collapsed';
 /** Layout of the logged-in pages: collapsible sidebar, top bar (breadcrumb + user menu), content. */
 @Component({
   selector: 'app-shell-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatButtonModule, MatIcon, MatTooltip, ThemeToggleComponent, ProfileComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatButtonModule, MatIcon, MatTooltip, ThemeToggleComponent, ProfileComponent, ChatComponent],
   templateUrl: './shell-layout.component.html',
   styleUrl: './shell-layout.component.scss',
 })

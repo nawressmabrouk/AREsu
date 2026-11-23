@@ -5,12 +5,13 @@ import { MatIcon } from '@angular/material/icon';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../services/auth/auth.service';
+import { ChatComponent } from '../chatbot/chatbot.component';
 import { ThemeToggleComponent } from '../shared/ui/theme-toggle.component';
 
 /** Layout of the public pages: top navbar (one shared header), content, footer. */
 @Component({
   selector: 'app-public-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatButtonModule, MatIcon, ThemeToggleComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatButtonModule, MatIcon, ThemeToggleComponent, ChatComponent],
   templateUrl: './public-layout.component.html',
   styleUrl: './public-layout.component.scss',
 })

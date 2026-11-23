@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { AdminComponent } from './admin/admin.component';
 import { AuthComponent } from './auth/auth.component';
 import { authGuard, redirectToRoleHome, roleGuard, Roles } from './auth/auth.guard';
-import { ChatComponent } from './chatbot/chatbot.component';
+import { AssistantPageComponent } from './chatbot/assistant-page.component';
 import { HomeComponent } from './home/home.component';
 import { IdOublieComponent } from './mot-de-passe-oubliée/id-oublie/id-oublie.component';
 import { ResetPasswordComponent } from './mot-de-passe-oubliée/reset-password/reset-password.component';
@@ -30,7 +30,7 @@ export const routes: Routes = [
       { path: 'register', component: RegisterComponent, title: 'Créer un compte' },
       { path: 'mot-de-passe-oublie', component: IdOublieComponent, title: 'Mot de passe oublié' },
       { path: 'reset-password', component: ResetPasswordComponent, title: 'Nouveau mot de passe' },
-      { path: 'chatbot', component: ChatComponent, title: 'Assistant' },
+      { path: 'chatbot', component: AssistantPageComponent, title: 'Assistant' },
     ],
   },
   // --- Spaces catalogue: app shell when logged in, public navbar otherwise ---
