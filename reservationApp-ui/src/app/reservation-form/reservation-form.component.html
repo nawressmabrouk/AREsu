@@ -117,8 +117,8 @@
       <div class="form-actions">
         <button mat-button type="button" (click)="goBack()">Annuler</button>
         <button mat-flat-button type="submit" [disabled]="isLoading">
-          @if (isLoading) { <mat-progress-spinner mode="indeterminate" diameter="18" /> Envoi en cours… }
-          @else { <mat-icon>send</mat-icon>Envoyer la demande }
+          @if (isLoading) { <mat-progress-spinner mode="indeterminate" diameter="18" /> } @else { <mat-icon>send</mat-icon> }
+          {{ isLoading ? 'Envoi en cours…' : 'Envoyer la demande' }}
         </button>
       </div>
     </form>

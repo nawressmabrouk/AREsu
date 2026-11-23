@@ -127,7 +127,7 @@
               <h3 class="card-title">{{ espace.nom || 'Espace sans nom' }}</h3>
             </header>
             <p class="meta"><mat-icon aria-hidden="true">groups</mat-icon>Jusqu'à {{ espace.capacite || 0 }} personnes</p>
-            @if (espace.equipement?.length) {
+            @if ((espace.equipement || []).length) {
               <ul class="chips" aria-label="Équipements">
                 @for (eq of espace.equipement; track eq) { <li>{{ eq }}</li> }
               </ul>
