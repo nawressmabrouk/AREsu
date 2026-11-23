@@ -77,25 +77,61 @@ Once both are running, open:
 
 The Angular app is configured to proxy `/api` calls to the backend via the file `reservationApp-ui/proxy.conf.json`.
 
-## Configuration notes
+## Configuration and secrets
 
-The backend configuration is in:
+`reservation-app/src/main/resources/application.yml` contains **no secrets**, only
+`${VARIABLE}` placeholders. The values come from environment variables or from a
+git-ignored `reservation-app/.env` file. Real environment variables take precedence
+over `.env`.
 
-- `reservation-app/src/main/resources/application.yml`
+### 1. Create your `.env`
 
-Important settings include:
+```powershell
+cd reservation-app
+Copy-Item .env.example .env
+notepad .env
+```
 
-- MongoDB connection URI
-- JWT secret and expiry
-- Mail credentials
-- Google Calendar configuration
+`.env.example` lists every variable with an explanation. The essentials:
 
-## Default admin credentials
+| Variable | Required | Notes |
+|---|---|---|
+| `JWT_SECRET` | yes | Base64, at least 256 bits. Generate it with the command below. |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | on first start | Creates the first SUPER_ADMIN (see below). |
+| `MONGODB_URI` | no | Defaults to `mongodb://localhost:27017/reservation`. |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | no | Gmail address + **App Password**. |
+| `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` | no | Defaults to `file:./secrets/service-account.json`. |
 
-The application security configuration includes a default admin user:
+Generate a JWT secret (PowerShell):
 
-- Username: `admin`
-- Password: `admin`
+```powershell
+$b = New-Object byte[] 64; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)
+```
+
+Google credential files (service-account key) go in `reservation-app/secrets/`,
+which is git-ignored. Never put them in `src/main/resources`.
+
+### 2. First SUPER_ADMIN account
+
+There is **no default login**. On startup, if no SUPER_ADMIN exists in the database,
+the backend creates one from `ADMIN_USERNAME` (an e-mail address, used to log in) and
+`ADMIN_PASSWORD` (stored as a BCrypt hash). The backend refuses to start if the
+password is weak (minimum 12 characters and 3 of: lowercase, uppercase, digit, symbol)
+or if the variables are missing while no SUPER_ADMIN exists. An existing account is
+never modified, so after the first start you can remove `ADMIN_PASSWORD` from `.env`.
+
+### 3. Secret protection (pre-commit hook)
+
+The repository ships a pre-commit hook that blocks commits containing secrets
+(`.env` files, credential JSON files, keys, passwords, MongoDB URIs with a password,
+Google API keys...). Enable it once per clone:
+
+```powershell
+git config core.hooksPath .githooks
+```
+
+It works out of the box. If [gitleaks](https://github.com/gitleaks/gitleaks) is
+installed (`winget install --id Gitleaks.Gitleaks`), the hook also runs it.
 
 ## Common issues
 
