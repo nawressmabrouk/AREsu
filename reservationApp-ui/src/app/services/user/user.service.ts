@@ -46,8 +46,6 @@ getProfile(): Observable<User> {
         throw new Error('Aucune donnée reçue');
       }
       
-      // Log the raw response
-      console.log('Raw profile response:', response);
       
       return {
         id: response._id || response.id || '', 
@@ -107,7 +105,6 @@ updateProfile(profileData: any): Observable<any> {
       observe: 'response'
     }).pipe(
       tap(response => {
-        console.log('Réponse du backend:', response);
         // After successful update, refresh user data
         if (response.status === 200) {
           this.authService.refreshUserData();
@@ -132,7 +129,6 @@ changePassword(passwordData: any): Observable<any> {
     headers: this.getAuthHeaders(),
     responseType: 'text' // Tell Angular to expect text response
   }).pipe(
-    tap(response => console.log('Password change response:', response)),
     map(response => ({ message: response })), // Convert to object
     catchError(error => {
       console.error('Detailed password change error:', error);

@@ -113,7 +113,6 @@ export class ReservationFormComponent implements OnInit {
         // Load space details including capacity
         this.loadEspaceDetails(params['espaceId']);
 
-        console.log('Reservation data initialized:', this.reservation);
       } catch (error) {
         console.error('Error initializing reservation:', error);
         this.errorMessage = 'Créneau invalide. Veuillez choisir un nouveau créneau.';
@@ -284,20 +283,6 @@ private loadEspaceDetails(espaceId: string): void {
   }
 
   isFormValid(form: NgForm): boolean {
-    console.log('Form validation check:', {
-  formValid: form.valid,
-  responsableAction: this.reservation.responsableAction,
-  intituleAction: this.reservation.intituleAction,
-  nbrParticipant: this.reservation.nbrParticipant,
-  cible: this.reservation.cible,
-  emailValid: this.emailIsValid(),
-  fonctionR: this.reservation.fonctionR,
-  structure: this.reservation.structure,
-  linkedInValid: this.linkedInIsValid(),
-  description: this.reservation.description,
-  timeSlotValid: this.timeSlotIsValid(),
-  capacity: this.selectedSpaceCapacity
-});
     return !!form.valid &&
            this.reservation.responsableAction.trim() !== '' &&
            this.reservation.intituleAction.trim() !== '' &&
@@ -314,12 +299,16 @@ private loadEspaceDetails(espaceId: string): void {
   async onSubmit(form: NgForm): Promise<void> {
     this.formSubmitted = true;
     this.errorMessage = null;
-    this.isLoading = true;
 
+    // Invalid form: the fields show their own errors, nothing is sent
+    if (!this.isFormValid(form)) {
+      form.control.markAllAsTouched();
+      this.errorMessage = 'Veuillez remplir correctement tous les champs obligatoires.';
+      return;
+    }
+
+    this.isLoading = true;
     try {
-      if (!this.isFormValid(form)) {
-        throw new Error('Veuillez remplir correctement tous les champs obligatoires.');
-      }
 
       if (!this.currentUser?.userId) {
         throw new Error('Session expirée, veuillez vous reconnecter.');
@@ -334,7 +323,6 @@ private loadEspaceDetails(espaceId: string): void {
         heureFin: this.reservation.heureFin
       };
 
-      console.log('Submission payload:', reservationPayload);
 
       // Create reservation
       const createResponse = await lastValueFrom(
