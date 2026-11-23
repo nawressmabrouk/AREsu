@@ -6,7 +6,9 @@ import { ChatComponent } from './chatbot/chatbot.component';
 import { HomeComponent } from './home/home.component';
 import { IdOublieComponent } from './mot-de-passe-oubliée/id-oublie/id-oublie.component';
 import { ResetPasswordComponent } from './mot-de-passe-oubliée/reset-password/reset-password.component';
+import { AdaptiveLayoutComponent } from './layout/adaptive-layout.component';
 import { PublicLayoutComponent } from './layout/public-layout.component';
+import { ShellLayoutComponent } from './layout/shell-layout.component';
 import { RegisterComponent } from './register/register.component';
 import { ReservationFormComponent } from './reservation-form/reservation-form.component';
 import { RoomManagerComponent } from './room-manager/room-manager.component';
@@ -31,7 +33,12 @@ export const routes: Routes = [
       { path: 'chatbot', component: ChatComponent, title: 'Assistant' },
     ],
   },
-  { path: 'spaces', component: SpacesComponent, title: 'Espaces' },
+  // --- Spaces catalogue: app shell when logged in, public navbar otherwise ---
+  {
+    path: 'spaces',
+    component: AdaptiveLayoutComponent,
+    children: [{ path: '', component: SpacesComponent, title: 'Espaces' }],
+  },
 
   // --- Old URLs and aliases (links in e-mails, bookmarks, redirects) --------
   { path: 'navbar/auth', redirectTo: 'login', pathMatch: 'full' },
@@ -40,17 +47,25 @@ export const routes: Routes = [
   { path: 'home', redirectTo: '', pathMatch: 'full' },
   { path: 'unauthorized', canActivate: [redirectToRoleHome], children: [] },
 
-  // --- Any logged-in user -------------------------------------------------
-  { path: 'reservation-form', component: ReservationFormComponent, canActivate: [authGuard] },
-  { path: 'selection-calendar', component: SelectionCalendarComponent, canActivate: [authGuard] },
+  // --- Logged-in pages: app shell (sidebar, top bar, breadcrumb) -------------
+  {
+    path: '',
+    component: ShellLayoutComponent,
+    canActivate: [authGuard],
+    children: [
+      // Any logged-in user
+      { path: 'selection-calendar', component: SelectionCalendarComponent, title: 'Choisir un créneau' },
+      { path: 'reservation-form', component: ReservationFormComponent, title: 'Demande de réservation' },
 
-  // --- Role-specific dashboards -------------------------------------------
-  { path: 'admin', component: AdminComponent, canActivate: [roleGuard(Roles.ADMIN)] },
-  { path: 'secretary', component: SecretaryComponent, canActivate: [roleGuard(Roles.SECRETAIRE_GENERALE)] },
-  { path: 'room-manager', component: RoomManagerComponent, canActivate: [roleGuard(Roles.RESPONSABLE_SALLE)] },
-  { path: 'super-admin/dashboard', component: DashboardComponent, canActivate: [roleGuard(Roles.SUPER_ADMIN)] },
-  { path: 'super-admin/etablissement-card', component: EtablissementCardComponent, canActivate: [roleGuard(Roles.SUPER_ADMIN)] },
-  { path: 'super-admin/etablissement-details', component: EtablissementDetailsComponent, canActivate: [roleGuard(Roles.SUPER_ADMIN)] },
+      // Role-specific dashboards
+      { path: 'admin', component: AdminComponent, canActivate: [roleGuard(Roles.ADMIN)], title: 'Administration' },
+      { path: 'secretary', component: SecretaryComponent, canActivate: [roleGuard(Roles.SECRETAIRE_GENERALE)], title: 'Réservations' },
+      { path: 'room-manager', component: RoomManagerComponent, canActivate: [roleGuard(Roles.RESPONSABLE_SALLE)], title: 'Mes espaces et demandes' },
+      { path: 'super-admin/dashboard', component: DashboardComponent, canActivate: [roleGuard(Roles.SUPER_ADMIN)], title: 'Établissements' },
+      { path: 'super-admin/etablissement-card', component: EtablissementCardComponent, canActivate: [roleGuard(Roles.SUPER_ADMIN)], title: 'Établissement' },
+      { path: 'super-admin/etablissement-details', component: EtablissementDetailsComponent, canActivate: [roleGuard(Roles.SUPER_ADMIN)], title: 'Détails de l’établissement' },
+    ],
+  },
 
   { path: '**', redirectTo: '' },
 ];
