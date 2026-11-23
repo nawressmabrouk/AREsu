@@ -33,7 +33,7 @@ import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.EventReminder;
 
-import io.netty.util.internal.ThreadLocalRandom;
+import java.util.concurrent.ThreadLocalRandom;
 import jakarta.validation.constraints.Pattern;
 import tn.sousse.univ.reservation_app.dto.CalendarSlotDTO;
 import tn.sousse.univ.reservation_app.models.Espace;
