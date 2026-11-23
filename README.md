@@ -1,81 +1,98 @@
-# ReservationApp
+# ReservationApp (AREsu)
 
-ReservationApp is a full-stack reservation system for managing university spaces and bookings. It includes:
+Space-reservation platform for the Université de Sousse: users book rooms,
+amphitheatres and other spaces of the partner establishments; secretaries and
+room managers approve the requests; admins and the super-admin manage
+establishments, spaces and accounts.
 
-- A Spring Boot REST API backend
-- An Angular frontend
-- MongoDB persistence
-- Google Calendar integration
-- JWT-based authentication and authorization
-- AI chatbot support via Spring AI / Ollama integration
+- `reservation-app/` — Spring Boot 3.4 REST API (Java 21, MongoDB, JWT)
+- `reservationApp-ui/` — Angular 19 frontend (standalone components, Angular Material)
 
-## Project structure
+Optional integrations — the app starts and works without them, the feature is
+simply disabled with a warning in the backend log:
 
-- `reservation-app/` — Spring Boot backend
-- `reservationApp-ui/` — Angular frontend
+| Feature | Needs | Without it |
+|---|---|---|
+| E-mails (activation, password reset, notifications) | `MAIL_USERNAME` + `MAIL_PASSWORD` (Gmail App Password) | E-mails are skipped; activation and reset links are written to the backend log |
+| Google Calendar sync | Service-account key file (`GOOGLE_SERVICE_ACCOUNT_KEY_FILE`) | Reservations are approved without calendar sync; the booking calendar still works |
+| Chatbot | Python 3.12 + `reservation-app/requirements.txt` | The chat answers "Le chatbot n'est pas disponible pour le moment…" |
 
 ## Prerequisites
 
-Before running the project, make sure you have:
+- **Java 21** (`java -version`). Maven is not needed: use the `mvnw.cmd` wrapper.
+- **Node.js 20 or 22 LTS** and npm (`node -v`); Node 24 also works.
+- **MongoDB**: either Docker Desktop (local database, see below) or a MongoDB Atlas cluster.
+- Optional: **Python 3.12** for the chatbot.
 
-- Java 21
-- Maven (the project includes `mvnw` wrapper, so Maven is not strictly required)
-- Node.js 18+ and npm
-- Access to the configured MongoDB Atlas connection
-- Internet access for Google Calendar and mail features
+## Quick start (Windows PowerShell)
 
-## Backend setup
-
-1. Open a terminal in the project root.
-2. Set Java 21 as `JAVA_HOME`.
-
-Example on Windows PowerShell:
+### 1. One-time setup
 
 ```powershell
-$env:JAVA_HOME = 'C:\Users\nawre\AppData\Local\Programs\jdk-21\jdk-21.0.12.1+1'
-$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
+git clone https://github.com/nawressmabrouk/AREsu.git
+cd AREsu
+git config core.hooksPath .githooks          # enables the secret-blocking pre-commit hook
+
+cd reservation-app
+Copy-Item .env.example .env
+notepad .env                                  # see "Configuration and secrets" below
 ```
 
-3. Start the backend:
+At minimum set `JWT_SECRET`, and on the very first start `ADMIN_USERNAME` /
+`ADMIN_PASSWORD` (see [First SUPER_ADMIN account](#2-first-super_admin-account)).
+
+### 2. Database
+
+Local MongoDB with Docker (no account needed — this is the default `MONGODB_URI`):
+
+```powershell
+docker compose up -d          # from the repository root; "docker compose down" to stop
+```
+
+Or use MongoDB Atlas: put the connection string in `MONGODB_URI` in `.env`.
+
+### 3. Backend — http://localhost:8080
 
 ```powershell
 cd reservation-app
 .\mvnw.cmd spring-boot:run
 ```
 
-The backend runs by default on:
+The log ends with `Started ReservationAppApplication`, followed by one line per
+optional feature (e-mails, Google Calendar, chatbot) saying whether it is enabled.
 
-- http://localhost:8080
+### 4. Frontend — http://localhost:4200
 
-## Frontend setup
-
-1. Open a second terminal.
-2. Install dependencies:
+In a second terminal:
 
 ```powershell
 cd reservationApp-ui
 npm install
-```
-
-3. Start the Angular app:
-
-```powershell
 npm start
 ```
 
-The frontend runs by default on:
+`npm start` runs `ng serve` with `proxy.conf.json`, which forwards `/api` to the
+backend on port 8080. Open http://localhost:4200.
 
-- http://localhost:4200
+### 5. Optional: chatbot
 
-## Running the whole app
+```powershell
+cd reservation-app
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
 
-Start the backend first, then the frontend.
+The backend uses `reservation-app\.venv` automatically (or the interpreter in
+`CHATBOT_PYTHON`). The language model (~470 MB) is downloaded on first use; on a
+slow connection, warm the cache once before using the chat (the backend gives up
+on a question after 120 s):
 
-Once both are running, open:
+```powershell
+"Comment réserver une salle ?" | .\.venv\Scripts\python.exe ask_bot.py --stdin
+```
 
-- http://localhost:4200
-
-The Angular app is configured to proxy `/api` calls to the backend via the file `reservationApp-ui/proxy.conf.json`.
+After that each answer takes about 10–15 seconds, because the model is loaded for
+every question.
 
 ## Configuration and secrets
 
@@ -99,8 +116,10 @@ notepad .env
 | `JWT_SECRET` | yes | Base64, at least 256 bits. Generate it with the command below. |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | on first start | Creates the first SUPER_ADMIN (see below). |
 | `MONGODB_URI` | no | Defaults to `mongodb://localhost:27017/reservation`. |
-| `MAIL_USERNAME` / `MAIL_PASSWORD` | no | Gmail address + **App Password**. |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | no | Gmail address + **App Password** (16 letters, no spaces). |
 | `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` | no | Defaults to `file:./secrets/service-account.json`. |
+| `CHATBOT_PYTHON` | no | Python with the chatbot packages; defaults to `.venv`, then `python`. |
+| `APP_FRONTEND_URL` / `APP_BACKEND_URL` | no | Used in e-mail links; default to localhost:4200 / localhost:8080. |
 
 Generate a JWT secret (PowerShell):
 
@@ -133,47 +152,47 @@ git config core.hooksPath .githooks
 It works out of the box. If [gitleaks](https://github.com/gitleaks/gitleaks) is
 installed (`winget install --id Gitleaks.Gitleaks`), the hook also runs it.
 
-## Common issues
+## Roles
 
-### Java error: `JAVA_HOME is not defined correctly`
+| Role (backend `Role`) | Landing page |
+|---|---|
+| `DEMANDEUR_INTERNE`, `DEMANDEUR_EXTERNE` | `/spaces` — browse spaces and book through the calendar |
+| `SECRETAIRE_GENERALE` | `/secretary` — approve or refuse requests |
+| `RESPONSABLE_SALLE` | `/room-manager` — approve requests for managed spaces |
+| `ADMIN` | `/admin` — establishment administration |
+| `SUPER_ADMIN` | `/super-admin/dashboard` — all establishments |
 
-Install Java 21 and set `JAVA_HOME` before running the backend.
-
-### MongoDB SRV/DNS errors
-
-The backend currently uses a MongoDB Atlas connection string. If you see DNS/SRV resolution errors, verify:
-
-- your network can resolve the configured MongoDB host
-- the MongoDB URI is valid and still active
-- the Atlas cluster is reachable from this environment
-
-### Frontend dependency install issues
-
-Run:
-
-```powershell
-npm install
-```
-
-If needed, delete `node_modules` and the lock file and reinstall.
+The frontend guards these pages by role; the backend checks the role again on
+`/api/admin`, `/api/secretaire`, `/api/responsable`, `/api/demandeur` and `/api/super-admin`.
 
 ## Useful commands
 
-Backend:
-
 ```powershell
-cd reservation-app
-.\mvnw.cmd clean install
-.\mvnw.cmd spring-boot:run
+# Backend (from reservation-app/)
+.\mvnw.cmd clean install          # build + tests (tests need the database from .env)
+.\mvnw.cmd spring-boot:run        # run
+
+# Frontend (from reservationApp-ui/)
+npm start                         # dev server with /api proxy
+npx ng build                      # production build into dist/
 ```
 
-Frontend:
+## Troubleshooting
 
-```powershell
-cd reservationApp-ui
-npm install
-npm start
-```
+- **`JAVA_HOME is not defined correctly`** — install Java 21 and point `JAVA_HOME`
+  to it, e.g. `$env:JAVA_HOME = Split-Path (Split-Path (Get-Command java).Source)`.
+- **The backend refuses to start** — read the last lines of the log: missing or weak
+  `JWT_SECRET` / `ADMIN_PASSWORD` are reported in French with the fix.
+- **MongoDB SRV / DNS / timeout errors (Atlas)** — check the URI, that the cluster is
+  not paused, and that your IP is in Atlas *Network Access*. Or use the local Docker
+  database (`docker compose up -d` and remove `MONGODB_URI` from `.env`).
+- **Port 8080 or 4200 already in use** — stop the other process, or run the backend
+  with `.\mvnw.cmd spring-boot:run "-Dspring-boot.run.arguments=--server.port=8081"`
+  and change the target in `reservationApp-ui/proxy.conf.json`.
+- **`npm warn allow-scripts`** during `npm install` (npm 11) — harmless: the build
+  tools ship prebuilt Windows binaries.
+- **Chatbot answers "pas disponible"** — check the backend log line starting with
+  `Chatbot`; it tells whether Python or the packages are missing.
 
 ## License
 
