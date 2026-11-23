@@ -3,6 +3,7 @@ package tn.sousse.univ.reservation_app.config;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +31,10 @@ import tn.sousse.univ.reservation_app.services.CustomUserDetailsService;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    // Browser origins allowed to call the API (APP_CORS_ALLOWED_ORIGINS, defaults to APP_FRONTEND_URL)
+    @Value("${app.cors-allowed-origins:http://localhost:4200}")
+    private List<String> allowedOrigins;
 
     private final JwtFilter jwtFilter; 
     private final CustomUserDetailsService customUserDetailsService;
@@ -113,7 +118,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "Origin"));
         configuration.setAllowedHeaders(List.of(
                 "Authorization",
