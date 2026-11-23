@@ -1,374 +1,143 @@
-<div class="main">
-<div class="spaces-container">
-  <!-- Header -->
-<header class="spaces-header">
-  <div class="header-content">
+<div class="page">
+  @if (!selectedEtablissement) {
+    <!-- Établissements -->
+    <app-page-header eyebrow="Réserver un espace" title="Établissements"
+      subtitle="Choisissez un établissement pour voir ses espaces réservables." />
 
-    <!-- Logo à gauche -->
-    <div class="header-brand">
-      <img src="/logo2.png" alt="Université de Sousse" class="logo-image">
-    </div>
-
-    <!-- Titre et sous-titre au centre -->
-    <div class="header-text">
-      <h1 class="page-title">
-        {{ selectedEtablissement ? 'Espaces Disponibles' : 'Établissements disponibles' }}
-      </h1>
-      <p class="page-subtitle">
-        {{ selectedEtablissement 
-           ? 'Sélectionnez un espace dans ' + selectedEtablissement.nom 
-           : 'Sélectionnez un établissement et réservez l\'espace qui vous convient' }}
-      </p>
-    </div>
-
-    <!-- Profil à droite -->
-    <app-profile class="profile-icon" [user]="currentUser"></app-profile>
-
-  </div>
-</header>
-
-
-
-
-    <div class="header-title">
-    
-    
-    </div>
-
-
-
-    
-  <!-- Establishment Filters -->
-  <section class="filters-section" *ngIf="!selectedEtablissement">
-    <div class="filter-icon">
-  <fa-icon class="icons-filter" [icon]="faFilter"></fa-icon> Filtrer par :
-</div>
-    <div class="filter-controls">
-      <div class="filter-group">
-        <label class="filter-label">Type :</label>
-        <select class="filter-select" [(ngModel)]="currentFilters.type" (change)="applyFilters()">
-          <option [ngValue]="null">Tous</option>
-          <option *ngFor="let type of establishmentTypes" [value]="type">
-            {{ getTypeLabel(type) }}
-          </option>
-        </select>
+    @if (!loggedIn) {
+      <div class="notice">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>Vous pouvez parcourir les espaces librement. <a routerLink="/login" [queryParams]="{ returnUrl: '/spaces' }">Connectez-vous</a> pour envoyer une demande de réservation.</span>
       </div>
+    }
 
-      <div class="filter-group">
-        <label class="filter-label">Zone :</label>
-        <select class="filter-select" [(ngModel)]="currentFilters.zone" (change)="applyFilters()">
-          <option [ngValue]="null">Toutes</option>
-          <option *ngFor="let zone of zones" [value]="zone">
-            {{ getZoneLabel(zone) }}
-          </option>
-        </select>
+    <div class="toolbar" role="search">
+      <mat-form-field class="search" subscriptSizing="dynamic">
+        <mat-label>Rechercher</mat-label>
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input matInput [(ngModel)]="searchEtab" placeholder="Nom ou adresse" />
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Type</mat-label>
+        <mat-select [(ngModel)]="currentFilters.type" (selectionChange)="applyFilters()">
+          <mat-option [value]="null">Tous</mat-option>
+          @for (type of establishmentTypes; track type) {
+            <mat-option [value]="type">{{ getTypeLabel(type) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Zone</mat-label>
+        <mat-select [(ngModel)]="currentFilters.zone" (selectionChange)="applyFilters()">
+          <mat-option [value]="null">Toutes</mat-option>
+          @for (zone of zones; track zone) {
+            <mat-option [value]="zone">{{ getZoneLabel(zone) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (hasEtabFilters) {
+        <button mat-button type="button" (click)="resetFilters()"><mat-icon>restart_alt</mat-icon>Réinitialiser</button>
+      }
+    </div>
+
+    @if (loading) {
+      <app-skeleton variant="cards" [count]="6" />
+    } @else if (visibleEtablissements.length === 0) {
+      <app-empty-state icon="domain_disabled" title="Aucun établissement trouvé"
+        message="Essayez d'autres filtres ou une autre recherche.">
+        <button mat-stroked-button type="button" (click)="resetFilters()">Réinitialiser les filtres</button>
+      </app-empty-state>
+    } @else {
+      <p class="count">{{ visibleEtablissements.length }} établissement{{ visibleEtablissements.length > 1 ? 's' : '' }}</p>
+      <div class="grid">
+        @for (etab of visibleEtablissements; track etab.id) {
+          <button type="button" class="card etab-card" (click)="selectEtablissement(etab)">
+            <span class="etab-logo" aria-hidden="true">
+              @if (etab.logo) { <img [src]="etab.logo" alt="" loading="lazy" /> }
+              @else { <span>{{ initials(etab.nom) }}</span> }
+            </span>
+            <span class="card-main">
+              <span class="badge">{{ getTypeLabel(etab.type) }}</span>
+              <span class="card-title">{{ etab.nom }}</span>
+              <span class="meta"><mat-icon aria-hidden="true">map</mat-icon>{{ getZoneLabel(etab.zone) }}</span>
+              @if (etab.adresse) {
+                <span class="meta"><mat-icon aria-hidden="true">location_on</mat-icon>{{ etab.adresse }}</span>
+              }
+            </span>
+            <mat-icon class="chevron" aria-hidden="true">chevron_right</mat-icon>
+          </button>
+        }
       </div>
-
-      <button class="btn reset-btn" (click)="resetFilters()">
-        <fa-icon [icon]="faSyncAlt"></fa-icon> Réinitialiser
-      </button>
-    </div>
-  </section>
-
-
-  <div class="filter-section">
-    <!-- Zone Filter Dropdown -->
-    <select [(ngModel)]="currentFilters.zone" (change)="applyFilters()">
-      <option value="">All Zones</option>
-      <option *ngFor="let zone of zones" [value]="zone">
-        {{ getZoneLabel(zone) }}
-      </option>
-    </select>
-  </div>
-  
-  <div class="spaces-container">
-    <section *ngIf="!selectedEtablissement && !loading" class="etablissements-grid">
-      <article *ngFor="let etab of etablissements; trackBy: trackByEtabId" 
-      class="etablissement-card"
-      (click)="selectEtablissement(etab)">
-        <div class="card-logo" *ngIf="etab.logo">
-          <img [src]="etab.logo" alt="Logo" class="etablissement-logo"/>
-        </div>
-        <div class="card-content">
-          <header class="card-header">
-            <h3 class="card-title">{{ etab.nom }}</h3>
-            <span class="card-badge">{{ getTypeLabel(etab.type) }}</span>
-          </header>
-          <div class="card-details">
-            <p class="detail-item">
-              <fa-icon [icon]="faBuilding"></fa-icon> {{ getZoneLabel(etab.zone) }}
-            </p>
-            <p class="detail-item">
-              <fa-icon [icon]="faLocationDot"></fa-icon> {{ etab.adresse }}
-            </p>
-          </div>
-        </div>
-      </article>
-    </section>
-
-    <!--app-chatbot></app-chatbot-->
-  </div>
-
-
-    <section *ngIf="selectedEtablissement && !loading" class="spaces-section">
-      <button class="btn back-btn" (click)="goBackToEtablissements()">
-        <fa-icon [icon]="faArrowLeft"></fa-icon> Retour aux établissements
-      </button>
-      
-<div class="space-filters">
-  <div class="filter-controls">
-    <div class="filter-group">
-      <label class="filter-label">Catégorie :</label>
-      <select class="filter-select" [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
-        <option [ngValue]="null">Toutes les catégories</option>
-        <option *ngFor="let category of categories" [ngValue]="category">
-          {{category.label}}
-        </option>
-      </select>
-    </div>
-  
-    <div class="filter-group" *ngIf="selectedCategory">
-      <label class="filter-label">Type d'espace :</label>
-      <select class="filter-select" [(ngModel)]="selectedSubcategory" (change)="filterSpaces()">
-        <option [ngValue]="null">Tous les types</option>
-        <option *ngFor="let type of selectedCategory?.types" [value]="type">
-          {{type}}
-        </option>
-      </select>
-    </div>
-
-    <button class="btn reset-btn" (click)="resetSpaceFilters()" *ngIf="selectedCategory">
-      <fa-icon [icon]="faSyncAlt"></fa-icon> Réinitialiser
+    }
+  } @else {
+    <!-- Espaces of the selected établissement -->
+    <button mat-button type="button" class="back" (click)="goBackToEtablissements()">
+      <mat-icon>arrow_back</mat-icon>Tous les établissements
     </button>
-  </div>
-</div>
-    
-      <div class="espaces-grid" *ngIf="filteredEspaces.length > 0; else noEspaces">
-        <article *ngFor="let espace of filteredEspaces" class="espace-card" (click)="navigateToSelectionCalendar(espace)">
-          <header class="card-header">
-            <h3 class="card-title">{{ espace.nom || 'Espace sans nom' }}</h3>
-            <span class="card-badge">{{ espace.type || 'Type non spécifié' }}</span>
-          </header>
-          <div class="card-details">
-            <p class="detail-item">
-              <fa-icon [icon]="faUsers"></fa-icon>
-              Capacité : {{ espace.capacite || 0 }} personnes
-            </p>
-            <p *ngIf="espace.equipement && espace.equipement.length > 0" class="detail-item">
-              <fa-icon [icon]="faMicrochip"></fa-icon>
-              Équipements : {{ espace.equipement.join(', ') }}
-            </p>
-          </div>
-        </article>
+    <app-page-header [eyebrow]="getTypeLabel(selectedEtablissement.type)" [title]="selectedEtablissement.nom"
+      subtitle="Choisissez un espace pour consulter ses disponibilités et réserver un créneau." />
+
+    <div class="toolbar" role="search">
+      <mat-form-field class="search" subscriptSizing="dynamic">
+        <mat-label>Rechercher un espace</mat-label>
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input matInput [(ngModel)]="searchEspace" placeholder="Nom, type ou équipement" />
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic" class="wide-select">
+        <mat-label>Catégorie</mat-label>
+        <mat-select [(ngModel)]="selectedCategory" (selectionChange)="onCategoryChange()">
+          <mat-option [value]="null">Toutes les catégories</mat-option>
+          @for (category of categories; track category.apiValue) {
+            <mat-option [value]="category">{{ category.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (selectedCategory) {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Type d'espace</mat-label>
+          <mat-select [(ngModel)]="selectedSubcategory" (selectionChange)="filterSpaces()">
+            <mat-option [value]="null">Tous les types</mat-option>
+            @for (type of selectedCategory.types; track type) {
+              <mat-option [value]="type">{{ formatType(type) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (hasSpaceFilters) {
+        <button mat-button type="button" (click)="resetSpaceFilters()"><mat-icon>restart_alt</mat-icon>Réinitialiser</button>
+      }
+    </div>
+
+    @if (loading) {
+      <app-skeleton variant="cards" [count]="4" />
+    } @else if (visibleEspaces.length === 0) {
+      <app-empty-state icon="meeting_room" title="Aucun espace ne correspond"
+        [message]="allEspaces.length ? 'Modifiez la recherche ou les filtres.' : 'Cet établissement n\'a pas encore d\'espace réservable.'">
+        @if (allEspaces.length) {
+          <button mat-stroked-button type="button" (click)="resetSpaceFilters()">Réinitialiser les filtres</button>
+        }
+      </app-empty-state>
+    } @else {
+      <p class="count">{{ visibleEspaces.length }} espace{{ visibleEspaces.length > 1 ? 's' : '' }}</p>
+      <div class="grid">
+        @for (espace of visibleEspaces; track espace.id) {
+          <article class="card space-card">
+            <header>
+              <span class="badge">{{ formatType(espace.type) || 'Type non spécifié' }}</span>
+              <h3 class="card-title">{{ espace.nom || 'Espace sans nom' }}</h3>
+            </header>
+            <p class="meta"><mat-icon aria-hidden="true">groups</mat-icon>Jusqu'à {{ espace.capacite || 0 }} personnes</p>
+            @if (espace.equipement?.length) {
+              <ul class="chips" aria-label="Équipements">
+                @for (eq of espace.equipement; track eq) { <li>{{ eq }}</li> }
+              </ul>
+            }
+            <button mat-flat-button type="button" class="space-cta" (click)="navigateToSelectionCalendar(espace)">
+              <mat-icon>calendar_month</mat-icon>Voir les disponibilités
+            </button>
+          </article>
+        }
       </div>
-    
-      <ng-template #noEspaces>
-        <div class="no-results-message">
-          <fa-icon [icon]="faInfoCircle" size="2x"></fa-icon>
-          <p>Aucun espace ne correspond à ce filtre.</p>
-          
-        </div>
-      </ng-template>
-    </section>
-
-    <app-chat></app-chat>
-
-  
-  </div>
-
-  </div>
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-  
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-
-  
-  
-  
-  
-
-  
-  
-  
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    }
+  }
+</div>
