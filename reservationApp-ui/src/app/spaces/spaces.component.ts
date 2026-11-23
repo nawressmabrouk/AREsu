@@ -17,6 +17,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Espace, Etablissement, EtablissementService } from '../services/etablissement/etablissement.service';
 import { UserService } from '../services/user/user.service';
+import { AuthService } from '../services/auth/auth.service';
 import { ProfileComponent } from '../shared/components/profile/profile.component';
 import { ChatComponent } from '../chatbot/chatbot.component';
 interface SpaceCategory {
@@ -108,12 +109,16 @@ export class SpacesComponent implements OnInit {
 
   constructor(
     private etablissementService: EtablissementService,
-    private router: Router , private userService: UserService
+    private router: Router , private userService: UserService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
     this.loadEtablissements();
-    this.loadUserProfile();
+    // Visitors can browse spaces without an account: only load the profile when logged in
+    if (this.authService.isLoggedIn()) {
+      this.loadUserProfile();
+    }
   }
 
   getTypeLabel(type: string): string {

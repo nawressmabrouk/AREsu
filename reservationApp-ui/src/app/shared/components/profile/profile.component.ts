@@ -67,7 +67,10 @@ export class ProfileComponent {
   ) {}
 
   ngOnInit(): void {
-    this.loadProfile();
+    // Also shown on public pages (e.g. /spaces): only load the profile when logged in
+    if (this.authService.isLoggedIn()) {
+      this.loadProfile();
+    }
   }
 
   // Load user profile
