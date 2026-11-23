@@ -3,24 +3,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import {
-  faAlignLeft,
-  faArrowRight,
-  faBriefcase,
-  faBuilding,
-  faBullseye,
-  faClipboard,
-  faEnvelope,
-  faHeading,
-  faHome,
-  faLink, faPhone,
-  faPlus,
-  faTimes,
-  faUser,
-  faUsers,
-  faUserTag
-} from '@fortawesome/free-solid-svg-icons';
 import { NotificationService } from '../services/alert-notif/notification.service';
 import { AuthService } from '../services/auth/auth.service';
 import { ReservationsubmissionService } from '../services/reservationflow/reservationsubmission.service';
@@ -45,22 +27,6 @@ import { PageHeaderComponent } from '../shared/ui/page-header.component';
 })
 export class ReservationFormComponent implements OnInit {
   // Font Awesome icons
-  faPageIcon = faArrowRight;
-  faHome = faHome;
-  faPlus = faPlus;
-  faTimes = faTimes;
-  faBuilding = faBuilding;
-  faAlignLeft = faAlignLeft;
-  faBullseye = faBullseye;
-  faUsers = faUsers;
-  faHeading = faHeading;
-  faPhone = faPhone;
-  faLink = faLink;
-  faUser = faUser;
-  faEnvelope = faEnvelope;
-  faBriefcase = faBriefcase;
-  faClipboard = faClipboard;
-  faUserTag = faUserTag;
 
   // Form state
   isTooltipVisible = false;
