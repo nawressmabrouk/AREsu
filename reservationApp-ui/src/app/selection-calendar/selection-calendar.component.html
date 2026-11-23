@@ -1,132 +1,101 @@
-
-<div class="main">
-  <header class="spaces-header">
-  <div class="header-content">
-    <div class="header-brand">
-      <img src="/logo2.png" alt="Université de Sousse" class="logo-image" >
-     
-    </div>
-
- <h1 class="page-title">
-       Calendrier des Réservations
-      </h1>
-      
-
-   
-  </div>
-   
-</header>
- <div *ngIf="selectedEtablissement" class="page-subtitle">
-  <h2>Calendrier de {{ selectedEtablissement.nom }}</h2>
-</div>
-
-
- <app-profile   class="profile-icon" [user]="currentUser"></app-profile>
-
-<div class="back-to-spaces-container">
-  <button class="back-to-spaces-button" (click)="navigateToSpaces()">
-    ← Retourner
+<div class="page">
+  <button mat-button type="button" class="back" (click)="navigateToSpaces()">
+    <mat-icon>arrow_back</mat-icon>Retour aux espaces
   </button>
-</div>
+  <app-page-header [eyebrow]="selectedEtablissement?.nom || 'Réservation'"
+    [title]="selectedEspace?.nom ? 'Réserver « ' + selectedEspace?.nom + ' »' : 'Choisir un créneau'"
+    subtitle="Choisissez un jour, puis cliquez sur l'heure de début et l'heure de fin de votre réservation." />
 
+  @if (errorMessage) {
+    <div class="form-alert" role="alert"><mat-icon aria-hidden="true">error_outline</mat-icon><span>{{ errorMessage }}</span></div>
+  }
 
-<div class="calendar-container">
-  <div class="sidebar">
-    <div class="month-selector">
-      <h2>
-        <button mat-icon-button (click)="prevMonth()">
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-        {{ currentMonth | date:'MMMM yyyy' }}
-        <button mat-icon-button (click)="nextMonth()">
-          <mat-icon>chevron_right</mat-icon>
-        </button>
-      </h2>
-      <div class="month-grid">
-        <div class="week-header">
-          <div *ngFor="let day of weekDays" class="day-header">{{ day }}</div>
-        </div>
-        <div class="month-days">
-         <div *ngFor="let day of monthDays; let i = index" 
-       class="day-cell"
-       [class.current-month]="day.isCurrentMonth"
-       [class.selected]="isSameDay(day.date, selectedDate)"
-       [class.disabled]="!isDayAvailable(day.date)"
-       (click)="selectDay(day.date)">
-    {{ day.date | date:'d' }}
-    <!-- Add this div for the bottom border -->
-    <div class="day-divider" *ngIf="i < monthDays.length - 1"></div>
-  </div>
-        </div>
+  <div class="layout">
+    <!-- Month -->
+    <section class="panel month" aria-label="Choix du jour">
+      <header class="month-head">
+        <button mat-icon-button type="button" (click)="prevMonth()" aria-label="Mois précédent"><mat-icon>chevron_left</mat-icon></button>
+        <h2>{{ currentMonth | date: 'MMMM y' }}</h2>
+        <button mat-icon-button type="button" (click)="nextMonth()" aria-label="Mois suivant"><mat-icon>chevron_right</mat-icon></button>
+      </header>
+      <div class="month-grid" role="grid">
+        @for (d of weekDays; track $index) { <span class="dow" aria-hidden="true">{{ d }}</span> }
+        @for (day of monthDays; track day.date.getTime()) {
+          <button type="button" class="day"
+                  [class.other]="!day.isCurrentMonth"
+                  [class.today]="isTodayDate(day.date)"
+                  [class.selected]="isSameDay(day.date, selectedDate)"
+                  [disabled]="!isDayAvailable(day.date)"
+                  [attr.aria-label]="(day.date | date: 'EEEE d MMMM y') + (isDayAvailable(day.date) ? '' : ', indisponible')"
+                  [attr.aria-pressed]="isSameDay(day.date, selectedDate)"
+                  (click)="selectDay(day.date)">
+            {{ day.date | date: 'd' }}
+          </button>
+        }
       </div>
-    </div>
+      <ul class="legend" aria-label="Légende">
+        <li><span class="sw sw-free"></span>Disponible</li>
+        <li><span class="sw sw-busy"></span>Indisponible</li>
+        <li><span class="sw sw-selected"></span>Sélection</li>
+        <li><span class="sw sw-today"></span>Aujourd'hui</li>
+      </ul>
+      <p class="note"><mat-icon aria-hidden="true">info</mat-icon>Les disponibilités excluent les week-ends et les dates déjà réservées.</p>
+    </section>
 
-    <div *ngIf="selectedEtablissement" class="selection-info">
-      « Les disponibilités excluent les week-ends et les dates réservées. »
-    </div>
+    <!-- Day -->
+    <section class="panel day-view" aria-label="Créneaux horaires">
+      <header class="day-head">
+        <div class="day-nav">
+          <button mat-icon-button type="button" (click)="prevDay()" [disabled]="isPreviousDayDisabled()" aria-label="Jour précédent"><mat-icon>chevron_left</mat-icon></button>
+          <button mat-icon-button type="button" (click)="nextDay()" aria-label="Jour suivant"><mat-icon>chevron_right</mat-icon></button>
+          <button mat-stroked-button type="button" (click)="selectToday()">Aujourd'hui</button>
+        </div>
+        <h2>{{ selectedDate | date: 'EEEE d MMMM y' }}</h2>
+      </header>
+
+      <div class="selection" [class.active]="selectionState !== 'idle'" aria-live="polite">
+        @switch (selectionState) {
+          @case ('idle') {
+            <span class="step"><span class="num">1</span>Cliquez sur l'heure de <strong>début</strong></span>
+          }
+          @case ('start-selected') {
+            <span class="step"><mat-icon aria-hidden="true">schedule</mat-icon>Début : <strong>{{ displayTime(selectedStartTime) }}</strong></span>
+            <span class="step muted"><span class="num">2</span>Cliquez sur l'heure de <strong>fin</strong></span>
+            <button mat-button type="button" (click)="resetSelection()">Annuler</button>
+          }
+          @case ('end-selected') {
+            <span class="step"><mat-icon aria-hidden="true">event_available</mat-icon><strong>{{ displayTime(selectedStartTime) }}</strong> → <strong>{{ displayTime(selectedEndTime) }}</strong></span>
+            <button mat-button type="button" (click)="resetSelection()">Modifier</button>
+          }
+        }
+      </div>
+
+      @if (!isDayAvailable(selectedDate)) {
+        <p class="day-closed"><mat-icon aria-hidden="true">event_busy</mat-icon>Ce jour n'est pas réservable. Choisissez un autre jour dans le calendrier.</p>
+      }
+
+      <div class="slots" [class.disabled]="!isDayAvailable(selectedDate)">
+        @for (time of timeSlots; track time; let i = $index) {
+          @if (shouldShowCurrentTime(time, i)) {
+            <div class="now" aria-hidden="true"><span>{{ currentTime }}</span></div>
+          }
+          <button type="button" class="slot"
+                  [class.busy]="isUnavailable(time)"
+                  [class.start]="isSlotSelectedStart(time)"
+                  [class.end]="isSlotSelectedEnd(time)"
+                  [class.range]="isTimeInRange(time)"
+                  [disabled]="!isDayAvailable(selectedDate)"
+                  [attr.aria-label]="displayTime(time) + (isUnavailable(time) ? ', indisponible' : '')"
+                  (click)="handleSlotClick(time)">
+            <span class="time">{{ displayTime(time) }}</span>
+            <span class="bar">
+              @if (isUnavailable(time)) { <mat-icon aria-hidden="true">lock</mat-icon>Indisponible }
+              @else if (isSlotSelectedStart(time)) { Début }
+              @else if (isSlotSelectedEnd(time)) { Fin }
+            </span>
+          </button>
+        }
+      </div>
+    </section>
   </div>
-
-  <div class="day-view">
-<div class="day-navigation">
-  <div class="nav-buttons">
-    <button class="bu" mat-icon-button (click)="prevDay()" [disabled]="isPreviousDayDisabled()">
-      <mat-icon>chevron_left</mat-icon>
-    </button>
-    <button class="bu" mat-icon-button (click)="nextDay()">
-      <mat-icon>chevron_right</mat-icon>
-    </button>
-  </div>
-  
-  <div class="current-day">
-    <button class="button1" mat-stroked-button (click)="selectToday()">
-      Aujourd'hui
-    </button>
-    <h2 >{{ selectedDate | date:'fullDate' }}</h2>
-  </div>
-</div>
-
-    <div *ngIf="errorMessage" class="error-message">
-      {{ errorMessage }}
-    </div>
-
-    <div class="time-slots-container" [class.disabled]="!isDayAvailable(selectedDate)">
-      
-
-<div class="time-range-selection" *ngIf="selectionState !== 'idle'">
-  <p>
-    Plage horaire sélectionnée : 
-    <strong>{{ selectedStartTime }}</strong>
-    <span *ngIf="selectedEndTime"> à <strong>{{ selectedEndTime }}</strong></span>
-    <span *ngIf="!selectedEndTime"> (sélectionnez l'heure de fin)</span>
-  </p>
-</div>
-
-
-<div class="time-slots">
-  <div *ngFor="let time of timeSlots; let i = index" class="time-slot-wrapper">
-    <!-- Current time indicator -->
-    <div class="current-time-indicator" *ngIf="shouldShowCurrentTime(time, i)">
-      <div class="current-time-line"></div>
-      <div class="current-time-circle"></div>
-      <span class="current-time-label">{{ currentTime }}</span>
-    </div>
-    
-    <!-- Time slot -->
-    <div class="slot"
-         [class.unavailable]="isUnavailable(time)"
-         [class.available]="!isUnavailable(time)"
-         [class.selected-start]="isSlotSelectedStart(time)"
-         [class.selected-end]="isSlotSelectedEnd(time)"
-         [class.in-range]="isTimeInRange(time)"
-         (click)="handleSlotClick(time)">
-      <span class="time-label">{{ time }}</span>
-      <span class="time-status" *ngIf="isUnavailable(time)">
-        <mat-icon>block</mat-icon>
-      </span>
-    </div>
-  </div>
-</div>
-  </div>
-
-</div>
 </div>

@@ -10,23 +10,22 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { format, isSameDay, parse, setDefaultOptions } from 'date-fns';
-import { enUS } from 'date-fns/locale';
+import { fr } from 'date-fns/locale';
 import { forkJoin } from 'rxjs';
 import { Espace } from '../models/espace.model';
 import { AuthService } from '../services/auth/auth.service';
 import { CalendarService } from '../services/calendar/calendar.service';
 import { Etablissement, EtablissementService } from '../services/etablissement/etablissement.service';
-import { ProfileComponent } from '../shared/components/profile/profile.component';
+import { ConfirmService } from '../shared/ui/confirm-dialog.component';
+import { PageHeaderComponent } from '../shared/ui/page-header.component';
 import { CalendarSlotDTO } from '../shared/interfaces/calendar-slot.dto';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
-import { ChatComponent } from "../chatbot/chatbot.component";
-import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 @Injectable()
 export class CustomDateFnsAdapter extends DateFnsAdapter {
   constructor() {
     super();
-    setDefaultOptions({ locale: enUS });
+    setDefaultOptions({ locale: fr });
   }
 }
 
@@ -41,9 +40,8 @@ export class CustomDateFnsAdapter extends DateFnsAdapter {
     MatInputModule,
     MatFormFieldModule,
     MatIconModule,
-    ProfileComponent,
-    MatButtonModule, MatDialogModule, 
-    ChatComponent
+    MatButtonModule, MatDialogModule,
+    PageHeaderComponent
 ],
   selector: 'app-selection-calendar',
   templateUrl: './selection-calendar.component.html',
@@ -66,7 +64,7 @@ export class CustomDateFnsAdapter extends DateFnsAdapter {
         }
       }
     },
-    { provide: MAT_DATE_LOCALE, useValue: enUS }
+    { provide: MAT_DATE_LOCALE, useValue: fr }
   ]
 })
 export class SelectionCalendarComponent {
@@ -100,7 +98,7 @@ currentTimePosition: string = this.getCurrentTimePosition();
     private calendarService: CalendarService,
     private etablissementService: EtablissementService,
     private authService: AuthService,
-    private datePipe: DatePipe , private dialog: MatDialog
+    private datePipe: DatePipe , private dialog: MatDialog, private confirmService: ConfirmService
   ) {}
 
   ngOnInit() {
@@ -112,7 +110,7 @@ currentTimePosition: string = this.getCurrentTimePosition();
         this.loadEstablishmentAndSpace();
       } else {
         console.error('Missing required parameters in URL');
-        this.errorMessage = 'Missing establishment or space information';
+        this.errorMessage = 'Informations sur l’établissement ou l’espace manquantes.';
       }
     });
     this.generateMonthDays();
@@ -246,7 +244,7 @@ isSameDay(date1: Date, date2: Date): boolean {
       },
       error: (err: any) => {
         console.error('Error loading establishment or space:', err);
-        this.errorMessage = 'Failed to load establishment or space information';
+        this.errorMessage = 'Impossible de charger l’établissement ou l’espace.';
       }
     });
   }
@@ -274,13 +272,14 @@ loadReservedDates(): void {
         
         this.isLoading = false;
         this.dateControl.updateValueAndValidity();
+        this.selectFirstAvailableDayOnce();
         
         // Debug log
         console.log('Reserved dates:', this.reservedDates);
       },
       error: (err) => {
         console.error('Error loading reserved dates:', err);
-        this.errorMessage = 'Failed to load reserved dates. Please try again later.';
+        this.errorMessage = 'Impossible de charger les disponibilités. Veuillez réessayer plus tard.';
         this.isLoading = false;
       }
     });
@@ -327,9 +326,9 @@ selectToday(): void {
     const currentHour = now.getHours();
     
     if (selectedHour < currentHour) {
-      this.errorMessage = 'Cannot select past time slots.';
+      this.errorMessage = 'Impossible de sélectionner un créneau passé.';
     } else {
-      this.errorMessage = `The ${time} slot is already booked.`;
+      this.errorMessage = `Le créneau de ${this.displayTime(time)} est indisponible.`;
     }
     
     setTimeout(() => this.errorMessage = '', 3000);
@@ -374,18 +373,20 @@ navigateToReservation(): void {
     return;
   }
 
-  const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-    width: '650px',
-    panelClass: ['custom-dialog-container', 'backdrop-blur'],
-    disableClose: true,
-    data: {
-      startTime: this.selectedStartTime,
-      endTime: this.selectedEndTime
-    }
-  });
-
-  dialogRef.afterClosed().subscribe(result => {
-    if (result) { 
+  this.confirmService.confirm({
+    title: 'Confirmer ce créneau ?',
+    message: 'Vous allez compléter votre demande de réservation pour ce créneau.',
+    icon: 'event_available',
+    details: [
+      { label: 'Espace', value: this.selectedEspace?.nom || '—' },
+      { label: 'Date', value: this.datePipe.transform(this.selectedDate, 'EEEE d MMMM y') || '' },
+      { label: 'Début', value: this.displayTime(this.selectedStartTime) },
+      { label: 'Fin', value: this.displayTime(this.selectedEndTime) },
+    ],
+    confirmLabel: 'Continuer',
+    cancelLabel: 'Modifier',
+  }).subscribe(result => {
+    if (result) {
       this.proceedToReservation();
     }
   });
@@ -410,7 +411,7 @@ private proceedToReservation(): void {
     queryParams,
     replaceUrl: true
   }).catch(err => {
-    this.errorMessage = 'Failed to navigate to reservation form';
+    this.errorMessage = 'Impossible d’ouvrir le formulaire de réservation.';
     console.error('Navigation error:', err);
   });
 }
@@ -544,5 +545,38 @@ nextDay(): void {
 
   navigateToSpaces() {
     this.router.navigate(['/spaces']);
+  }
+
+  // ---- display helpers (the internal slot format stays '7:00 AM') ----
+
+  /** '7:00 AM' -> '07:00', '1:30 PM' -> '13:30' */
+  displayTime(time: string | null): string {
+    if (!time) return '';
+    const { hours, minutes } = this.parseTime(time);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+
+  isTodayDate(date: Date): boolean {
+    return this.isSameDay(date, new Date());
+  }
+
+  private initialDaySelected = false;
+
+  /** On first load, if today is not bookable (weekend, reserved…), open the next available day. */
+  private selectFirstAvailableDayOnce(): void {
+    if (this.initialDaySelected) return;
+    this.initialDaySelected = true;
+    if (this.isDayAvailable(this.selectedDate)) return;
+    const d = new Date(this.selectedDate);
+    for (let i = 0; i < 90; i++) {
+      d.setDate(d.getDate() + 1);
+      if (this.isDayAvailable(d)) {
+        this.selectedDate = new Date(d);
+        this.dateControl.setValue(this.selectedDate);
+        this.currentMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+        this.generateMonthDays();
+        return;
+      }
+    }
   }
 }
