@@ -150,6 +150,9 @@ export class AuthComponent {
     this.isLoading = false;
     if (err.status === 401) {
       this.notificationService.showError('Email ou mot de passe incorrect');
+    } else if (err.status === 403 && err.error?.error) {
+      // e.g. account not activated yet
+      this.notificationService.showError(err.error.error);
     } else if (err.status === 0) {
       this.notificationService.showError('Impossible de se connecter au serveur');
     } else {

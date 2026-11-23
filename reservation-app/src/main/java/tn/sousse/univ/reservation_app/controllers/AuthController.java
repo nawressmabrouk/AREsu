@@ -54,6 +54,9 @@ public class AuthController {
 
             return ResponseEntity.ok(Map.of("token", token));
 
+        } catch (org.springframework.security.authentication.DisabledException e) {
+            // Account not activated yet: a clear 403 instead of a generic 500
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500)

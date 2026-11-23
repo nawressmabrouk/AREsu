@@ -49,7 +49,8 @@ public class AuthService {
         }
 
         if (!user.isEnabled()) {
-            throw new RuntimeException("Votre compte n’est pas activé. Veuillez vérifier votre email.");
+            throw new org.springframework.security.authentication.DisabledException(
+                    "Votre compte n’est pas activé. Veuillez vérifier votre email.");
         }
 
         return user;
