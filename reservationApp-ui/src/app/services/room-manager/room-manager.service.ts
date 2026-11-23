@@ -9,7 +9,7 @@ import { Espace } from '../../models/espace.model';
   providedIn: 'root'
 })
 export class RoomManagerService {
-  private baseUrl = 'http://localhost:8080/api/responsable';
+  private baseUrl = '/api/responsable';
   private allReservations: Reservation[] = [];
 
   constructor(

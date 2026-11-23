@@ -8,7 +8,7 @@ import { User , Role } from '../../shared/interfaces/user.model';
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = 'http://localhost:8080/api';
+  private apiUrl = '/api';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   constructor(
@@ -142,7 +142,7 @@ changePassword(passwordData: any): Observable<any> {
 }
   // Logout
   logout(): Observable<any> {
-    return this.http.post(`http://localhost:8080/api/auth/logout`, {}, { 
+    return this.http.post(`/api/auth/logout`, {}, { 
       headers: this.getAuthHeaders() 
     });
   }

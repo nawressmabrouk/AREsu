@@ -8,7 +8,7 @@ import { catchError } from 'rxjs/operators';
   providedIn: 'root',
 })
 export class RegistrationService {
-  private apiUrl = 'http://localhost:8080/api/utilisateurs/inscription';
+  private apiUrl = '/api/utilisateurs/inscription';
 
   constructor(private http: HttpClient) {}
 
@@ -22,4 +22,4 @@ export class RegistrationService {
       })
     );
   }
-}
+}
