@@ -1,45 +1,37 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { PasswordRecoveryService } from '../../services/password-recovery/password-recovery.service';
-import { NotificationComponent } from '../../alert-notif/notification.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NotificationService } from '../../services/alert-notif/notification.service';
-import { CommonModule } from '@angular/common';
-import { faLock, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import {  ViewChild, ElementRef } from '@angular/core';
+import { PasswordRecoveryService } from '../../services/password-recovery/password-recovery.service';
+
+/** New password, reached from the link in the reset e-mail (?token=…). */
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [FormsModule , NotificationComponent , CommonModule , FontAwesomeModule],
+  imports: [FormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIcon, MatProgressSpinner],
   templateUrl: './reset-password.component.html',
   styleUrls: ['./reset-password.component.scss']
 })
-
 export class ResetPasswordComponent implements OnInit {
-  @ViewChild('newPassInput') newPassInput!: ElementRef;
-  @ViewChild('confirmPassInput') confirmPassInput!: ElementRef;
-  token: string = '';
-  newPassword: string = '';
-  confirmPassword: string = '';
-  isLoading: boolean = false;
-showPassword = false;
-showConfirmPassword = false;
-faLock = faLock;
-faEye = faEye;
-faEyeSlash = faEyeSlash;
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly passwordService = inject(PasswordRecoveryService);
+  private readonly notificationService = inject(NotificationService);
 
-
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private passwordService: PasswordRecoveryService,
-    private notificationService: NotificationService
-  ) {}
+  token = '';
+  newPassword = '';
+  confirmPassword = '';
+  isLoading = false;
+  showPassword = false;
+  errorMessage: string | null = null;
 
   ngOnInit() {
     this.token = this.route.snapshot.queryParams['token'];
-    
     if (!this.token) {
       this.notificationService.showError('Lien invalide');
       this.router.navigate(['/login']);
@@ -47,37 +39,26 @@ faEyeSlash = faEyeSlash;
   }
 
   onSubmit() {
-    if (this.newPassword !== this.confirmPassword) {
-      this.notificationService.showError('Les mots de passe ne correspondent pas');
+    this.errorMessage = null;
+    if (this.newPassword.length < 8) {
+      this.errorMessage = 'Le mot de passe doit contenir au moins 8 caractères.';
       return;
     }
-
-    this.isLoading = true;
-
-    this.passwordService.resetPassword(this.token, this.newPassword, this.confirmPassword)
-      .subscribe({
-        next: () => {
-          this.notificationService.showSuccess('Mot de passe réinitialisé !');
-          this.router.navigate(['/login']);
-        },
-        error: (err) => {
-          this.notificationService.showError(err.error?.message || 'Erreur inattendue');
-          this.isLoading = false;
-        }
-      });
-  }
- 
-
-  togglePasswordVisibility(inputField: HTMLInputElement) {
-    if (inputField === this.newPassInput.nativeElement) {
-      this.showPassword = !this.showPassword;
-      inputField.type = this.showPassword ? 'text' : 'password';
-    } else {
-      this.showConfirmPassword = !this.showConfirmPassword;
-      inputField.type = this.showConfirmPassword ? 'text' : 'password';
+    if (this.newPassword !== this.confirmPassword) {
+      this.errorMessage = 'Les mots de passe ne correspondent pas.';
+      return;
     }
-  }
-  onPasswordInput() {
-    // Déclenche la détection de changement
+    this.isLoading = true;
+    this.passwordService.resetPassword(this.token, this.newPassword, this.confirmPassword).subscribe({
+      next: () => {
+        this.notificationService.showSuccess('Mot de passe réinitialisé ! Vous pouvez vous connecter.');
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        // the backend sends { error: "…" } (e.g. expired or invalid link)
+        this.errorMessage = err.error?.error || err.error?.message || 'Erreur inattendue';
+        this.isLoading = false;
+      }
+    });
   }
 }

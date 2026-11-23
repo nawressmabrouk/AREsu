@@ -444,6 +444,17 @@ img {
   width: 100%;
 }
 
+// Outlined labels float half above the field: keep them clear of the previous field's hint
+.mat-form-field-appearance-outline {
+  margin-top: 8px;
+}
+
+// Links styled as buttons are never underlined
+a.mat-mdc-button-base,
+a.mat-mdc-button-base:hover {
+  text-decoration: none;
+}
+
 // Material buttons: a bit more weight, consistent height
 .mat-mdc-button-base {
   --mdc-filled-button-container-shape: 10px;
