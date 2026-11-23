@@ -30,11 +30,6 @@ spring:
       mail.smtp.starttls.enable: true
       mail.smtp.starttls.required: true
 
-  logging:
-  level:
-    org.springframework: DEBUG
-    tn.sousse.univ.reservation_app: DEBUG
-
   jackson:
     time-zone: Africa/Tunis
 
@@ -48,6 +43,12 @@ spring:
     allow-bean-definition-overriding: true
   autoconfigure:
     exclude: org.springframework.cloud.function.context.config.ContextFunctionCatalogAutoConfiguration
+
+# Log levels (top level, not under spring:). Raise to DEBUG through the environment.
+logging:
+  level:
+    org.springframework: ${LOG_LEVEL_SPRING:INFO}
+    tn.sousse.univ.reservation_app: ${LOG_LEVEL_APP:INFO}
 
 # First-start SUPER_ADMIN account (only used when no SUPER_ADMIN exists yet).
 app:
