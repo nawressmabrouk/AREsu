@@ -1,53 +1,41 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { 
-  faKey, faSignInAlt, faUser, faUserPlus,
-  faEnvelope, faBriefcase, faPhone, faBuilding,
-  faUniversity, faDoorOpen, faLock, faLink 
-} from '@fortawesome/free-solid-svg-icons';
-import { AuthService } from '../services/auth/auth.service';
-import { RegistrationService } from '../services/auth/register.service';
-import { NotificationComponent } from '../alert-notif/notification.component';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatRadioModule } from '@angular/material/radio';
+import { RouterLink } from '@angular/router';
 import { NotificationService } from '../services/alert-notif/notification.service';
-import { ChatComponent } from '../chatbot/chatbot.component';
+import { RegistrationService } from '../services/auth/register.service';
+import { EtablissementService } from '../services/etablissement/etablissement.service';
+
+/** Account creation for requesters (internal / external). */
 @Component({
   selector: 'app-register',
   standalone: true,
   imports: [
-    CommonModule,    // Required for *ngIf and other common directives
-    FormsModule,     // Required for template-driven forms
-    RouterModule,    // Required for routerLink
-    FontAwesomeModule , NotificationComponent, ChatComponent
+    FormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIcon,
+    MatRadioModule, MatAutocompleteModule, MatProgressSpinner,
   ],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss']
 })
-export class RegisterComponent {
-  // Icons
-  faKey = faKey;
-  faDoorOpen = faDoorOpen;
-  faUser = faUser;
-  faSignInAlt = faSignInAlt;
-  faUserPlus = faUserPlus;
-  faEnvelope = faEnvelope;
-  faBriefcase = faBriefcase;
-  faPhone = faPhone;
-  faBuilding = faBuilding;
-  faUniversity = faUniversity;
-  faLink = faLink;
-  faLock = faLock;
+export class RegisterComponent implements OnInit {
+  private readonly registrationService = inject(RegistrationService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly etablissementService = inject(EtablissementService);
 
-  // Form states
-  isAccountPage: boolean = false;
-  isLoading: boolean = false;
+  isLoading = false;
+  registered = false;
+  registeredEmail = '';
   errorMessage: string | null = null;
-  loginErrorMessage: string | null = null;
-  confirmPassword: string = '';
+  confirmPassword = '';
+  showPassword = false;
+  etablissementNames: string[] = [];
 
-  // Form data models
   registerData = {
     nom: '',
     prenom: '',
@@ -58,225 +46,126 @@ export class RegisterComponent {
     linkedin: '',
     structure: '',
     role: '',
-    password: '', 
-     isPartenaire: null  
-
+    password: '',
+    isPartenaire: null as boolean | null
   };
 
-  loginData = {
-    email: '',
-    password: ''
-  };
-
-  constructor(
-    private router: Router,
-    private authService: AuthService,
-    private registrationService: RegistrationService,
-    private notificationService: NotificationService
-  ) {}
-
-  toggleView() {
-    this.isAccountPage = !this.isAccountPage;
-    this.resetFormStates();
+  ngOnInit() {
+    // Suggestions for the "Établissement" field (free text is still allowed)
+    this.etablissementService.getAllEtablissements().subscribe({
+      next: list => this.etablissementNames = list.map(e => e.nom).filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr')),
+      error: () => this.etablissementNames = []
+    });
   }
 
-  private resetFormStates() {
-    this.errorMessage = null;
-    this.loginErrorMessage = null;
-    this.isLoading = false;
+  get filteredEtablissements(): string[] {
+    const q = this.normalize(this.registerData.nomEtablissement);
+    return this.etablissementNames.filter(n => this.normalize(n).includes(q)).slice(0, 8);
   }
 
-  // Login Submit
-  onLoginSubmit(event: Event) {
+  get passwordRules() {
+    const p = this.registerData.password;
+    return [
+      { ok: p.length >= 8, label: '8 caractères minimum' },
+      { ok: this.hasUpperCase(p), label: 'Une majuscule' },
+      { ok: this.hasNumber(p), label: 'Un chiffre' },
+      { ok: this.hasSymbol(p), label: 'Un symbole' },
+    ];
+  }
+
+  onRegisterSubmit(event: Event) {
     event.preventDefault();
-    this.loginErrorMessage = null;
-
-    if (!this.validateLogin()) return;
+    this.errorMessage = null;
+    if (!this.validateRegistration()) return;
 
     this.isLoading = true;
+    // Prepare the data in the format expected by the backend
+    const registrationData = {
+      nom: this.registerData.nom.trim(),
+      prenom: this.registerData.prenom.trim(),
+      email: this.registerData.email.trim(),
+      fonction: this.registerData.fonction,
+      numTel: this.registerData.numTel,
+      nomEtablissement: this.registerData.nomEtablissement,
+      // the backend field is linkedInLink (the old "linkedin" key was ignored)
+      linkedInLink: this.registerData.linkedin,
+      structure: this.registerData.structure,
+      role: this.registerData.role,
+      password: this.registerData.password,
+      isPartenaire: this.registerData.isPartenaire
+    };
 
-    this.authService.login(this.loginData.email, this.loginData.password).subscribe({
-      next: (response) => {
+    this.registrationService.register(registrationData).subscribe({
+      next: () => {
         this.isLoading = false;
-        this.handleLoginSuccess();
+        this.registeredEmail = registrationData.email;
+        this.registered = true;
+        this.notificationService.showSuccess('Inscription réussie ! Vérifiez votre e-mail pour activer votre compte.');
+        this.resetRegisterForm();
       },
-      error: (err) => {
-        this.handleLoginError(err);
+      error: (error) => {
+        this.isLoading = false;
+        this.errorMessage = error === 'Cet email est déjà utilisé'
+          ? 'Cette adresse e-mail est déjà utilisée.'
+          : 'Erreur lors de l\'inscription. Veuillez réessayer.';
       }
     });
   }
 
-  private validateLogin(): boolean {
-    if (!this.loginData.email || !this.loginData.password) {
-      this.notificationService.showError('Veuillez remplir tous les champs');
+  private resetRegisterForm() {
+    this.registerData = {
+      nom: '', prenom: '', email: '', fonction: '', numTel: '', nomEtablissement: '',
+      linkedin: '', structure: '', role: '', password: '', isPartenaire: null
+    };
+    this.confirmPassword = '';
+  }
+
+  private validateRegistration(): boolean {
+    const labels: Record<string, string> = {
+      nom: 'Nom', prenom: 'Prénom', email: 'E-mail', fonction: 'Fonction', numTel: 'Téléphone',
+      nomEtablissement: 'Établissement', structure: 'Structure', role: 'Type d\'utilisateur', password: 'Mot de passe'
+    };
+    for (const field of Object.keys(labels)) {
+      if (!this.registerData[field as keyof typeof this.registerData]) {
+        this.errorMessage = `Le champ « ${labels[field]} » est obligatoire.`;
+        return false;
+      }
+    }
+    if (this.registerData.isPartenaire === null) {
+      this.errorMessage = 'Veuillez indiquer si vous êtes partenaire de l\'établissement.';
       return false;
     }
-
-    if (!this.isValidEmail(this.loginData.email)) {
-      this.notificationService.showError('Veuillez entrer une adresse email valide');
+    if (!this.isValidEmail(this.registerData.email)) {
+      this.errorMessage = 'Veuillez entrer une adresse e-mail valide.';
       return false;
     }
-
+    if (this.registerData.linkedin && !this.isValidLinkedInUrl(this.registerData.linkedin)) {
+      this.errorMessage = 'Veuillez entrer une URL LinkedIn valide (linkedin.com/in/… ou /company/…).';
+      return false;
+    }
+    if (!this.isPasswordStrong(this.registerData.password)) {
+      this.errorMessage = 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, un chiffre et un symbole.';
+      return false;
+    }
+    if (this.registerData.password !== this.confirmPassword) {
+      this.errorMessage = 'Les mots de passe ne correspondent pas.';
+      return false;
+    }
     return true;
   }
 
-  private handleLoginSuccess() {
-    const token = this.authService.getToken();
-    if (token) {
-      const decoded = this.authService.decodeToken(token);
-      this.redirectUserByRole(decoded?.roles);
-    } else {
-      this.notificationService.showError('Erreur d\'authentification : jeton non reçu');
-    }
-  }
-
-  private handleLoginError(err: any) {
-    this.isLoading = false;
-    if (err.status === 401) {
-      this.notificationService.showError('Email ou mot de passe incorrect');
-    } else if (err.status === 0) {
-      this.notificationService.showError('Impossible de se connecter au serveur');
-    } else {
-      this.notificationService.showError('Erreur lors de la connexion');
-    }
-  }
-
-  // Registration Submit
-onRegisterSubmit(event: Event) {
-  event.preventDefault();
-  this.errorMessage = null;
-
-  if (!this.validateRegistration()) return;
-
-  this.isLoading = true;
-
-  // Prepare the data in the format expected by the backend
-  const registrationData = {
-    nom: this.registerData.nom,
-    prenom: this.registerData.prenom,
-    email: this.registerData.email,
-    fonction: this.registerData.fonction,
-    numTel: this.registerData.numTel,
-    nomEtablissement: this.registerData.nomEtablissement,
-    linkedin: this.registerData.linkedin,
-    structure: this.registerData.structure,
-    role: this.registerData.role,
-    password: this.registerData.password,
-    isPartenaire: this.registerData.isPartenaire
-  };
-
-  this.registrationService.register(registrationData).subscribe({
-    next: (response) => {
-      this.isLoading = false;
-      this.notificationService.showSuccess(
-        'Inscription réussie ! Veuillez vérifier votre email pour activer votre compte.'
-      );
-      this.toggleView();
-      this.resetRegisterForm();
-    },
-    error: (error) => {
-      this.isLoading = false;
-      if (error === 'Cet email est déjà utilisé') {
-        this.notificationService.showError(error);
-      } else {
-        this.notificationService.showError('Erreur lors de l\'inscription');
-      }
-      console.error('Registration error:', error);
-    }
-  });
-}
-
-private resetRegisterForm() {
-  this.registerData = {
-    nom: '',
-    prenom: '',
-    email: '',
-    fonction: '',
-    numTel: '',
-    nomEtablissement: '',
-    linkedin: '',
-    structure: '',
-    role: '',
-    password: '',
-    isPartenaire: null
-  };
-  this.confirmPassword = '';
-}
-
-private validateRegistration(): boolean {
-  // Check required fields
-  const requiredFields = [
-    'nom', 'prenom', 'email', 'fonction', 'numTel',
-    'nomEtablissement', 'structure', 'role', 'password'
-  ];
-  
-  for (const field of requiredFields) {
-    if (!this.registerData[field as keyof typeof this.registerData]) {
-      this.notificationService.showError(`Le champ ${field} est obligatoire`);
-      return false;
-    }
-  }
-
-  // Check isPartenaire is set
-  if (this.registerData.isPartenaire === null) {
-    this.notificationService.showError('Veuillez spécifier si vous êtes partenaire');
-    return false;
-  }
-
-  // Email validation
-  if (!this.isValidEmail(this.registerData.email)) {
-    this.notificationService.showError('Veuillez entrer une adresse email valide');
-    return false;
-  }
-
-  // LinkedIn URL validation
-  if (this.registerData.linkedin && !this.isValidLinkedInUrl(this.registerData.linkedin)) {
-    this.notificationService.showError('Veuillez entrer une URL LinkedIn valide');
-    return false;
-  }
-
-  // Password confirmation
-  if (this.registerData.password !== this.confirmPassword) {
-    this.notificationService.showError('Les mots de passe ne correspondent pas');
-    return false;
-  }
-
-  // Password strength
-  if (!this.isPasswordStrong(this.registerData.password)) {
-    this.notificationService.showError(
-      'Le mot de passe doit contenir au moins 8 caractères avec majuscule, chiffre et symbole'
-    );
-    return false;
-  }
-
-  return true;
-}
-  private handleRegistrationError(error: any) {
-    this.isLoading = false;
-    if (error?.error?.includes('email')) {
-      this.notificationService.showError('Cet email existe déjà');
-    } else {
-      this.notificationService.showError('Erreur lors de l\'inscription');
-    }
-  }
-
   // Validation helpers
-  private isValidEmail(email: string): boolean {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
+  isValidEmail(email: string): boolean {
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim());
   }
 
   private isValidLinkedInUrl(url: string): boolean {
     if (!url) return true;
-    const linkedInRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9-]+\/?$/;
-    return linkedInRegex.test(url);
+    return /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9-]+\/?$/.test(url);
   }
 
   private isPasswordStrong(password: string): boolean {
-    return password.length >= 8 && 
-           this.hasUpperCase(password) && 
-           this.hasNumber(password) && 
-           this.hasSymbol(password);
+    return password.length >= 8 && this.hasUpperCase(password) && this.hasNumber(password) && this.hasSymbol(password);
   }
 
   private hasUpperCase(text: string): boolean {
@@ -291,8 +180,7 @@ private validateRegistration(): boolean {
     return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(text);
   }
 
-  private redirectUserByRole(roles: any): void {
-    const role = Array.isArray(roles) ? roles[0] : roles;
-    this.router.navigate([this.authService.homeRouteFor(role)]);
+  private normalize(s: string): string {
+    return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 }
