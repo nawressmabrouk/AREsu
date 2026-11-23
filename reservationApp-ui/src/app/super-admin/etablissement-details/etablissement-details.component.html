@@ -1,82 +1,84 @@
-<!-- etablissement-details.component.html -->
-<div class="etablissement-details" *ngIf="etablissement">
-  <div class="details-header">
-    <h2>{{etablissement.nom}}</h2>
-    <button mat-icon-button class="close-btn" (click)="close.emit()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
-
-  <div class="basic-info">
-    <p><strong>Adresse:</strong> {{etablissement.adresse}}</p>
-    <p><strong>Type:</strong> {{etablissement.type}}</p>
-    <p *ngIf="etablissement.secretaireGeneral">
-      <strong>Secrétaire Général:</strong> 
-      {{etablissement.secretaireGeneral.prenom}} {{etablissement.secretaireGeneral.nom}}
-       <!---strong>Son email:</strong> 
- {{etablissement.secretaireGeneral.email}}--->
-    </p>
-  </div>
-
-  <div class="tabs">
-    <button mat-button 
-      [class.active]="activeTab === 'responsables'"
-      (click)="setActiveTab('responsables')">
-      Responsables
-    </button>
-    <button mat-button 
-      [class.active]="activeTab === 'espaces'"
-      (click)="setActiveTab('espaces')">
-      Espaces
-    </button>
-  </div>
-
-  <div class="tab-content">
-    <div *ngIf="activeTab === 'responsables'" class="responsables-list">
-      <div *ngFor="let responsable of etablissement.responsables" class="responsable-item">
-        <div class="user-avatar">
-          <mat-icon>person</mat-icon>
-        </div>
-        <div class="user-info">
-          <h4>{{responsable.prenom}} {{responsable.nom}}</h4>
-          <p>{{responsable.email}}</p>
-          <p>{{responsable.fonction}}</p>
-          <p>{{responsable.numTel}}</p>
-        </div>
+@if (etablissement(); as e) {
+  <article class="details" aria-labelledby="etab-title">
+    <header>
+      <div>
+        <p class="eyebrow">{{ e.type || 'Établissement' }}</p>
+        <h2 id="etab-title">{{ e.nom }}</h2>
       </div>
+      <button mat-icon-button type="button" (click)="close.emit()" aria-label="Fermer les détails" matTooltip="Fermer">
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <dl class="info">
+      <div><dt><mat-icon aria-hidden="true">place</mat-icon>Adresse</dt><dd>{{ e.adresse || '—' }}</dd></div>
+      <div><dt><mat-icon aria-hidden="true">map</mat-icon>Zone</dt><dd>{{ typeLabel(e.zone) || '—' }}</dd></div>
+      <div><dt><mat-icon aria-hidden="true">assignment_ind</mat-icon>Secrétaire général(e)</dt>
+        <dd>
+          @if (e.secretaireGeneral; as sg) {
+            {{ sg.prenom }} {{ sg.nom }}
+            @if (sg.email) { <a class="sub" [href]="'mailto:' + sg.email">{{ sg.email }}</a> }
+          } @else { <span class="muted">Non renseigné</span> }
+        </dd>
+      </div>
+      <div><dt><mat-icon aria-hidden="true">groups</mat-icon>Capacité totale</dt><dd>{{ totalCapacity(e) }} places</dd></div>
+    </dl>
+
+    <div class="segmented with-icons" role="tablist" aria-label="Contenu de l'établissement">
+      <button type="button" role="tab" [attr.aria-selected]="activeTab() === 'espaces'" (click)="activeTab.set('espaces')">
+        <mat-icon aria-hidden="true">meeting_room</mat-icon>Espaces<span class="tab-count">{{ espaces(e).length }}</span>
+      </button>
+      <button type="button" role="tab" [attr.aria-selected]="activeTab() === 'responsables'" (click)="activeTab.set('responsables')">
+        <mat-icon aria-hidden="true">badge</mat-icon>Responsables<span class="tab-count">{{ responsables(e).length }}</span>
+      </button>
     </div>
 
-    <div *ngIf="activeTab === 'espaces'" class="espaces-list">
-      <table mat-table [dataSource]="etablissement.espaces" class="mat-elevation-z1">
-        <!-- Name Column -->
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Nom</th>
-          <td mat-cell *matCellDef="let espace">{{espace.nom}}</td>
-        </ng-container>
-
-        <!-- Type Column -->
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef>Type</th>
-          <td mat-cell *matCellDef="let espace">{{espace.type}}</td>
-        </ng-container>
-
-        <!-- Capacity Column -->
-        <ng-container matColumnDef="capacity">
-          <th mat-header-cell *matHeaderCellDef>Capacité</th>
-          <td mat-cell *matCellDef="let espace">{{espace.capacite}}</td>
-        </ng-container>
-
-        <!-- Responsable Column -->
-        <ng-container matColumnDef="responsable">
-          <th mat-header-cell *matHeaderCellDef>Responsable</th>
-          <td mat-cell *matCellDef="let espace">
-            {{espace.responsable ? espace.responsable.prenom + ' ' + espace.responsable.nom : 'Aucun'}}
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
-    </div>
-  </div>
-</div>
+    @if (activeTab() === 'espaces') {
+      @if (espaces(e).length) {
+        <div class="table-wrap">
+          <table class="data-table table-cards">
+            <thead>
+              <tr><th scope="col">Espace</th><th scope="col">Catégorie</th><th scope="col" class="num">Capacité</th><th scope="col">Responsable</th></tr>
+            </thead>
+            <tbody>
+              @for (s of espaces(e); track s.id) {
+                <tr>
+                  <td data-label="Espace">
+                    <span class="cell-main"><span class="cell-strong">{{ s.nom }}</span><span class="sub">{{ typeLabel(s.type) || 'Type non spécifié' }}</span></span>
+                  </td>
+                  <td data-label="Catégorie">{{ categoryLabel(s.categorie) || '—' }}</td>
+                  <td data-label="Capacité" class="num">{{ s.capacite }}</td>
+                  <td data-label="Responsable">
+                    @if (responsableOf(s); as name) { {{ name }} } @else { <span class="muted">Secrétariat</span> }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <app-empty-state icon="meeting_room" title="Aucun espace" message="Cet établissement n'a pas encore d'espace réservable." />
+      }
+    } @else {
+      @if (responsables(e).length) {
+        <ul class="people">
+          @for (r of responsables(e); track r.id) {
+            <li>
+              <span class="avatar" aria-hidden="true">{{ initials(r) }}</span>
+              <span class="cell-main">
+                <span class="cell-strong">{{ r.prenom }} {{ r.nom }}</span>
+                <span class="sub">{{ r.fonction || 'Responsable de salle' }}</span>
+              </span>
+              <span class="contact">
+                @if (r.email) { <a [href]="'mailto:' + r.email">{{ r.email }}</a> }
+                @if (r.numTel) { <span class="sub">{{ r.numTel }}</span> }
+              </span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <app-empty-state icon="badge" title="Aucun responsable" message="Aucun responsable de salle n'est encore rattaché à cet établissement." />
+      }
+    }
+  </article>
+}

@@ -1,48 +1,72 @@
+<div class="page">
+  <app-page-header eyebrow="Super administration" title="Établissements"
+    subtitle="Vue d'ensemble des établissements de l'université, de leurs espaces et de leurs responsables.">
+    <button actions mat-stroked-button type="button" (click)="load()"><mat-icon>refresh</mat-icon>Actualiser</button>
+  </app-page-header>
 
-<div class="main"></div>
-<header class="spaces-header">
-  <div class="header-content">
-    <div class="header-brand">
-      <img src="/logo2.png" alt="Université de Sousse" class="logo-image">
-    </div>
-
-    <h1 class="page-title">
-      Tableau de bord Super Admin
-    </h1>
-    <p class="page-subtitle">
-      Visualisation de tous les établissements et leurs données
-    </p>
-
-    <app-profile class="profile-icon" [user]="currentUser"></app-profile>
+  <div class="stat-grid">
+    <app-stat-card label="Établissements" [value]="loading() ? '…' : etablissements().length" icon="domain" tone="primary" />
+    <app-stat-card label="Espaces" [value]="loading() ? '…' : totals().espaces" icon="meeting_room" tone="info" />
+    <app-stat-card label="Responsables de salle" [value]="loading() ? '…' : totals().responsables" icon="badge" tone="accent" />
+    <app-stat-card label="Capacité totale" [value]="loading() ? '…' : totals().capacity" icon="groups" tone="success" hint="Places" />
   </div>
-</header>
 
-<div class="super-admin-dashboard">
-  <div class="content">
-    <!-- Liste des établissements -->
-    <div class="etablissements-list">
-      <h2>Liste des établissements ({{etablissements.length}})</h2>
-      
-      <div *ngIf="isLoading" class="loading">
-        <mat-spinner diameter="40"></mat-spinner>
-      </div>
-      
-      <div *ngIf="!isLoading" class="cards-container">
-        <app-etablissement-card 
-          *ngFor="let etablissement of etablissements" 
-          [etablissement]="etablissement"
-          [isActive]="selectedEtablissement?.id === etablissement.id"
-          (click)="showEtablissementDetails(etablissement)">
-        </app-etablissement-card>
-      </div>
-    </div>
+  @if (loading()) {
+    <app-skeleton variant="cards" [count]="3" />
+  } @else if (failed()) {
+    <app-empty-state icon="cloud_off" title="Chargement impossible" message="Les établissements n'ont pas pu être chargés.">
+      <button mat-stroked-button type="button" (click)="load()"><mat-icon>refresh</mat-icon>Réessayer</button>
+    </app-empty-state>
+  } @else if (!etablissements().length) {
+    <app-empty-state icon="domain" title="Aucun établissement" message="Aucun établissement n'est encore enregistré." />
+  } @else {
+    <div class="layout">
+      <section class="list" aria-label="Liste des établissements">
+        <div class="toolbar">
+          <mat-form-field class="search" subscriptSizing="dynamic">
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-label>Rechercher</mat-label>
+            <input matInput type="search" [value]="search()" (input)="search.set($any($event.target).value)" placeholder="Nom, adresse, zone…" />
+          </mat-form-field>
+          @if (types().length > 1) {
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>Type</mat-label>
+              <mat-select [value]="typeFilter()" (valueChange)="typeFilter.set($event)">
+                <mat-option value="">Tous les types</mat-option>
+                @for (t of types(); track t) { <mat-option [value]="t">{{ t }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+          }
+        </div>
+        <p class="count">{{ filtered().length }} établissement{{ filtered().length > 1 ? 's' : '' }}</p>
 
-    <!-- Détails de l'établissement sélectionné -->
-    <div class="etablissement-details" *ngIf="selectedEtablissement">
-      <app-etablissement-details 
-        [etablissement]="selectedEtablissement"
-        (close)="selectedEtablissement = null">
-      </app-etablissement-details>
+        @if (!filtered().length) {
+          <app-empty-state icon="search_off" title="Aucun résultat" message="Aucun établissement ne correspond à votre recherche.">
+            <button mat-stroked-button type="button" (click)="search.set(''); typeFilter.set('')">Effacer les filtres</button>
+          </app-empty-state>
+        } @else {
+          <ul class="cards">
+            @for (e of filtered(); track e.id) {
+              <li>
+                <button type="button" class="card-btn" (click)="select(e)" [attr.aria-pressed]="selectedId() === e.id">
+                  <app-etablissement-card [etablissement]="e" [isActive]="selectedId() === e.id" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section #details class="detail" aria-live="polite">
+        @if (selected(); as e) {
+          <app-etablissement-details [etablissement]="e" (close)="selectedId.set(null)" />
+        } @else {
+          <div class="placeholder">
+            <app-empty-state icon="touch_app" title="Sélectionnez un établissement"
+              message="Ses informations, ses espaces et ses responsables s'afficheront ici." />
+          </div>
+        }
+      </section>
     </div>
-  </div>
+  }
 </div>

@@ -293,7 +293,7 @@
     display: none;
   }
 
-  .breadcrumb li + li::before {
+  .breadcrumb ol li + li::before {
     content: none;
   }
 }
