@@ -172,6 +172,11 @@
   display: none;
 }
 
+.breadcrumb {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .breadcrumb ol {
   display: flex;
   align-items: center;
@@ -204,6 +209,7 @@
 }
 
 .topbar-actions {
+  flex: none;
   margin-left: auto;
   display: flex;
   align-items: center;
@@ -278,5 +284,16 @@
 
   .topbar {
     padding: 0 var(--space-3);
+  }
+}
+
+// Phones: keep only the current page in the breadcrumb
+@media (max-width: 520px) {
+  .breadcrumb li:not(:last-child) {
+    display: none;
+  }
+
+  .breadcrumb li + li::before {
+    content: none;
   }
 }
