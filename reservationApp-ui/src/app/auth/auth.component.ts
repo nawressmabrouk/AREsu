@@ -295,25 +295,8 @@ private resetRegisterForm() {
 
   // === REDIRECTION BASED ON ROLE ===
   private redirectUserByRole(roles: any): void {
-    let normalizedRole = '';
-    
-    if (Array.isArray(roles)) {
-      normalizedRole = roles[0].replace('ROLE_', '').toLowerCase();
-    } else if (typeof roles === 'string') {
-      normalizedRole = roles.replace('ROLE_', '').toLowerCase();
-    }
-
-    const roleRoutes: { [key: string]: string } = {
-      'demandeur_interne': '/spaces',
-      'demandeur_externe': '/spaces',
-      'secretaire_generale': '/secretary',
-      'admin': '/admin',
-      'responsable_salle': '/room-manager',
-      'super_admin': '/super-admin/dashboard',
-    };
-
-    const targetRoute = roleRoutes[normalizedRole] || '/unauthorized';
-    this.router.navigate([targetRoute]);
+    const role = Array.isArray(roles) ? roles[0] : roles;
+    this.router.navigate([this.authService.homeRouteFor(role)]);
   }
 }
 
