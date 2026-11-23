@@ -58,7 +58,7 @@ faEyeSlash = faEyeSlash;
       .subscribe({
         next: () => {
           this.notificationService.showSuccess('Mot de passe réinitialisé !');
-          this.router.navigate(['/auth']);
+          this.router.navigate(['/login']);
         },
         error: (err) => {
           this.notificationService.showError(err.error?.message || 'Erreur inattendue');
