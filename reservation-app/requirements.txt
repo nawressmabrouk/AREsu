@@ -1,0 +1,11 @@
+# Python dependencies of the chatbot (ask_bot.py), called by PythonBridgeService.
+#
+# Install (PowerShell, from the reservation-app folder):
+#   py -3.12 -m venv .venv
+#   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+#
+# The backend uses .venv automatically if it exists (or set CHATBOT_PYTHON).
+# The first question downloads the sentence-transformers model (~470 MB)
+# from Hugging Face into your user cache.
+torch>=2.2
+sentence-transformers>=3.0,<6

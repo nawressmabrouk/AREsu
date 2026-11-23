@@ -34,3 +34,7 @@ dist/
 # ---------------------------------------------------------------
 *-backup-*.zip
 *.bundle
+
+# Python virtual environments (chatbot)
+.venv/
+__pycache__/

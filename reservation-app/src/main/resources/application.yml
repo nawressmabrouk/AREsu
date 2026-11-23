@@ -57,6 +57,12 @@ app:
     username: ${ADMIN_USERNAME:}
     password: ${ADMIN_PASSWORD:}
 
+# Optional Python chatbot (ask_bot.py, see requirements.txt)
+chatbot:
+  python: ${CHATBOT_PYTHON:}
+  script: ${CHATBOT_SCRIPT:ask_bot.py}
+  timeout-seconds: ${CHATBOT_TIMEOUT_SECONDS:120}
+
 google:
   calendar:
     api-key: ${GOOGLE_API_KEY:}
