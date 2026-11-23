@@ -44,6 +44,10 @@ public class UserService {
     @Autowired
     private EmailService emailService;
 
+    // Public URL of the backend, used in the activation link (APP_BACKEND_URL)
+    @org.springframework.beans.factory.annotation.Value("${app.backend-url:http://localhost:8080}")
+    private String backendUrl;
+
     
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
@@ -81,7 +85,8 @@ public class UserService {
 
     @Async
     public void sendActivationEmailAsync(User user, String token) {
-        String activationLink = "http://localhost:8080/api/utilisateurs/activer?token=" + token;
+        String activationLink = backendUrl + "/api/utilisateurs/activer?token=" + token;
+        logIfMailDisabled(user, activationLink);
         String htmlTemplate = loadEmailTemplate("templates/activation-email.html");
         String htmlContent = htmlTemplate.replace("{{activation_link}}", activationLink);
         emailService.sendHtmlEmail(user.getEmail(),
@@ -122,13 +127,21 @@ public class UserService {
         return savedUser;
     }
 
+    // Local development without SMTP: write the activation link to the server log
+    private void logIfMailDisabled(User user, String activationLink) {
+        if (!emailService.isEnabled()) {
+            logger.warn("Envoi d'e-mails désactivé : lien d'activation pour {} : {}", user.getEmail(), activationLink);
+        }
+    }
+
     // Sends account activation email with verification link
     private void sendActivationEmail(User user) {
         try {
             String token = UUID.randomUUID().toString();
             verificationTokenRepository.save(new VerificationToken(token, user.getId()));
 
-            String activationLink = "http://localhost:8080/api/utilisateurs/activer?token=" + token;
+            String activationLink = backendUrl + "/api/utilisateurs/activer?token=" + token;
+            logIfMailDisabled(user, activationLink);
             String htmlTemplate = loadEmailTemplate("templates/activation-email.html");
             String htmlContent = htmlTemplate
                     .replace("{{activation_link}}", activationLink)

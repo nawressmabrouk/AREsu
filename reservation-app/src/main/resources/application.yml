@@ -50,6 +50,9 @@ logging:
 
 # First-start SUPER_ADMIN account (only used when no SUPER_ADMIN exists yet).
 app:
+  # Public URLs used in e-mail links (activation -> backend, password reset -> frontend)
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:4200}
+  backend-url: ${APP_BACKEND_URL:http://localhost:8080}
   bootstrap-admin:
     username: ${ADMIN_USERNAME:}
     password: ${ADMIN_PASSWORD:}
