@@ -6,7 +6,7 @@ import { ChatComponent } from './chatbot/chatbot.component';
 import { HomeComponent } from './home/home.component';
 import { IdOublieComponent } from './mot-de-passe-oubliée/id-oublie/id-oublie.component';
 import { ResetPasswordComponent } from './mot-de-passe-oubliée/reset-password/reset-password.component';
-import { NavbarComponent } from './navbar/navbar.component';
+import { PublicLayoutComponent } from './layout/public-layout.component';
 import { RegisterComponent } from './register/register.component';
 import { ReservationFormComponent } from './reservation-form/reservation-form.component';
 import { RoomManagerComponent } from './room-manager/room-manager.component';
@@ -18,25 +18,26 @@ import { EtablissementCardComponent } from './super-admin/etablissement-card/eta
 import { EtablissementDetailsComponent } from './super-admin/etablissement-details/etablissement-details.component';
 
 export const routes: Routes = [
-  // --- Public pages -------------------------------------------------------
-  { path: '', component: HomeComponent },
+  // --- Public pages: shared top navbar + footer -----------------------------
   {
-    path: 'navbar',
-    component: NavbarComponent,
+    path: '',
+    component: PublicLayoutComponent,
     children: [
-      { path: 'auth', component: AuthComponent },
-      { path: 'register', component: RegisterComponent },
-      { path: 'id-oublie', component: IdOublieComponent },
+      { path: '', component: HomeComponent, pathMatch: 'full' },
+      { path: 'login', component: AuthComponent, title: 'Connexion' },
+      { path: 'register', component: RegisterComponent, title: 'Créer un compte' },
+      { path: 'mot-de-passe-oublie', component: IdOublieComponent, title: 'Mot de passe oublié' },
+      { path: 'reset-password', component: ResetPasswordComponent, title: 'Nouveau mot de passe' },
+      { path: 'chatbot', component: ChatComponent, title: 'Assistant' },
     ],
   },
-  { path: 'spaces', component: SpacesComponent },
-  { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'chatbot', component: ChatComponent },
+  { path: 'spaces', component: SpacesComponent, title: 'Espaces' },
 
-  // --- Short aliases used by links and redirects in the app -----------------
+  // --- Old URLs and aliases (links in e-mails, bookmarks, redirects) --------
+  { path: 'navbar/auth', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'navbar/register', redirectTo: 'register', pathMatch: 'full' },
+  { path: 'navbar/id-oublie', redirectTo: 'mot-de-passe-oublie', pathMatch: 'full' },
   { path: 'home', redirectTo: '', pathMatch: 'full' },
-  { path: 'login', redirectTo: 'navbar/auth', pathMatch: 'full' },
-  { path: 'register', redirectTo: 'navbar/register', pathMatch: 'full' },
   { path: 'unauthorized', canActivate: [redirectToRoleHome], children: [] },
 
   // --- Any logged-in user -------------------------------------------------
