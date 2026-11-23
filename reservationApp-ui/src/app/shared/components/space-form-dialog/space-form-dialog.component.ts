@@ -13,7 +13,7 @@ import { categoryValue, COMMON_EQUIPMENTS, SPACE_CATEGORIES, typeLabel, typesOf 
 
 export interface SpaceFormData {
   /** Space to edit; omit to create one. */
-  espace?: Partial<Espace>;
+  espace?: Partial<Pick<Espace, 'id' | 'nom' | 'capacite' | 'categorie' | 'type' | 'equipement' | 'responsableId'>>;
   /** Shown as a required select when given (admin: choose the room manager). */
   responsables?: { id: string; label: string }[];
 }

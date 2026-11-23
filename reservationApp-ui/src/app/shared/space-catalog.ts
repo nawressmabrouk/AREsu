@@ -42,7 +42,17 @@ export function typesOf(category: string | null | undefined): string[] {
   return findCategory(category)?.types ?? [];
 }
 
-/** 'Salle_de_conference' -> 'Salle de conference' */
+const TYPE_LABELS: Record<string, string> = {
+  Amphitheatre: 'Amphithéâtre',
+  Laboratoire_de_recherche: 'Laboratoire de recherche',
+  Salle_de_conference: 'Salle de conférence',
+  'Salle_de_marche/bourse': 'Salle de marché / bourse',
+  Espace_4C: 'Espace 4C',
+  Coworking_space: 'Espace de coworking',
+  Pole_etudiant_entrepreneur: 'Pôle étudiant entrepreneur',
+};
+
+/** Display name of a stored type: 'Salle_de_conference' -> 'Salle de conférence' */
 export function typeLabel(type: string | null | undefined): string {
-  return (type ?? '').replace(/_/g, ' ');
+  return type ? TYPE_LABELS[type] ?? type.replace(/_/g, ' ') : '';
 }

@@ -1,552 +1,319 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import {
-  faArrowRight,
-  faBriefcase,
-  faBuilding,
-  faEdit,
-  faEnvelope,
-  faHome,
-  faLink, faLock,
-  faPhone,
-  faPlusCircle,
-  faTasks,
-  faTools,
-  faTrash,
-  faUniversity,
-  faUser,
-  faUsers,
-  faUsersCog,
-  faUserTag
-} from '@fortawesome/free-solid-svg-icons';
-import { NotificationComponent } from '../alert-notif/notification.component';
-import { AdminRegistrationService, AdminUser } from '../services/admin/admin-registration.service';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTooltip } from '@angular/material/tooltip';
+import { filter, finalize, Observable, switchMap } from 'rxjs';
+import { AdminRegistrationService, AdminUser, Espace, Role } from '../services/admin/admin-registration.service';
 import { NotificationService } from '../services/alert-notif/notification.service';
-import { ProfileComponent } from '../shared/components/profile/profile.component';
+import { SpaceFormService, SpaceFormValue } from '../shared/components/space-form-dialog/space-form-dialog.component';
+import { categoryLabel, categoryValue, SPACE_CATEGORIES, typeLabel } from '../shared/space-catalog';
+import { apiErrorMessage } from '../shared/ui/api-error';
+import { ConfirmService } from '../shared/ui/confirm-dialog.component';
+import { EmptyStateComponent } from '../shared/ui/empty-state.component';
+import { PageHeaderComponent } from '../shared/ui/page-header.component';
+import { SkeletonComponent } from '../shared/ui/skeleton.component';
+import { StatCardComponent } from '../shared/ui/stat-card.component';
+import { ResponsableFormDialogComponent, ResponsableFormValue } from './responsable-form-dialog.component';
 
+type View = 'espaces' | 'responsables';
 
-interface Espace {
-  id: string;
-  nom: string;
-  capacite: number;
-  disponibilite: boolean;
-  equipement: string[];
-  responsableId: string;
-  responsableNom: string | null;
-  etablissementId: string;
-  etablissementNom: string;
-  categorie: string;
-  type: string;
-}
-
-export enum Role {
-  ADMIN = 'ADMIN',
-  SECRETAIRE_GENERALE = 'SECRETAIRE_GENERALE',
-  RESPONSABLE_SALLE = 'RESPONSABLE_SALLE',
-  DEMANDEUR = 'DEMANDEUR'
+interface ListState<T> {
+  items: T[];
+  loading: boolean;
+  failed: boolean;
 }
 
 @Component({
   selector: 'app-admin',
-  standalone: true,
-  imports: [CommonModule, FontAwesomeModule, RouterModule, FormsModule, ProfileComponent, NotificationComponent],
+  imports: [
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIcon,
+    MatInput,
+    MatPaginator,
+    MatProgressSpinner,
+    MatSelectModule,
+    MatTooltip,
+    EmptyStateComponent,
+    PageHeaderComponent,
+    SkeletonComponent,
+    StatCardComponent,
+  ],
   templateUrl: './admin.component.html',
-  styleUrls: ['./admin.component.scss']
+  styleUrl: './admin.component.scss',
 })
-export class AdminComponent {
-  faUser = faUser;
-  faEnvelope = faEnvelope;
-  faBriefcase = faBriefcase;
-  faPhone = faPhone;
-  faBuilding = faBuilding;
-  faUniversity = faUniversity;
-  faLink = faLink;
-  faLock = faLock;
-  faUsers = faUsers;
-  faTools = faTools;
-  faHome = faHome;
-  faPageIcon = faArrowRight;
-  faUsersCog = faUsersCog;
-  faTasks = faTasks;
-  faEdit = faEdit;
-  faTrash = faTrash;
-  faPlusCircle = faPlusCircle;
-  faUserTag = faUserTag;
+export class AdminComponent implements OnInit {
+  private readonly adminService = inject(AdminRegistrationService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly dialog = inject(MatDialog);
+  private readonly spaceForm = inject(SpaceFormService);
+  private readonly toast = inject(NotificationService);
 
+  readonly view = signal<View>('espaces');
+  readonly espaces = signal<ListState<Espace>>({ items: [], loading: true, failed: false });
+  readonly responsables = signal<ListState<AdminUser>>({ items: [], loading: true, failed: false });
+  readonly busy = signal<ReadonlySet<string>>(new Set());
 
-  showModal: string | null = null;
-  currentEspaceView: string | null = null;
-  showEspaceOptions: boolean = false;
-  showSousAdminOptions: boolean = false;
-  currentSousAdminView: 'ajouter' | 'gerer' = 'ajouter';
-  isEditingSousAdmin: boolean = false;
-  isEditingEspace: boolean = false;
-  selectedCategory: string = '';
+  readonly categories = SPACE_CATEGORIES;
+  readonly categoryLabel = categoryLabel;
+  readonly typeLabel = typeLabel;
 
-  espaces: Espace[] = [];
-  sousAdmins: AdminUser[] = [];
-  currentSousAdmin: AdminUser | null = null;
-  currentEspace: Espace | null = null;
-  searchSousAdmin: string = '';
-  searchEspace: string = '';
+  // Filters and pages
+  readonly espaceSearch = signal('');
+  readonly espaceCategory = signal('');
+  readonly espacePage = signal({ index: 0, size: 10 });
+  readonly respSearch = signal('');
+  readonly respPage = signal({ index: 0, size: 10 });
 
-  // Current user
-  currentUser: any = {
-    role: 'ADMIN',
-    nomPrenom: 'Admin',
-    email: 'admin@univ-sousse.tn'
-  };
+  readonly totalCapacity = computed(() => this.espaces().items.reduce((sum, e) => sum + (Number(e.capacite) || 0), 0));
+  readonly unassigned = computed(() => this.espaces().items.filter(e => !e.responsableId).length);
 
-  // Form data
-  sousAdminFormData: AdminUser = {
-    nom: '',
-    prenom: '',
-    email: '',
-    numTel: '',
-    role: Role.RESPONSABLE_SALLE,
-    fonction: '',
-    nomEtablissement: '',
-    structure: '',
-    linkedInLink: '',
-    espacesResponsables: []
-  };
-
-  espaceFormData: any = {
-    nom: '',
-    capacite: null,
-    equipement: '',
-    categorie: '',
-    type: '',
-    responsableId: ''
-  };
-
-  categories = [
-    { 
-      name: 'Espaces administratifs & académiques',
-      types: ['Laboratoire_de_recherche', 'Salle_de_conference', 'Salle_de_marche/bourse']
-    },
-    { 
-      name: "Espaces d'employabilité & d'innovation",
-      types: ['Espace_4C', 'Incubateur', 'FabLab', 'Coworking_space', 'Pole_etudiant_entrepreneur']
+  /** Spaces per room manager (from the spaces' responsableId). */
+  readonly espacesByResponsable = computed(() => {
+    const map = new Map<string, Espace[]>();
+    for (const e of this.espaces().items) {
+      if (!e.responsableId) continue;
+      map.set(e.responsableId, [...(map.get(e.responsableId) ?? []), e]);
     }
-  ];
-
-  constructor(
-    private router: Router,
-    private adminService: AdminRegistrationService,
-    private notificationService: NotificationService,
-  ) {}
-
-  ngOnInit() {
-    this.loadEspaces();
-    this.loadSousAdmins();
-  }
-
-   // Toggles visibility of space management options panel
-  toggleEspaceOptions() {
-    this.showEspaceOptions = !this.showEspaceOptions;
-    if (!this.showEspaceOptions) {
-      this.showModal = null;
-    }
-  }
-
-  // Toggles visibility of sub-admin management options panel  
-  toggleSousAdminOptions() {
-    this.showSousAdminOptions = !this.showSousAdminOptions;
-    if (!this.showSousAdminOptions) {
-      this.showModal = null;
-    }
-  }
-
-    // Closes all modals and resets forms
-  closeModal() {
-    this.showModal = null;
-    this.currentEspaceView = null;
-    this.resetForms();
-  }
- 
-   // Fetches all spaces from the API
-private loadEspaces() {
-  this.adminService.getAllEspaces().subscribe({
-    next: spaces => {
-      this.espaces = spaces.map(s => ({
-        ...s,
-        responsableNom: s.responsableNom ?? ''  
-      }));
-    },
-    error: err => {
-      console.error('Error loading spaces:', err);
-      this.notificationService.showError('Failed to load spaces');
-    }
+    return map;
   });
-}
 
-// Fetches all sub-admins (responsables) from the API
-  private loadSousAdmins() {
+  readonly filteredEspaces = computed(() => {
+    const q = normalize(this.espaceSearch());
+    const cat = this.espaceCategory();
+    return this.espaces()
+      .items.filter(e => !cat || categoryValue(e.categorie) === cat)
+      .filter(e => !q || normalize([e.nom, e.responsableNom, typeLabel(e.type), ...(e.equipement ?? [])].join(' ')).includes(q))
+      .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+  });
+
+  readonly filteredResponsables = computed(() => {
+    const q = normalize(this.respSearch());
+    return this.responsables()
+      .items.filter(r => !q || normalize([r.prenom, r.nom, r.email, r.fonction, r.structure].join(' ')).includes(q))
+      .sort((a, b) => `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, 'fr'));
+  });
+
+  readonly pagedEspaces = computed(() => page(this.filteredEspaces(), this.espacePage()));
+  readonly pagedResponsables = computed(() => page(this.filteredResponsables(), this.respPage()));
+
+  ngOnInit(): void {
+    this.loadEspaces();
+    this.loadResponsables();
+  }
+
+  count(view: View): number | null {
+    const state = view === 'espaces' ? this.espaces() : this.responsables();
+    return state.loading ? null : state.items.length;
+  }
+
+  loadEspaces(silent = false): void {
+    if (!silent) this.espaces.update(s => ({ ...s, loading: true, failed: false }));
+    this.adminService.getAllEspaces().subscribe({
+      next: items => this.espaces.set({ items, loading: false, failed: false }),
+      error: () => this.espaces.update(s => ({ ...s, loading: false, failed: !silent || !s.items.length })),
+    });
+  }
+
+  loadResponsables(silent = false): void {
+    if (!silent) this.responsables.update(s => ({ ...s, loading: true, failed: false }));
     this.adminService.getResponsables().subscribe({
-      next: (responsables) => {
-        this.sousAdmins = responsables;
-      },
-      error: (err) => {
-        console.error('Error loading responsables:', err);
-        this.notificationService.showError('Failed to load responsables');
-      }
+      next: items => this.responsables.set({ items, loading: false, failed: false }),
+      error: () => this.responsables.update(s => ({ ...s, loading: false, failed: !silent || !s.items.length })),
     });
   }
 
-  // Handles sub-admin form submission
-  onSubmitSousAdmin(event: Event) {
-    event.preventDefault();
-
-    if (!this.validateSousAdminForm()) return;
-
-    if (this.isEditingSousAdmin) {
-      this.updateSousAdmin();
-    } else {
-      this.createSousAdmin();
-    }
+  setEspaceSearch(v: string): void {
+    this.espaceSearch.set(v);
+    this.espacePage.update(p => ({ ...p, index: 0 }));
   }
 
-  // Validates sub-admin form fields
-  private validateSousAdminForm(): boolean {
-    const requiredFields = {
-      'Nom': this.sousAdminFormData.nom,
-      'Prénom': this.sousAdminFormData.prenom,
-      'Email': this.sousAdminFormData.email,
-      'Fonction': this.sousAdminFormData.fonction,
-      'Téléphone': this.sousAdminFormData.numTel,
-      'Structure': this.sousAdminFormData.structure
-    };
-
-    for (const [fieldName, value] of Object.entries(requiredFields)) {
-      if (!value) {
-        this.notificationService.showError(`Le champ ${fieldName} est obligatoire`);
-        return false;
-      }
-    }
-
-    if (!this.isValidEmail(this.sousAdminFormData.email)) {
-      this.notificationService.showError('Veuillez entrer une adresse email valide');
-      return false;
-    }
-
-    return true;
+  setEspaceCategory(v: string): void {
+    this.espaceCategory.set(v);
+    this.espacePage.update(p => ({ ...p, index: 0 }));
   }
 
-  // Creates a new sub-admin via API
-  private createSousAdmin() {
-    const userData = {
-      ...this.sousAdminFormData,
-      espacesResponsables: this.parseEspacesResponsables()
-    };
-
-    this.adminService.registerAdmin(userData).subscribe({
-      next: (response) => {
-        this.notificationService.showSuccess('Responsable créé avec succès !');
-        this.loadSousAdmins();
-        this.resetSousAdminForm();
-      },
-      error: (error) => {
-        this.notificationService.showError(error.error?.message || 'Erreur lors de la création');
-      }
-    });
+  setRespSearch(v: string): void {
+    this.respSearch.set(v);
+    this.respPage.update(p => ({ ...p, index: 0 }));
   }
 
-  // Updates existing sub-admin via API
-  private updateSousAdmin() {
-    if (!this.currentSousAdmin?.id) return;
+  onEspacePage(e: PageEvent): void {
+    this.espacePage.set({ index: e.pageIndex, size: e.pageSize });
+  }
 
-    const userData = {
-      ...this.sousAdminFormData,
-      espacesResponsables: this.parseEspacesResponsables()
-    };
+  onRespPage(e: PageEvent): void {
+    this.respPage.set({ index: e.pageIndex, size: e.pageSize });
+  }
 
-    this.adminService.updateAdmin(this.currentSousAdmin.id, userData).subscribe({
+  responsableName(id: string | null | undefined, fallback?: string | null): string {
+    const r = this.responsables().items.find(x => x.id === id);
+    return r ? `${r.prenom} ${r.nom}` : fallback || '';
+  }
+
+  initials(r: AdminUser): string {
+    return `${r.prenom?.[0] ?? ''}${r.nom?.[0] ?? ''}`.toUpperCase() || '?';
+  }
+
+  isBusy(id: string | undefined): boolean {
+    return !!id && this.busy().has(id);
+  }
+
+  // ---------------------------------------------------------------- spaces
+  addEspace(): void {
+    this.openSpaceForm().pipe(
+      switchMap(value => this.track('new-espace', this.adminService.ajouterEspace(value.responsableId!, { ...value, disponibilite: true } as unknown as Espace))),
+    ).subscribe({
       next: () => {
-        this.notificationService.showSuccess('Modifications sauvegardées');
-        this.loadSousAdmins();
-        this.cancelEditSousAdmin();
+        this.toast.showSuccess('Espace ajouté.');
+        this.loadEspaces(true);
+        this.loadResponsables(true);
       },
-      error: (err) => {
-        this.notificationService.showError(err.error?.message || 'Erreur lors de la mise à jour');
-      }
+      error: err => this.toast.showError(apiErrorMessage(err, "L'espace n'a pas pu être ajouté.")),
     });
   }
 
-    // Parses responsible spaces string into array
-private parseEspacesResponsables(): string[] {
-  const espaces = this.sousAdminFormData.espacesResponsables;
-  
-  // Handle undefined/null case
-  if (!espaces) {
-    return [];
-  }
-  
-  // Handle string case (comma-separated values)
-  if (typeof espaces === 'string') {
-    return espaces.split(',').map((item: string) => item.trim());
-  }
-  
-  // Handle array case
-  if (Array.isArray(espaces)) {
-    return espaces;
-  }
-  
-  // Fallback for any other type
-  return [];
-}
-
-// Prepares form for editing existing sub-admin
-  onEditSousAdmin(admin: AdminUser) {
-    this.currentSousAdmin = { ...admin };
-    this.isEditingSousAdmin = true;
-    this.currentSousAdminView = 'ajouter'; // Ajoutez cette ligne
-  this.showModal = 'sous-admin'; // Assurez-vous que le modal est ouvert
-    this.sousAdminFormData = {
-      nom: admin.nom,
-      prenom: admin.prenom,
-      email: admin.email,
-      numTel: admin.numTel,
-      role: admin.role,
-      fonction: admin.fonction,
-      nomEtablissement: admin.nomEtablissement,
-      structure: admin.structure,
-      linkedInLink: admin.linkedInLink,
-      espacesResponsables: admin.espacesResponsables
-    };
-  }
-
-  // Deletes a sub-admin after confirmation
-  onSupprimerSousAdmin(adminId: string) {
-    if (!adminId) {
-      this.notificationService.showError('ID non valide');
-      return;
-    }
-
-    if (confirm('Confirmez la suppression de ce responsable ?')) {
-      this.adminService.deleteAdmin(adminId).subscribe({
-        next: () => {
-          this.loadSousAdmins();
-          this.notificationService.showSuccess('Suppression réussie');
-        },
-        error: (err) => {
-          this.notificationService.showError(err.error?.message || 'Erreur de suppression');
-        }
-      });
-    }
-  }
-
-  // Cancels sub-admin editing mode
-  cancelEditSousAdmin() {
-    this.isEditingSousAdmin = false;
-    this.currentSousAdmin = null;
-    this.resetSousAdminForm();
-  }
-
-  // Handles space form submission
-  onSubmitEspace(event: Event) {
-    event.preventDefault();
-
-    if (!this.validateEspaceForm()) return;
-
-    if (this.isEditingEspace) {
-      this.updateEspace();
-    } else {
-      this.createEspace();
-    }
-  }
-
-  // Validates space form fields
-  private validateEspaceForm(): boolean {
-    const requiredFields = {
-      'Nom': this.espaceFormData.nom,
-      'Capacité': this.espaceFormData.capacite,
-      'Responsable': this.espaceFormData.responsableId,
-      'Catégorie': this.espaceFormData.categorie,
-      'Type': this.espaceFormData.type
-    };
-
-    for (const [fieldName, value] of Object.entries(requiredFields)) {
-      if (!value || (fieldName === 'Capacité' && value <= 0)) {
-        this.notificationService.showError(`${fieldName} est requis`);
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  // Creates new space via API
-  private createEspace() {
-    const espaceData = {
-      ...this.espaceFormData,
-      capacite: Number(this.espaceFormData.capacite),
-      equipement: this.parseEquipements()
-    };
-
-    this.adminService.ajouterEspace(this.espaceFormData.responsableId, espaceData).subscribe({
-      next: (response) => {
-        this.notificationService.showSuccess('Espace ajouté avec succès');
-        this.loadEspaces();
-        this.resetEspaceForm();
-      },
-      error: (err) => {
-        this.notificationService.showError(err.error?.message || 'Erreur lors de l\'ajout');
-      }
-    });
-  }
-
-  // Updates existing space via API
-  private updateEspace() {
-    if (!this.currentEspace?.id) return;
-
-    const espaceData = {
-      ...this.espaceFormData,
-      capacite: Number(this.espaceFormData.capacite),
-      equipement: this.parseEquipements()
-    };
-
-    this.adminService.modifierEspace(this.currentEspace.id, espaceData).subscribe({
+  editEspace(espace: Espace): void {
+    this.openSpaceForm(espace).pipe(
+      // Send the whole space: the backend also overwrites `disponibilite`
+      switchMap(value => this.track(espace.id, this.adminService.modifierEspace(espace.id, { ...espace, ...value }))),
+    ).subscribe({
       next: () => {
-        this.notificationService.showSuccess('Espace modifié avec succès');
-        this.loadEspaces();
-        this.cancelEditEspace();
+        this.toast.showSuccess('Espace modifié.');
+        this.loadEspaces(true);
       },
-      error: (err) => {
-        this.notificationService.showError(err.error?.message || 'Erreur lors de la modification');
-      }
+      error: err => this.toast.showError(apiErrorMessage(err, "L'espace n'a pas pu être modifié.")),
     });
   }
 
-  // Parses equipment string into array
-  private parseEquipements(): string[] {
-    return this.espaceFormData.equipement 
-      ? this.espaceFormData.equipement.split(',').map((e: string) => e.trim())
-      : [];
-  }
-
-   // Prepares form for editing existing space
-  onEditEspace(espace: Espace) {
-    this.currentEspace = { ...espace };
-    this.isEditingEspace = true;
-    this.currentEspaceView = 'ajouter'; // Ajoutez cette ligne
-    this.showModal = 'espaces'; // Assurez-vous que le modal est ouvert
-
-
-    this.espaceFormData = {
-      nom: espace.nom,
-      capacite: espace.capacite,
-      equipement: Array.isArray(espace.equipement) 
-                 ? espace.equipement.join(', ') 
-                 : espace.equipement,
-      responsableId: espace.responsableId,
-      categorie: espace.categorie,
-      type: espace.type
-    };
-    this.selectedCategory = espace.categorie;
-  }
-
-  // Deletes space after confirmation
-  onSupprimerEspace(espaceId: string) {
-    if (!espaceId) return;
-
-    if (confirm('Confirmez la suppression de cet espace ?')) {
-      // Find the responsableId for this space
-      const espace = this.espaces.find(e => e.id === espaceId);
-      if (!espace) return;
-
-      this.adminService.supprimerEspace(espaceId).subscribe({
+  deleteEspace(espace: Espace): void {
+    this.confirm
+      .confirm({
+        title: `Supprimer « ${espace.nom} » ?`,
+        message: "L'espace ne pourra plus être réservé. Cette action est définitive.",
+        confirmLabel: 'Supprimer',
+        tone: 'danger',
+        icon: 'delete',
+      })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.track(espace.id, this.adminService.supprimerEspace(espace.id))),
+      )
+      .subscribe({
         next: () => {
-          this.notificationService.showSuccess('Suppression réussie');
-          this.loadEspaces();
+          this.toast.showSuccess('Espace supprimé.');
+          this.loadEspaces(true);
         },
-        error: (err) => {
-          this.notificationService.showError(err.error?.message || 'Erreur lors de la suppression');
-        }
+        error: err => this.toast.showError(apiErrorMessage(err, "L'espace n'a pas pu être supprimé.")),
       });
-    }
   }
 
-  // Cancels space editing mode
-  cancelEditEspace() {
-    this.isEditingEspace = false;
-    this.currentEspace = null;
-    this.resetEspaceForm();
+  private openSpaceForm(espace?: Espace): Observable<SpaceFormValue> {
+    const responsables = this.responsables().items
+      .filter(r => r.id)
+      .map(r => ({ id: r.id!, label: `${r.prenom} ${r.nom}` }));
+    return this.spaceForm.open({ espace, responsables }).pipe(filter((v): v is SpaceFormValue => !!v));
   }
 
-  // Filters sub-admins based on search input
-  get filteredSousAdmins(): AdminUser[] {
-    return this.sousAdmins.filter(admin => {
-      const search = this.searchSousAdmin.toLowerCase();
-      return (
-        admin.nom.toLowerCase().includes(search) ||
-        admin.prenom.toLowerCase().includes(search) ||
-        admin.email.toLowerCase().includes(search) ||
-        admin.nomEtablissement.toLowerCase().includes(search)
-      );
+  // ---------------------------------------------------------- room managers
+  addResponsable(): void {
+    this.openResponsableForm().pipe(
+      switchMap(value =>
+        this.track('new-responsable', this.adminService.registerAdmin({
+          ...value,
+          role: Role.RESPONSABLE_SALLE,
+          nomEtablissement: '',
+          espacesResponsables: [],
+        })),
+      ),
+    ).subscribe({
+      next: () => {
+        this.toast.showSuccess('Responsable créé : ses identifiants lui ont été envoyés par e-mail.');
+        this.loadResponsables(true);
+      },
+      error: err => this.toast.showError(apiErrorMessage(err, 'Le responsable n\'a pas pu être créé.')),
     });
   }
 
-  // Filters spaces based on search input
-  get filteredEspaces(): Espace[] {
-    return this.espaces.filter(e =>
-      e.nom.toLowerCase().includes(this.searchEspace.toLowerCase()) ||
-      e.responsableNom?.toLowerCase().includes(this.searchEspace.toLowerCase())
+  editResponsable(r: AdminUser): void {
+    this.openResponsableForm(r).pipe(
+      // Keep role, establishment and the managed spaces (ids maintained by the backend)
+      switchMap(value => this.track(r.id!, this.adminService.updateAdmin(r.id!, { ...r, ...value }))),
+    ).subscribe({
+      next: () => {
+        this.toast.showSuccess('Modifications enregistrées.');
+        this.loadResponsables(true);
+        this.loadEspaces(true);
+      },
+      error: err => this.toast.showError(apiErrorMessage(err, 'Les modifications n\'ont pas pu être enregistrées.')),
+    });
+  }
+
+  deleteResponsable(r: AdminUser): void {
+    const managed = this.espacesByResponsable().get(r.id!) ?? [];
+    this.confirm
+      .confirm({
+        title: `Supprimer ${r.prenom} ${r.nom} ?`,
+        message: managed.length
+          ? `Son compte sera supprimé. Il est responsable de ${managed.length} espace${managed.length > 1 ? 's' : ''} : pensez à les réattribuer.`
+          : 'Son compte sera supprimé. Cette action est définitive.',
+        details: managed.length ? managed.slice(0, 5).map(e => ({ label: 'Espace', value: e.nom })) : undefined,
+        confirmLabel: 'Supprimer',
+        tone: 'danger',
+        icon: 'person_remove',
+      })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.track(r.id!, this.adminService.deleteAdmin(r.id!))),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.showSuccess('Responsable supprimé.');
+          this.loadResponsables(true);
+          this.loadEspaces(true);
+        },
+        error: err => this.toast.showError(apiErrorMessage(err, 'Le responsable n\'a pas pu être supprimé.')),
+      });
+  }
+
+  private openResponsableForm(responsable?: AdminUser): Observable<ResponsableFormValue> {
+    return this.dialog
+      .open<ResponsableFormDialogComponent, { responsable?: AdminUser }, ResponsableFormValue>(ResponsableFormDialogComponent, {
+        data: { responsable },
+        width: '620px',
+        maxWidth: '94vw',
+      })
+      .afterClosed()
+      .pipe(filter((v): v is ResponsableFormValue => !!v));
+  }
+
+  /** Marks an item busy while the request runs. */
+  private track<T>(id: string, request: Observable<T>): Observable<T> {
+    this.busy.update(s => new Set(s).add(id));
+    return request.pipe(
+      finalize(() =>
+        this.busy.update(s => {
+          const next = new Set(s);
+          next.delete(id);
+          return next;
+        }),
+      ),
     );
   }
+}
 
-  // Gets types for selected category
-  getTypesForCategory(categoryName: string): string[] {
-    const category = this.categories.find(cat => cat.name === categoryName);
-    return category ? category.types : [];
-  }
+function normalize(text: string | null | undefined): string {
+  return (text ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
 
-  // Formats type names for display (replaces underscores)
-  formatTypeName(type: string): string {
-    return type ? type.replace(/_/g, ' ') : '';
-  }
-
-  // Validates email format
-  isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-
- // Resets all forms
-  private resetForms() {
-    this.resetSousAdminForm();
-    this.resetEspaceForm();
-  }
-
-  // Resets sub-admin form to default values
-  private resetSousAdminForm() {
-    this.sousAdminFormData = {
-      nom: '',
-      prenom: '',
-      email: '',
-      numTel: '',
-      role: Role.RESPONSABLE_SALLE,
-      fonction: '',
-      nomEtablissement: '',
-      structure: '',
-      linkedInLink: '',
-      espacesResponsables: []
-    };
-  }
-
-   // Resets space form to default values
-  private resetEspaceForm() {
-    this.espaceFormData = {
-      nom: '',
-      capacite: null,
-      equipement: '',
-      responsableId: '',
-      categorie: '',
-      type: ''
-    };
-    this.selectedCategory = '';
-  }
+function page<T>(list: T[], p: { index: number; size: number }): T[] {
+  const last = Math.max(0, Math.ceil(list.length / p.size) - 1);
+  const start = Math.min(p.index, last) * p.size;
+  return list.slice(start, start + p.size);
 }
