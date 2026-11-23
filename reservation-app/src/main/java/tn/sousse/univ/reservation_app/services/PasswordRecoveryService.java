@@ -3,6 +3,7 @@ package tn.sousse.univ.reservation_app.services;
 import java.util.Date;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +23,10 @@ public class PasswordRecoveryService {
     private final PasswordResetTokenRepository tokenRepository;
     private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
+
+    // Sender address = the application's mail account (MAIL_USERNAME)
+    @Value("${spring.mail.username:}")
+    private String mailFrom;
 
     // Processes a password reset request by generating and sending a reset token
     public void processPasswordResetRequest(String email) {
@@ -66,7 +71,7 @@ public class PasswordRecoveryService {
     // Sends a password reset email containing the reset token
     private void sendResetEmail(String toEmail, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("REDACTED_OLD_APP_EMAIL");
+        message.setFrom(mailFrom);
         message.setTo(toEmail);
         message.setSubject("Réinitialisation de mot de passe");
         message.setText("Cliquez sur ce lien pour réinitialiser votre mot de passe:\n"

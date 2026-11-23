@@ -1,5 +1,6 @@
 package tn.sousse.univ.reservation_app.services;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -16,9 +17,14 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    // Sender address = the application's mail account (MAIL_USERNAME)
+    @Value("${spring.mail.username:}")
+    private String mailFrom;
+
     // Sends simple text email
     public void sendEmail(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
+        if (!mailFrom.isBlank()) message.setFrom(mailFrom);
         message.setTo(to);
         message.setSubject(subject);
         message.setText(body);
@@ -37,6 +43,7 @@ public class EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            if (!mailFrom.isBlank()) helper.setFrom(mailFrom);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true); // true pour dire que c’est du HTML

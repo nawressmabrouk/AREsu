@@ -3,6 +3,7 @@ package tn.sousse.univ.reservation_app.services;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,10 @@ public class GoogleCalendarMigrationService implements CommandLineRunner {
     private final EtablissementRepository etablissementRepo;
     private final GoogleCalendarService googleCalendarService;
     private final EmailService emailService; // Assume you have an email service
-    private final String ADMIN_EMAIL = "REDACTED_OLD_APP_EMAIL";
+    // Owner of the created calendars and recipient of error notifications:
+    // the application's mail account (MAIL_USERNAME).
+    @Value("${spring.mail.username:}")
+    private String adminEmail;
 
     @Override
 
@@ -66,7 +70,7 @@ public class GoogleCalendarMigrationService implements CommandLineRunner {
 
                     // 3. Set permissions
                     AclRule adminRule = new AclRule()
-                            .setScope(new AclRule.Scope().setType("user").setValue(ADMIN_EMAIL))
+                            .setScope(new AclRule.Scope().setType("user").setValue(adminEmail))
                             .setRole("owner");
 
                     AclRule serviceAccountRule = new AclRule()
@@ -99,7 +103,7 @@ public class GoogleCalendarMigrationService implements CommandLineRunner {
         } catch (Exception e) {
             log.error("FATAL: Calendar migration failed: {}", e.getMessage());
             emailService.sendHtmlEmail(
-                    ADMIN_EMAIL,
+                    adminEmail,
                     "CALENDAR MIGRATION FAILURE",
                     "Critical error: " + e.getMessage());
         } finally {
@@ -120,7 +124,7 @@ public class GoogleCalendarMigrationService implements CommandLineRunner {
         }
 
         // Verify admin permissions
-        AclRule adminAcl = service.acl().get(calendarId, "user:" + ADMIN_EMAIL).execute();
+        AclRule adminAcl = service.acl().get(calendarId, "user:" + adminEmail).execute();
         if (!"owner".equals(adminAcl.getRole())) {
             log.error("Admin permissions not set correctly");
             return false;
@@ -155,7 +159,7 @@ public class GoogleCalendarMigrationService implements CommandLineRunner {
                         "<p><strong>Error:</strong> %s</p>",
                 etab.getNom(), error);
 
-        emailService.sendHtmlEmail(ADMIN_EMAIL, subject, content);
+        emailService.sendHtmlEmail(adminEmail, subject, content);
     }
 
     @Scheduled(cron = "0 0 9 * * ?")
