@@ -17,7 +17,7 @@ import {
   faSearch, faSpinner,
   faTimesCircle
 } from '@fortawesome/free-solid-svg-icons';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize } from 'rxjs';
 import { Reservation, StatusReservation } from '../models/reservation.model';
 import { ReservationsCalendarComponent } from '../reservations-calendar/reservations-calendar.component';
 import { AuthService } from '../services/auth/auth.service';
@@ -132,12 +132,11 @@ private loadInitialData(): void {
       this.etablissementId = effectiveEtabId;
       console.log('Using establishment ID:', this.etablissementId);
       
-      // Load reservation data
-      forkJoin([
-        this.loadToHandleReservations(),
-        this.loadToViewReservations(),
-        this.loadViewedReservations()
-      ]).subscribe();
+      // Load reservation data. The loaders subscribe themselves and return void:
+      // wrapping them in forkJoin() threw "You provided 'undefined' where a stream was expected".
+      this.loadToHandleReservations();
+      this.loadToViewReservations();
+      this.loadViewedReservations();
     },
     error: (err) => {
       console.error('Error loading profile:', err);
@@ -292,14 +291,11 @@ approveRequest(reservation: Reservation): void {
       delete this.approvedEquipment[reservation.id];
       
       // Refresh all relevant lists AND the calendar
-      forkJoin([
-        this.loadToHandleReservations(),
-        this.loadApprovedReservations(),
-        this.loadViewedReservations()
-      ]).subscribe(() => {
-        // Refresh the calendar after lists are loaded
-        this.calendarComponent?.loadSlots();
-      });
+      // (forkJoin over these void loaders threw, so the calendar was never refreshed)
+      this.loadToHandleReservations();
+      this.loadApprovedReservations();
+      this.loadViewedReservations();
+      this.calendarComponent?.loadSlots();
       
       // Show success message
       alert('Réservation approuvée avec succès');
@@ -438,14 +434,10 @@ handleCancel(reservation: Reservation): void {
     .pipe(finalize(() => delete this.cancelLoadingStates[reservation.id]))
     .subscribe({
       next: () => {
-        forkJoin([
-          this.loadApprovedReservations(),
-          this.loadRejectedReservations(),
-          this.loadViewedReservations()
-        ]).subscribe(() => {
-          // Refresh the calendar after lists are loaded
-          this.calendarComponent?.loadSlots();
-        });
+        this.loadApprovedReservations();
+        this.loadRejectedReservations();
+        this.loadViewedReservations();
+        this.calendarComponent?.loadSlots();
       },
       error: (err) => {
         console.error('Erreur lors de l\'annulation:', err);
