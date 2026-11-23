@@ -68,7 +68,8 @@ public class ReservationService {
                 Etablissement etab = etablissementRepository.findById(espace.getEtablissementId())
                                 .orElseThrow(() -> new RuntimeException("Establishment not found"));
 
-                if (etab.getGoogleCalendarId() == null) {
+                // Only required when Google Calendar is configured (googleCalendar == null otherwise)
+                if (googleCalendar != null && etab.getGoogleCalendarId() == null) {
                         logger.error("Establishment {} has no Google Calendar configured", etab.getId());
                         throw new IllegalStateException("This establishment has no calendar configured");
                 }
