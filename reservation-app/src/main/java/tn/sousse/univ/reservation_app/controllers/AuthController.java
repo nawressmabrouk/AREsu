@@ -50,8 +50,7 @@ public class AuthController {
             }
 
             // Generate JWT token
-            String token = jwtUtil.generateToken(user);
-            System.out.println("Token généré : " + token);
+            String token = jwtUtil.generateToken(user); // never log the token itself
 
             return ResponseEntity.ok(Map.of("token", token));
 

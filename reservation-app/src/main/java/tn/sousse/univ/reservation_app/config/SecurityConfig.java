@@ -110,15 +110,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    private void logRequestDetails(HttpServletRequest request, HttpServletResponse response,
-            FilterChain chain) throws IOException, ServletException {
-        System.out.println("Incoming request: " + request.getRequestURI());
-        System.out.println("Authorization header: " + request.getHeader("Authorization"));
-        System.out.println("X-User-Id: " + request.getHeader("X-User-Id"));
-        System.out.println("X-User-Role: " + request.getHeader("X-User-Role"));
-        chain.doFilter(request, response);
-    }
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
