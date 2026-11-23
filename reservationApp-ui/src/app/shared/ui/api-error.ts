@@ -5,6 +5,8 @@ import { HttpErrorResponse } from '@angular/common/http';
  * sometimes as plain text, and some calls use responseType 'text' (body is a JSON string then).
  */
 export function apiErrorMessage(err: unknown, fallback: string): string {
+  // Some services already turn HTTP errors into Error('<message in French>')
+  if (err instanceof Error) return err.message || fallback;
   if (!(err instanceof HttpErrorResponse)) return fallback;
   if (err.status === 0) return 'Serveur injoignable. Vérifiez votre connexion puis réessayez.';
 

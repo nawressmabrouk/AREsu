@@ -172,6 +172,21 @@ export class ReservationTableComponent {
   }
 }
 
+/** Lines for a confirmation dialog about a reservation (title, space, date, optional equipment). */
+export function reservationSummary(r: Reservation, equipments?: string): { label: string; value: string }[] {
+  const start = new Date(r.heureDebut);
+  const end = new Date(r.heureFin);
+  const hm = (d: Date) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const day = start.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const lines = [
+    { label: 'Demande', value: r.intituleAction || '—' },
+    { label: 'Espace', value: r.espaceNom || '—' },
+    { label: 'Date', value: `${day}, ${hm(start)} – ${hm(end)}` },
+  ];
+  if (equipments !== undefined) lines.push({ label: 'Équipements accordés', value: equipments });
+  return lines;
+}
+
 function normalize(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }

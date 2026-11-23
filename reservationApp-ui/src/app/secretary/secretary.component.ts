@@ -7,7 +7,7 @@ import { ReservationsCalendarComponent } from '../reservations-calendar/reservat
 import { NotificationService } from '../services/alert-notif/notification.service';
 import { SecretaryService } from '../services/secretary/secretary.service';
 import { UserService } from '../services/user/user.service';
-import { ApproveEvent, ReservationTableComponent } from '../shared/components/reservation-table/reservation-table.component';
+import { ApproveEvent, ReservationTableComponent, reservationSummary } from '../shared/components/reservation-table/reservation-table.component';
 import { apiErrorMessage } from '../shared/ui/api-error';
 import { ConfirmService } from '../shared/ui/confirm-dialog.component';
 import { EmptyStateComponent } from '../shared/ui/empty-state.component';
@@ -49,7 +49,6 @@ const VIEWS: { key: View; label: string; icon: string; description: string }[] =
     StatCardComponent,
   ],
   templateUrl: './secretary.component.html',
-  styleUrl: './secretary.component.scss',
 })
 export class SecretaryComponent implements OnInit {
   private readonly secretaryService = inject(SecretaryService);
@@ -127,7 +126,7 @@ export class SecretaryComponent implements OnInit {
         message: requested && !equipments.length
           ? "Aucun équipement n'est coché : la réservation sera acceptée sans équipement."
           : 'Le demandeur sera informé de votre décision.',
-        details: this.summary(reservation, requested ? equipments.join(', ') || 'Aucun' : undefined),
+        details: reservationSummary(reservation, requested ? equipments.join(', ') || 'Aucun' : undefined),
         confirmLabel: 'Accepter',
         icon: 'check_circle',
       })
@@ -149,7 +148,7 @@ export class SecretaryComponent implements OnInit {
       .confirm({
         title: 'Refuser la demande ?',
         message: 'Le demandeur sera informé du refus.',
-        details: this.summary(reservation),
+        details: reservationSummary(reservation),
         confirmLabel: 'Refuser',
         tone: 'danger',
         icon: 'cancel',
@@ -182,7 +181,7 @@ export class SecretaryComponent implements OnInit {
       .prompt({
         title: 'Annuler la réservation ?',
         message: "La réservation sera annulée et retirée du calendrier. Le créneau redeviendra disponible.",
-        details: this.summary(reservation),
+        details: reservationSummary(reservation),
         input: { label: "Motif de l'annulation (facultatif)", multiline: true },
         confirmLabel: 'Annuler la réservation',
         cancelLabel: 'Retour',
@@ -202,18 +201,6 @@ export class SecretaryComponent implements OnInit {
       });
   }
 
-  private summary(r: Reservation, equipments?: string) {
-    const date = new Date(r.heureDebut);
-    const end = new Date(r.heureFin);
-    const hm = (d: Date) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const lines = [
-      { label: 'Demande', value: r.intituleAction || '—' },
-      { label: 'Espace', value: r.espaceNom || '—' },
-      { label: 'Date', value: `${date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}, ${hm(date)} – ${hm(end)}` },
-    ];
-    if (equipments !== undefined) lines.push({ label: 'Équipements accordés', value: equipments });
-    return lines;
-  }
 
   /** Marks the reservation busy while the request runs. */
   private track<T>(r: Reservation, request: Observable<T>): Observable<T> {

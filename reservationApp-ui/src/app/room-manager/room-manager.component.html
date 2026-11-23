@@ -1,452 +1,109 @@
-<div class="admin-container">
-  <!-- Sidebar verticale -->
-  <div class="sidebar-vertical" [class.expanded]="isSidebarExpanded">
-    <div class="sidebar-header">
-<div class="hamburger" 
-     (click)="toggleSidebar($event)"
-     (touchstart)="toggleSidebar($event)"
-     [title]="isSidebarExpanded ? 'Close sidebar' : 'Open sidebar'">
-  <fa-icon [icon]="faBars"></fa-icon>
-</div>
-        <img src="/logo2.png" alt="Université de Sousse" class="logo1-image" >
-    </div>
-    
-    <div class="sidebar-menu">
-      <div class="menu-section"
-           [class.active]="activeSection === 'access'"
-           (click)="switchSection('access')">
-        <div class="menu-title">
-          <fa-icon [icon]="faAccessIcon"></fa-icon>
-          <h4>Gestion des Réservations</h4>
-        </div>
-      </div>
-      
-      <div class="menu-section"
-           [class.active]="activeSection === 'space'"
-           (click)="switchSection('space')">
-        <div class="menu-title">
-          <fa-icon [icon]="faAddSpaceIcon"></fa-icon>
-          <h4>Gérer les  Espaces</h4>
-        </div>
-      </div>
+<div class="page">
+  <app-page-header eyebrow="Responsable de salle" title="Mes espaces & demandes"
+    subtitle="Traitez les demandes de réservation de vos espaces et tenez leurs informations à jour.">
+    <button actions mat-stroked-button type="button" (click)="refresh()"><mat-icon>refresh</mat-icon>Actualiser</button>
+  </app-page-header>
 
-       <!-- Nouvelle section pour le calendrier -->
-      <div class="menu-section"
-           [class.active]="activeSection === 'calendar'"
-           (click)="switchSection('calendar')">
-        <div class="menu-title">
-          <fa-icon [icon]="faCalendarAlt"></fa-icon>
-          <h4>Consulter Calendrier</h4>
-        </div>
-      </div>
-
-    </div>
+  <div class="stat-grid">
+    <button type="button" class="stat-link" (click)="setView('pending')" [attr.aria-pressed]="view() === 'pending'">
+      <app-stat-card label="En attente" [value]="count('pending') ?? '…'" icon="pending_actions" tone="warning"
+        hint="À décider" [active]="view() === 'pending'" />
+    </button>
+    <button type="button" class="stat-link" (click)="setView('accepted')" [attr.aria-pressed]="view() === 'accepted'">
+      <app-stat-card label="Acceptées" [value]="count('accepted') ?? '…'" icon="check_circle" tone="success"
+        hint="Réservations confirmées" [active]="view() === 'accepted'" />
+    </button>
+    <button type="button" class="stat-link" (click)="setView('refused')" [attr.aria-pressed]="view() === 'refused'">
+      <app-stat-card label="Refusées" [value]="count('refused') ?? '…'" icon="cancel" tone="danger"
+        hint="Demandes refusées" [active]="view() === 'refused'" />
+    </button>
+    <button type="button" class="stat-link" (click)="setView('spaces')" [attr.aria-pressed]="view() === 'spaces'">
+      <app-stat-card label="Mes espaces" [value]="count('spaces') ?? '…'" icon="meeting_room" tone="primary"
+        hint="Sous votre responsabilité" [active]="view() === 'spaces'" />
+    </button>
   </div>
 
-  <!-- Contenu Principal -->
-  <div class="main-content"> 
-    <!-- Admin header -->
-    <div class="spaces-header">
-      <div class="header-content">
-        <div class="hamburger" (click)="toggleSidebar($event)" [title]="isSidebarExpanded ? 'Close sidebar' : 'Open sidebar'">
-          <fa-icon [icon]="faBars"></fa-icon>
-        </div>
-        <!-- Partie gauche - Logo -->
-    <div class="header-brand">
-      <img src="/logo2.png" alt="Université de Sousse" class="logo-image" >
-     
-    </div>
-        
-        <!-- Partie centrale - Titre et sous-titre -->
-        <div class="center-section">
-          <h1 class="page-title">{{ currentPageTitle }}</h1>
-          <p class="page-subtitle">{{ currentPageSubtitle }}</p>
-        </div>
-        
-        <!-- Partie droite - Search Box -->
-       
-        
-        <!-- Partie droite - Breadcrumb -->
-        <div class="right-section">
-         
-          <app-profile [user]="currentUser"   class="profile"></app-profile>
-         
-        </div>
-      </div>
-    </div>
-
-
-
-     <div class="search1-box">
-          <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher par nom , id ...">
-          <button class="search-button" (click)="onSearch()">
-            <fa-icon [icon]="faSearch"></fa-icon>
-            SEARCH
-          </button>
-      </div>
-
-    <!-- Contenu principal dynamique -->
-    <div class="admin-dashboard">
-      <!-- Contenu pour la gestion des réservations -->
-      <div *ngIf="activeSection === 'access'">
-        <!-- [Le contenu existant pour la gestion des réservations reste inchangé] -->
-        <!-- Cartes statistiques -->
-        <div class="stats-container">
-          <div *ngFor="let tab of statusTabs" 
-               class="stat-card"
-               [class.active]="currentStatus === tab.key"
-               (click)="setActiveTab(tab.key)">
-            <div class="card-content">
-              <div class="card-icon">
-                <fa-icon [icon]="getStatusIcon(tab.key)"></fa-icon>
-              </div>
-              <h3>{{ tab.label }}</h3>
-              <div class="stat-value">{{ getReservationCount(tab.key) }}</div>
-
-            </div>
-          </div>
-        </div>
-
-        <!-- Barre de titre et recherche -->
-
-        <!-- Tab Navigation -->
-        <div class="compact-tabs">
-          <div class="tab" 
-               *ngFor="let tab of statusTabs"
-               [class.active]="currentStatus === tab.key"
-               (click)="setActiveTab(tab.key)">
-            {{ tab.label }}
-          </div>
-        </div>
-        
-        <!-- Contenu des onglets -->
-        <div class="tab-content">
-          <!-- Onglet Demandes en attente -->
-<!-- Onglet Demandes en attente -->
-<div *ngIf="currentStatus === StatusReservation.EN_ATTENTE" class="requests-table">
-  <table>
-    <thead>
-      <tr class="line">
-        <th>RESPONSABLE</th>
-        <th>EMAIL</th>
-        <th>TÉLÉPHONE</th>
-        <th>FONCTION</th>
-        <th>LINKEDIN</th>
-           <th>ESPACE</th>
-            <th>TYPE</th>
-        <th>INTITULÉ ACTION</th>
-        <th>PARTICIPANTS</th>
-        <th>CIBLE</th>
-        <th>DESCRIPTION</th>
-        <th>DATE/HEURE</th>
-        <th>ÉQUIPEMENTS</th>
-        <th>ACTIONS</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let reservation of reservations">
-        <td>{{ reservation.responsableAction }}</td>
-        <td>{{ reservation.emailR }}</td>
-        <td>{{ reservation.numTelR }}</td>
-        <td>{{ reservation.fonctionR }}</td>
-        <td>{{ reservation.lienLinkedInR }}</td>
-         <td> {{ reservation.espaceNom }}</td>
-          <td> {{ reservation.demandeurRole }}</td>
-        <td>{{ reservation.intituleAction }}</td>
-        <td>{{ reservation.nbrParticipant }}</td>
-        <td>{{ reservation.cible }}</td>
-        <td>{{ reservation.description }}</td>
-        <td>
-          {{ reservation.heureDebut | date:'dd/MM/yyyy HH:mm' }} - 
-          {{ reservation.heureFin | date:'HH:mm' }}
-        </td>
-<td>
-  <div class="equipment-list">
-    <div *ngFor="let equip of reservation.equipements" class="equipment-item">
-      <label>
-        <input type="checkbox" 
-               [checked]="isEquipmentApproved(reservation.id, equip)"
-               (change)="toggleEquipmentApproval(reservation.id, equip)">
-        {{ equip }}
-      </label>
-    </div>
-  </div>
-</td>
-        <td class="actions">
-          <button class="accept-btn" 
-                  (click)="handleDecision(reservation.id, true)">
-            Accepter
-          </button>
-          <button class="reject-btn" 
-                  (click)="handleDecision(reservation.id, false)">
-            Refuser
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-          <!-- Onglet Demandes acceptées -->
-<!-- Onglet Demandes acceptées -->
-<div *ngIf="currentStatus === StatusReservation.ACCEPTEE" class="requests-table">
-  <table>
-    <thead>
-      <tr class="line">
-        <th>RESPONSABLE</th>
-        <th>EMAIL</th>
-        <th>TÉLÉPHONE</th>
-        <th>FONCTION</th>
-        <th>LINKEDIN</th>
-          
-           <th>ESPACE</th>
-            <th>TYPE</th>
-        <th>INTITULÉ ACTION</th>
-        <th>PARTICIPANTS</th>
-        <th>CIBLE</th>
-        <th>DESCRIPTION</th>
-        <th>DATE/HEURE</th>
-        <th>ÉQUIPEMENTS</th>
-        <th>STATUT</th>
-        <th>ANNULATION</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let reservation of reservations">
-        <td>{{ reservation.responsableAction }}</td>
-        <td>{{ reservation.emailR }}</td>
-        <td>{{ reservation.numTelR }}</td>
-        <td>{{ reservation.fonctionR }}</td>
-        <td>{{ reservation.lienLinkedInR }}</td>
-         <td> {{ reservation.espaceNom }}</td>
-          <td> {{ reservation.demandeurRole }}</td>
-        <td>{{ reservation.intituleAction }}</td>
-        <td>{{ reservation.nbrParticipant }}</td>
-        <td>{{ reservation.cible }}</td>
-        <td>{{ reservation.description }}</td>
-        <td>
-          {{ reservation.heureDebut | date:'dd/MM/yyyy HH:mm' }} - 
-          {{ reservation.heureFin | date:'HH:mm' }}
-        </td>
-         <td>
-  <div class="approved-equipment">
-<span *ngIf="(reservation.approvedEquipements || []).length > 0">
-  {{ (reservation.approvedEquipements || []).join(', ') }}
-</span>
-    <span *ngIf="!reservation.approvedEquipements?.length">Aucun équipement approuvé</span>
-  </div>
-</td>
-        <td>
-          <span [ngClass]="getStatusClass(reservation.statut)">
-            {{ reservation.statut }}
-          </span>
-        </td>
-         <td>
-          <button *ngIf="canCancel(reservation)" 
-                  class="cancel-btn" 
-                  (click)="handleCancel(reservation)">
-            Annuler
-          </button>
-          <span *ngIf="!canCancel(reservation)" class="cancel-disabled">
-            Non annulable
-          </span>
-        </td>
-
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-          <!-- Onglet Demandes refusées -->
-<!-- Onglet Demandes refusées -->
-<div *ngIf="currentStatus === StatusReservation.REFUSEE" class="requests-table">
-  <table>
-    <thead>
-      <tr class="line">
-        <th>RESPONSABLE</th>
-        <th>EMAIL</th>
-        <th>TÉLÉPHONE</th>
-        <th>FONCTION</th>
-        <th>LINKEDIN</th>
-        <th>ESPACE</th>
-        <th>TYPE</th>
-        <th>INTITULÉ ACTION</th>
-        <th>PARTICIPANTS</th>
-        <th>CIBLE</th>
-        <th>DESCRIPTION</th>
-        <th>DATE/HEURE</th>
-        <th>ÉQUIPEMENTS</th>
-        <th>STATUT</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let reservation of reservations">
-        <td>{{ reservation.responsableAction }}</td>
-        <td>{{ reservation.emailR }}</td>
-        <td>{{ reservation.numTelR }}</td>
-        <td>{{ reservation.fonctionR }}</td>
-        <td>{{ reservation.lienLinkedInR }}</td>
-         <td> {{ reservation.espaceNom }}</td>
-          <td> {{ reservation.demandeurRole }}</td>
-        <td>{{ reservation.intituleAction }}</td>
-        <td>{{ reservation.nbrParticipant }}</td>
-        <td>{{ reservation.cible }}</td>
-        <td>{{ reservation.description }}</td>
-        <td>
-          {{ reservation.heureDebut | date:'dd/MM/yyyy HH:mm' }} - 
-          {{ reservation.heureFin | date:'HH:mm' }}
-        </td>
-       <td>
-            {{ reservation.equipements }}
-               
-          </td>
-        <td>
-          <span [ngClass]="getStatusClass(reservation.statut)">
-            {{ reservation.statut }}
-          </span>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-        </div>
-      </div>
-
-      <!-- Contenu pour l'ajout d'espace -->
-<div *ngIf="activeSection === 'space'" class="space-management-container">
-  
-  <!-- Liste des espaces -->
-    <!-- Liste des espaces -->
-  <div class="espaces-grid">
-    <article *ngFor="let espace of managedSpaces" class="espace-card">
-      <header class="card-header">
-        <h3 class="card-title">{{ espace.nom }}</h3>
-        <span class="card-badge">{{ espace.type }}</span>
-      </header>
-      
-      <div class="card-details">
-        <p class="detail-item">
-          <fa-icon [icon]="faUsers"></fa-icon>
-          Capacité: {{ espace.capacite }}
-        </p>
-        
-        <p class="detail-item">
-          <fa-icon [icon]="faBuilding"></fa-icon>
-          Catégorie: {{ espace.categorie }}
-        </p>
-        
-        <div *ngIf="espace.equipement && espace.equipement.length > 0" class="detail-item">
-  <fa-icon [icon]="faTools"></fa-icon>
-  Équipements: {{ espace.equipement.join(', ') }}
-</div>
-      </div>
-      
-      <div class="card-actions">
-        <button class="edit-btn" (click)="openEditSpaceModal(espace); $event.stopPropagation()">
-          <fa-icon [icon]="faEdit"></fa-icon> Modifier
+  <div class="tabs-scroll">
+    <div class="segmented with-icons" role="tablist" aria-label="Sections">
+      @for (v of views; track v.key) {
+        <button type="button" role="tab" [id]="'tab-' + v.key" aria-controls="rm-panel"
+                [attr.aria-selected]="view() === v.key" (click)="setView(v.key)">
+          <mat-icon aria-hidden="true">{{ v.icon }}</mat-icon>{{ v.label }}
+          @if (count(v.key); as n) { <span class="tab-count">{{ n }}</span> }
         </button>
-        <button class="delete-btn" (click)="confirmDeleteSpace(espace.id); $event.stopPropagation()">
-          <fa-icon [icon]="faTrash"></fa-icon> Supprimer
-        </button>
-      </div>
-    </article>
+      }
+    </div>
   </div>
 
-  <!-- Modal d'ajout/modification -->
-  <div *ngIf="showAddSpaceModal || editingSpace" class="space-modal" (click)="closeSpaceModal()">
-     <div class="modal-content" (click)="$event.stopPropagation()">
- <button class="close-modal-btn" (click)="closeSpaceModal()" aria-label="Fermer">
-  <fa-icon [icon]="faTimes"></fa-icon>
-</button>
-      <h3>{{ editingSpace ? 'Modifier Espace' : 'Ajouter un Espace' }}</h3>
-      
-      <form (ngSubmit)="editingSpace ? updateSpace() : addSpace()">
-        <div class="form-group">
-          <label>Nom:</label>
-          <input type="text" [(ngModel)]="currentSpace.nom" name="nom" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Capacité:</label>
-          <input type="number" [(ngModel)]="currentSpace.capacite" name="capacite" required>
-        </div>
-        
-  <div class="form-group">
-      <label>Catégorie:</label>
-      <select [(ngModel)]="currentSpace.categorie" name="categorie" required
-              (change)="currentSpace.type = ''">
-        <option value="">Sélectionnez une catégorie</option>
-        <option *ngFor="let cat of spaceCategories" [value]="cat.name">
-          {{ cat.name }}
-        </option>
-      </select>
-    </div>
-        <div class="form-group" *ngIf="currentSpace.categorie">
-      <label>Type:</label>
-      <select [(ngModel)]="currentSpace.type" name="type" required>
-        <option value="">Sélectionnez un type</option>
-        <option *ngFor="let type of getTypesForCategory(currentSpace.categorie)" 
-                [value]="type">
-          {{ type }}
-        </option>
-      </select>
-    </div>
+  <section id="rm-panel" role="tabpanel" [attr.aria-labelledby]="'tab-' + view()">
+    <p class="view-description">{{ current().description }}</p>
 
-        
-<div class="form-group">
-      <label>Équipements:</label>
-      <div class="equipment-selection expanded">
-        <!-- Liste des équipements standards -->
-        <div *ngFor="let equip of equipmentsList" class="equipment-item">
-          <label>
-            <input type="checkbox" 
-                   [checked]="currentSpace.equipement.includes(equip)"
-                   (change)="toggleEquipment(equip)">
-            {{ equip }}
-          </label>
-        </div>
-        
-        <!-- Ajout d'équipement personnalisé -->
-<div class="custom-equipment">
-  <input type="text" [(ngModel)]="customEquipmentInput" 
-         placeholder="Ajouter un équipement personnalisé"
-         (keyup.enter)="addCustomEquipment()"> <!-- Ajout de la touche Enter -->
-  <button type="button" class="add-equipment-btn"
-          (click)="addCustomEquipment()">
-    <fa-icon [icon]="faPlusCircle"></fa-icon> Ajouter
-  </button>
-</div>
-        
-        <!-- Liste des équipements ajoutés -->
-        <div class="current-equipments">
-          <div *ngFor="let equip of currentSpace.equipement" class="equipment-tag">
-            {{ equip }}
-            <button (click)="removeEquipment(equip)" class="remove-equipment">
-              <fa-icon [icon]="faTimesCircle"></fa-icon>
-            </button>
+    @switch (view()) {
+      @case ('pending') {
+        <app-reservation-table mode="decide" [reservations]="lists().pending.items" [loading]="lists().pending.loading"
+          [failed]="lists().pending.failed" [busyIds]="busy()" emptyIcon="task_alt" emptyTitle="Aucune demande en attente"
+          emptyMessage="Les nouvelles demandes pour vos espaces apparaîtront ici."
+          (approve)="approve($event)" (reject)="reject($event)" (retry)="load('pending')" />
+      }
+      @case ('accepted') {
+        <app-reservation-table mode="accepted" [reservations]="lists().accepted.items" [loading]="lists().accepted.loading"
+          [failed]="lists().accepted.failed" [busyIds]="busy()" emptyIcon="event_available" emptyTitle="Aucune réservation acceptée"
+          (cancel)="cancel($event)" (retry)="load('accepted')" />
+      }
+      @case ('refused') {
+        <app-reservation-table [reservations]="lists().refused.items" [loading]="lists().refused.loading"
+          [failed]="lists().refused.failed" emptyIcon="block" emptyTitle="Aucune demande refusée" (retry)="load('refused')" />
+      }
+      @case ('spaces') {
+        @if (spaces().loading) {
+          <app-skeleton variant="cards" [count]="3" />
+        } @else if (spaces().failed) {
+          <app-empty-state icon="cloud_off" title="Chargement impossible" message="Vos espaces n'ont pas pu être chargés.">
+            <button mat-stroked-button type="button" (click)="loadSpaces()"><mat-icon>refresh</mat-icon>Réessayer</button>
+          </app-empty-state>
+        } @else if (!spaces().items.length) {
+          <app-empty-state icon="meeting_room" title="Aucun espace"
+            message="Aucun espace ne vous est encore attribué. L'administrateur de votre établissement peut vous en confier." />
+        } @else {
+          <div class="spaces grid-auto">
+            @for (espace of spaces().items; track espace.id) {
+              <article class="space-card">
+                <header>
+                  <span class="space-icon" aria-hidden="true"><mat-icon>meeting_room</mat-icon></span>
+                  <div class="space-title">
+                    <h3>{{ espace.nom }}</h3>
+                    <span class="muted text-sm">{{ typeLabel(espace.type) || 'Type non spécifié' }}</span>
+                  </div>
+                </header>
+                <dl>
+                  <div><dt><mat-icon aria-hidden="true">groups</mat-icon>Capacité</dt><dd>{{ espace.capacite || 0 }} personnes</dd></div>
+                  <div><dt><mat-icon aria-hidden="true">category</mat-icon>Catégorie</dt><dd>{{ categoryLabel(espace.categorie) || '—' }}</dd></div>
+                </dl>
+                <ul class="chips" aria-label="Équipements">
+                  @for (eq of espace.equipement || []; track eq) { <li>{{ eq }}</li> }
+                  @empty { <li class="none">Aucun équipement renseigné</li> }
+                </ul>
+                <footer>
+                  <button mat-stroked-button type="button" [disabled]="isBusy(espace.id)" (click)="editSpace(espace)">
+                    <mat-icon>edit</mat-icon>Modifier
+                  </button>
+                  <button mat-button type="button" class="btn-danger" [disabled]="isBusy(espace.id)" (click)="deleteSpace(espace)">
+                    <mat-icon>delete</mat-icon>Supprimer
+                  </button>
+                </footer>
+              </article>
+            }
           </div>
-        </div>
-      </div>
-    </div>
-    
-        
-        <div class="form-actions">
-          <button type="button" class="cancel-btn" (click)="closeSpaceModal()">Annuler</button>
-          <button type="submit" class="save-btn">{{ editingSpace ? 'Enregistrer' : 'Ajouter' }}</button>
-        </div>
-      </form>
-    </div>
-  </div>
+        }
+      }
+      @case ('calendar') {
+        @if (etablissementId(); as etabId) {
+          <app-reservations-calendar [etablissementId]="etabId" />
+        } @else if (etablissementId() === '') {
+          <app-empty-state icon="domain_disabled" title="Aucun établissement"
+            message="Votre compte n'est associé à aucun établissement : contactez l'administrateur." />
+        }
+      }
+    }
+  </section>
 </div>
-
-
- <!-- Contenu pour le calendrier -->
-      <div *ngIf="activeSection === 'calendar'" class="calendar-container">
-       <app-reservations-calendar [etablissementId]="etablissementId"></app-reservations-calendar>
-      </div>
-    </div>
-  </div>
-
-
-
-</div>  
