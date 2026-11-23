@@ -54,6 +54,20 @@ public class JwtFilter extends OncePerRequestFilter {
         // Extract token from header (remove "Bearer " prefix)
         String token = authHeader.substring(7);
 
+        try {
+            authenticate(token, request);
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException
+                | org.springframework.security.core.userdetails.UsernameNotFoundException e) {
+            // Expired, malformed or orphaned token: continue unauthenticated, so protected
+            // endpoints answer 401 (and the frontend logs out) instead of a 500 error.
+            SecurityContextHolder.clearContext();
+        }
+        // Continue filter chain
+        chain.doFilter(request, response);
+    }
+
+    // Validates the token and puts the user in the security context
+    private void authenticate(String token, HttpServletRequest request) {
         // Check if token exists and isn't blacklisted
         if (token != null && !tokenBlacklistRepository.existsByToken(token)) {
 
@@ -92,8 +106,6 @@ public class JwtFilter extends OncePerRequestFilter {
                 }
             }
         }
-        // Continue filter chain
-        chain.doFilter(request, response);
     }
 
 }

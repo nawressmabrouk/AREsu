@@ -74,7 +74,13 @@ public class AuthController {
         }
 
         String token = authHeader.substring(7);
-        Date expiresAt = jwtUtil.extractExpiration(token);
+        Date expiresAt;
+        try {
+            expiresAt = jwtUtil.extractExpiration(token);
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+            // Expired or invalid token: nothing left to revoke
+            return ResponseEntity.ok(Map.of("message", "Successfully logged out"));
+        }
         Date createdAt = new Date();
 
         TokenBlacklist blacklisted = new TokenBlacklist(null, token, createdAt, expiresAt);
