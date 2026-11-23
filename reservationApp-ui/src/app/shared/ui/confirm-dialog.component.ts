@@ -1,7 +1,9 @@
 import { Component, inject, Injectable } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
+import { MatInput } from '@angular/material/input';
 import { map, Observable } from 'rxjs';
 
 export interface ConfirmOptions {
@@ -14,12 +16,14 @@ export interface ConfirmOptions {
   /** 'danger' for destructive actions (red button and icon). */
   tone?: 'primary' | 'danger';
   icon?: string;
+  /** Adds a text field (e.g. a reason). Use ConfirmService.prompt() to read its value. */
+  input?: { label: string; placeholder?: string; hint?: string; multiline?: boolean };
 }
 
 /** Generic confirmation dialog. Use ConfirmService.confirm() to open it. */
 @Component({
   selector: 'app-ui-confirm-dialog',
-  imports: [MatDialogModule, MatButton, MatIcon],
+  imports: [MatDialogModule, MatButton, MatIcon, MatFormFieldModule, MatInput],
   template: `
     <div class="head" [attr.data-tone]="data.tone ?? 'primary'">
       <span class="icon" aria-hidden="true"><mat-icon>{{ data.icon ?? (data.tone === 'danger' ? 'warning' : 'help') }}</mat-icon></span>
@@ -34,10 +38,21 @@ export interface ConfirmOptions {
           }
         </dl>
       }
+      @if (data.input; as field) {
+        <mat-form-field class="field" subscriptSizing="dynamic">
+          <mat-label>{{ field.label }}</mat-label>
+          @if (field.multiline) {
+            <textarea matInput rows="3" [placeholder]="field.placeholder ?? ''" (input)="value = $any($event.target).value"></textarea>
+          } @else {
+            <input matInput [placeholder]="field.placeholder ?? ''" (input)="value = $any($event.target).value" />
+          }
+          @if (field.hint) { <mat-hint>{{ field.hint }}</mat-hint> }
+        </mat-form-field>
+      }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button type="button" [mat-dialog-close]="false">{{ data.cancelLabel ?? 'Annuler' }}</button>
-      <button mat-flat-button type="button" cdkFocusInitial [mat-dialog-close]="true"
+      <button mat-flat-button type="button" cdkFocusInitial [mat-dialog-close]="data.input ? value.trim() : true"
               [class.danger]="data.tone === 'danger'">{{ data.confirmLabel ?? 'Confirmer' }}</button>
     </mat-dialog-actions>
   `,
@@ -55,11 +70,13 @@ export interface ConfirmOptions {
     .details div { display: flex; justify-content: space-between; gap: var(--space-4); padding: 4px 0; }
     dt { color: var(--color-text-muted); }
     dd { margin: 0; font-weight: 600; }
+    .field { width: 100%; margin-top: var(--space-4); }
     .danger { --mdc-filled-button-container-color: var(--color-danger); --mdc-filled-button-label-text-color: #fff; }
   `,
 })
 export class UiConfirmDialogComponent {
   readonly data = inject<ConfirmOptions>(MAT_DIALOG_DATA);
+  value = '';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -68,9 +85,17 @@ export class ConfirmService {
 
   /** Emits true if the user confirmed, false otherwise. */
   confirm(options: ConfirmOptions): Observable<boolean> {
+    return this.open({ ...options, input: undefined }).pipe(map(result => result === true));
+  }
+
+  /** Confirmation with a text field: emits the text ('' if left empty), or null if cancelled. */
+  prompt(options: ConfirmOptions & { input: NonNullable<ConfirmOptions['input']> }): Observable<string | null> {
+    return this.open(options).pipe(map(result => (typeof result === 'string' ? result : null)));
+  }
+
+  private open(options: ConfirmOptions): Observable<unknown> {
     return this.dialog
-      .open(UiConfirmDialogComponent, { data: options, width: '440px', maxWidth: '92vw', autoFocus: 'dialog' })
-      .afterClosed()
-      .pipe(map(result => result === true));
+      .open(UiConfirmDialogComponent, { data: options, width: '460px', maxWidth: '92vw', autoFocus: 'dialog' })
+      .afterClosed();
   }
 }

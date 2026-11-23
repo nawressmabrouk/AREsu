@@ -1,4 +1,5 @@
 // Shared UI building blocks of the design system
+export * from './api-error';
 export * from './card.component';
 export * from './confirm-dialog.component';
 export * from './empty-state.component';

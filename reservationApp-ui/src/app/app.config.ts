@@ -11,11 +11,13 @@ import {
 } from '@angular/core';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MatIconRegistry } from '@angular/material/icon';
+import { MatPaginatorIntl } from '@angular/material/paginator';
 import { Title } from '@angular/platform-browser';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, RouterStateSnapshot, TitleStrategy, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import { routes } from './app.routes';
 import { authInterceptor } from './auth/auth.interceptor.interceptor';
+import { FrenchPaginatorIntl } from './shared/ui/paginator-intl';
 
 registerLocaleData(localeFr);
 
@@ -43,6 +45,7 @@ export const appConfig: ApplicationConfig = {
     { provide: TitleStrategy, useClass: AppTitleStrategy },
     { provide: LOCALE_ID, useValue: 'fr-FR' },
     { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
+    { provide: MatPaginatorIntl, useClass: FrenchPaginatorIntl },
     // Rounded Material icons (font loaded in index.html)
     provideAppInitializer(() => {
       inject(MatIconRegistry).setDefaultFontSetClass('material-icons-round');

@@ -1,0 +1,183 @@
+@if (loading()) {
+  <app-skeleton variant="rows" [count]="4" />
+} @else if (failed()) {
+  <app-empty-state icon="cloud_off" title="Chargement impossible" message="Les demandes n'ont pas pu être chargées.">
+    <button mat-stroked-button type="button" (click)="retry.emit()"><mat-icon>refresh</mat-icon>Réessayer</button>
+  </app-empty-state>
+} @else if (!reservations().length) {
+  <app-empty-state [icon]="emptyIcon()" [title]="emptyTitle()" [message]="emptyMessage()" />
+} @else {
+  <div class="toolbar">
+    <mat-form-field class="search" subscriptSizing="dynamic">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>Rechercher</mat-label>
+      <input matInput type="search" [value]="search()" (input)="setSearch($any($event.target).value)"
+             placeholder="Intitulé, responsable, e-mail, espace…" />
+    </mat-form-field>
+    @if (espaces().length > 1) {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Espace</mat-label>
+        <mat-select [value]="espace()" (valueChange)="setEspace($event)">
+          <mat-option value="">Tous les espaces</mat-option>
+          @for (e of espaces(); track e) { <mat-option [value]="e">{{ e }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+    }
+    <mat-form-field class="sort" subscriptSizing="dynamic">
+      <mat-label>Trier par date</mat-label>
+      <mat-select [value]="sort()" (valueChange)="sort.set($event)">
+        <mat-option value="asc">Plus proches d'abord</mat-option>
+        <mat-option value="desc">Plus lointaines d'abord</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span class="toolbar-spacer"></span>
+    <span class="count" aria-live="polite">{{ filtered().length }} demande{{ filtered().length > 1 ? 's' : '' }}</span>
+  </div>
+
+  @if (!filtered().length) {
+    <app-empty-state icon="search_off" title="Aucun résultat" message="Aucune demande ne correspond à vos filtres.">
+      <button mat-stroked-button type="button" (click)="resetFilters()">Effacer les filtres</button>
+    </app-empty-state>
+  } @else {
+    <div class="table-wrap">
+      <table class="data-table table-cards">
+        <thead>
+          <tr>
+            <th scope="col">Demande</th>
+            <th scope="col">Demandeur</th>
+            <th scope="col">Date</th>
+            <th scope="col" class="num">Participants</th>
+            <th scope="col">Statut</th>
+            <th scope="col" class="cell-actions"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of paged(); track r.id) {
+            <tr [class.expanded]="expandedId() === r.id">
+              <td data-label="Demande">
+                <span class="cell-main">
+                  <span class="cell-strong">{{ r.intituleAction || 'Sans intitulé' }}</span>
+                  <span class="meta">
+                    <mat-icon inline aria-hidden="true">meeting_room</mat-icon>{{ r.espaceNom || '—' }}
+                    @if (eqs(r).length) { · {{ eqs(r).length }} équipement{{ eqs(r).length > 1 ? 's' : '' }} }
+                  </span>
+                </span>
+              </td>
+              <td data-label="Demandeur">
+                <span class="cell-main">
+                  <span>{{ r.responsableAction || '—' }}</span>
+                  <span class="meta">{{ roleLabel(r.demandeurRole) || r.fonctionR }}</span>
+                </span>
+              </td>
+              <td data-label="Date">
+                <span class="cell-main">
+                  <span class="date">{{ r.heureDebut | date: 'EEE d MMM y' }}</span>
+                  <span class="meta">{{ r.heureDebut | date: 'HH:mm' }} – {{ r.heureFin | date: 'HH:mm' }}</span>
+                </span>
+              </td>
+              <td data-label="Participants" class="num">{{ r.nbrParticipant }}</td>
+              <td data-label="Statut"><app-status-badge [status]="r.statut" /></td>
+              <td class="cell-actions">
+                @if (isBusy(r)) {
+                  <mat-progress-spinner mode="indeterminate" diameter="22" aria-label="Action en cours" />
+                } @else {
+                  @switch (mode()) {
+                    @case ('decide') {
+                      @if (isPending(r)) {
+                        <button mat-flat-button type="button" class="btn-success" (click)="onApprove(r)">Accepter</button>
+                        <button mat-stroked-button type="button" class="btn-danger" (click)="reject.emit(r)">Refuser</button>
+                      }
+                    }
+                    @case ('view') {
+                      <button mat-stroked-button type="button" (click)="markSeen.emit(r)"><mat-icon>visibility</mat-icon>Marquer comme vue</button>
+                    }
+                    @case ('accepted') {
+                      @if (canCancel(r)) {
+                        <button mat-stroked-button type="button" class="btn-danger" (click)="cancel.emit(r)">Annuler</button>
+                      } @else {
+                        <span class="muted text-sm" matTooltip="Seules les réservations à venir peuvent être annulées">Non annulable</span>
+                      }
+                    }
+                  }
+                }
+                <button mat-icon-button type="button" class="toggle" (click)="toggle(r)"
+                        [attr.aria-expanded]="expandedId() === r.id" [attr.aria-controls]="'details-' + r.id"
+                        [attr.aria-label]="(expandedId() === r.id ? 'Masquer' : 'Afficher') + ' les détails de ' + (r.intituleAction || 'la demande')"
+                        [matTooltip]="expandedId() === r.id ? 'Masquer les détails' : 'Détails'">
+                  <mat-icon>{{ expandedId() === r.id ? 'expand_less' : 'expand_more' }}</mat-icon>
+                </button>
+              </td>
+            </tr>
+            @if (expandedId() === r.id) {
+              <tr class="detail-row" [id]="'details-' + r.id">
+                <td colspan="6" class="detail-cell">
+                  <div class="details">
+                    <dl class="info">
+                      <div><dt>Responsable de l'action</dt><dd>{{ r.responsableAction || '—' }}</dd></div>
+                      <div><dt>Fonction</dt><dd>{{ r.fonctionR || '—' }}</dd></div>
+                      <div><dt>Type de demandeur</dt><dd>{{ roleLabel(r.demandeurRole) || r.demandeurRole || '—' }}</dd></div>
+                      <div><dt>E-mail</dt><dd>@if (r.emailR) { <a [href]="'mailto:' + r.emailR">{{ r.emailR }}</a> } @else { — }</dd></div>
+                      <div><dt>Téléphone</dt><dd>@if (r.numTelR) { <a [href]="'tel:' + r.numTelR">{{ r.numTelR }}</a> } @else { — }</dd></div>
+                      <div><dt>LinkedIn</dt><dd>
+                        @if (r.lienLinkedInR) {
+                          <a [href]="r.lienLinkedInR" target="_blank" rel="noopener noreferrer">Voir le profil <mat-icon inline aria-hidden="true">open_in_new</mat-icon></a>
+                        } @else { — }
+                      </dd></div>
+                      <div><dt>Public cible</dt><dd>{{ r.cible || '—' }}</dd></div>
+                      <div><dt>Horaire</dt><dd>{{ r.heureDebut | date: 'EEEE d MMMM y' }}, {{ r.heureDebut | date: 'HH:mm' }} – {{ r.heureFin | date: 'HH:mm' }}</dd></div>
+                      <div class="full"><dt>Description</dt><dd class="desc">{{ r.description || '—' }}</dd></div>
+                      @if (r.annulationReason) {
+                        <div class="full"><dt>Motif d'annulation</dt><dd>{{ r.annulationReason }}</dd></div>
+                      }
+                    </dl>
+
+                    <div class="equip">
+                      @if (mode() === 'decide' && isPending(r)) {
+                        <h4>Équipements à accorder</h4>
+                        @if (eqs(r).length) {
+                          <p class="muted text-sm">Cochez les équipements que vous accordez avant d'accepter.</p>
+                          <div class="checks">
+                            @for (eq of eqs(r); track eq) {
+                              <mat-checkbox [checked]="isApproved(r, eq)" (change)="toggleApproved(r, eq)" [disabled]="isBusy(r)">{{ eq }}</mat-checkbox>
+                            }
+                          </div>
+                        } @else {
+                          <p class="muted text-sm">Aucun équipement demandé.</p>
+                        }
+                        <div class="equip-actions">
+                          <button mat-flat-button type="button" class="btn-success" [disabled]="isBusy(r)" (click)="onApprove(r)">
+                            <mat-icon>check</mat-icon>Accepter
+                            @if (eqs(r).length) { ({{ approvedCount(r) }}/{{ eqs(r).length }} équip.) }
+                          </button>
+                          <button mat-stroked-button type="button" class="btn-danger" [disabled]="isBusy(r)" (click)="reject.emit(r)">Refuser</button>
+                        </div>
+                      } @else {
+                        <h4>Équipements demandés</h4>
+                        <div class="chips">
+                          @for (eq of eqs(r); track eq) { <span class="chip">{{ eq }}</span> }
+                          @empty { <span class="muted text-sm">Aucun</span> }
+                        </div>
+                        @if (approvedEqs(r).length || mode() === 'accepted') {
+                          <h4>Équipements accordés</h4>
+                          <div class="chips">
+                            @for (eq of approvedEqs(r); track eq) { <span class="chip ok"><mat-icon inline aria-hidden="true">check</mat-icon>{{ eq }}</span> }
+                            @empty { <span class="muted text-sm">Aucun équipement accordé</span> }
+                          </div>
+                        }
+                      }
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (filtered().length > 5) {
+      <mat-paginator [length]="filtered().length" [pageIndex]="page()" [pageSize]="pageSize()"
+                     [pageSizeOptions]="[5, 10, 25, 50]" (page)="onPage($event)" aria-label="Pagination des demandes" />
+    }
+  }
+}
