@@ -1,59 +1,12 @@
-// notification.component.ts
 import { Component } from '@angular/core';
-import { NotificationService } from '../services/alert-notif/notification.service';
-import { CommonModule } from '@angular/common';
 
+/**
+ * Deprecated: toasts are now displayed once, globally, by <app-toast-host> in AppComponent.
+ * This component renders nothing so the <app-notification> tags still present in some
+ * pages do not show duplicates; they are removed as each page is redesigned.
+ */
 @Component({
   selector: 'app-notification',
-  imports: [CommonModule],
-  template: `
-    <div *ngIf="notification" class="notification" [class.success]="notification.type === 'success'" 
-                                                  [class.error]="notification.type === 'error'">
-      {{ notification.message }}
-      <button class=" buttonx"(click)="dismiss()">×</button>
-    </div>
-  `,
- styles: [`
-  .notification {
-    position: fixed;
-    top: 150px;
-    right: 20px;
-    padding: 19px 20px; /* Padding réduit */
-    border-radius: 5px;
-    color: white;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-width: 200px; /* Largeur minimale réduite */
-    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-    font-size: 20px; /* Taille de police augmentée */
-  }
-  .success { background-color: #28a745; }
-  .error { background-color:rgb(207, 45, 61); }
-  button {
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-    margin-left: 15px;
-  }
-  .buttonx{
-  position:relative; 
-  }
-`]
+  template: '',
 })
-export class NotificationComponent {
-  notification: any;
-
-  constructor(private notificationService: NotificationService) {
-    this.notificationService.notification$.subscribe(notification => {
-      this.notification = notification;
-    });
-  }
-
-  dismiss() {
-    this.notificationService.clear();
-  }
-}
+export class NotificationComponent {}

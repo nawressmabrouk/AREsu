@@ -1,15 +1,13 @@
 import { Component } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
-
-
+import { RouterOutlet } from '@angular/router';
+import { ToastHostComponent } from './shared/ui/toast-host.component';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  imports: [RouterOutlet, ToastHostComponent],
+  template: `
+    <router-outlet />
+    <app-toast-host />
+  `,
 })
-export class AppComponent {
-  title = 'pfe-project';
-}
+export class AppComponent {}
