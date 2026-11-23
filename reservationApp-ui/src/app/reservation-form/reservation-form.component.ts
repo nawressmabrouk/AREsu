@@ -27,14 +27,18 @@ import { ReservationsubmissionService } from '../services/reservationflow/reserv
 
 import { lastValueFrom } from 'rxjs/internal/lastValueFrom';
 import { catchError } from 'rxjs/operators';
-import { NotificationComponent } from "../alert-notif/notification.component";
-import { ChatComponent } from "../chatbot/chatbot.component";
-import { ProfileComponent } from '../shared/components/profile/profile.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { PageHeaderComponent } from '../shared/ui/page-header.component';
 
 @Component({
   selector: 'app-reservation-form',
   standalone: true,
-  imports: [FontAwesomeModule, FormsModule, CommonModule, RouterModule, ProfileComponent, ChatComponent, NotificationComponent],
+  imports: [FormsModule, CommonModule, RouterModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatCheckboxModule, MatIcon, MatProgressSpinner, PageHeaderComponent],
   templateUrl: './reservation-form.component.html',
   styleUrls: ['./reservation-form.component.scss'],
   providers: [DatePipe]
@@ -146,7 +150,7 @@ export class ReservationFormComponent implements OnInit {
         console.log('Reservation data initialized:', this.reservation);
       } catch (error) {
         console.error('Error initializing reservation:', error);
-        this.errorMessage = 'Invalid time parameters. Please select a new time slot.';
+        this.errorMessage = 'Créneau invalide. Veuillez choisir un nouveau créneau.';
         this.router.navigate(['/selection-calendar'], {
           queryParams: {
             etablissementId: params['etablissementId'],
@@ -272,8 +276,8 @@ private loadEspaceDetails(espaceId: string): void {
     if (this.reservation.nbrParticipant && this.selectedSpaceCapacity) {
       if (this.reservation.nbrParticipant > this.selectedSpaceCapacity) {
         this.notificationService.showError(
-          `The capacity of "${this.selectedSpaceName}" is ${this.selectedSpaceCapacity}. ` +
-          `Please select a smaller number of participants or choose a different space.`
+          `La capacité de « ${this.selectedSpaceName} » est de ${this.selectedSpaceCapacity} personnes. ` +
+          `Réduisez le nombre de participants ou choisissez un autre espace.`
         );
       }
     }
@@ -352,7 +356,7 @@ private loadEspaceDetails(espaceId: string): void {
       }
 
       if (!this.currentUser?.userId) {
-        throw new Error('Session expired, please log in again');
+        throw new Error('Session expirée, veuillez vous reconnecter.');
       }
 
       const reservationPayload = {
@@ -370,20 +374,20 @@ private loadEspaceDetails(espaceId: string): void {
       const createResponse = await lastValueFrom(
         this.reservationService.createReservation(reservationPayload).pipe(
           catchError(err => {
-            throw new Error(`Creation failed: ${this.extractErrorMessage(err)}`);
+            throw new Error(`Échec de la création : ${this.extractErrorMessage(err)}`);
           })
         )
       );
 
       if (!createResponse?.id) {
-        throw new Error('Invalid server response - missing ID');
+        throw new Error('Réponse du serveur invalide (identifiant manquant).');
       }
 
       // Send to responsible
       await lastValueFrom(
         this.reservationService.sendReservation(createResponse.id).pipe(
           catchError(err => {
-            throw new Error(`Sending failed: ${this.extractErrorMessage(err)}`);
+            throw new Error(`Échec de l'envoi : ${this.extractErrorMessage(err)}`);
           })
         )
       );
@@ -403,13 +407,20 @@ private loadEspaceDetails(espaceId: string): void {
 
   private extractErrorMessage(error: any): string {
     if (error instanceof HttpErrorResponse) {
-      return error.error?.message || error.message || 'Unknown server error';
+      return error.error?.message || error.error?.error || error.message || 'Erreur serveur inconnue';
     }
-    return error.message || 'Unknown error';
+    return error.message || 'Erreur inconnue';
   }
 
   goBack(): void {
     this.router.navigate(['/spaces']);
+  }
+
+  /** Back to the calendar of the same space to pick another slot. */
+  changeSlot(): void {
+    this.router.navigate(['/selection-calendar'], {
+      queryParams: { etablissementId: this.reservation.etablissementId, espaceId: this.reservation.espaceId }
+    });
   }
 
   showError(field: keyof typeof this.reservation): boolean {
