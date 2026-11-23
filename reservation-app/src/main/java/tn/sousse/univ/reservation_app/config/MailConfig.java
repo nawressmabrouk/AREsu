@@ -29,6 +29,9 @@ public class MailConfig {
     @Value("${spring.mail.properties.mail.smtp.starttls.enable}") // Enables/disables STARTTLS
     private boolean starttlsEnable;
 
+    @Value("${app.mail.timeout-ms:30000}") // SMTP connect/read/write timeout
+    private int timeoutMs;
+
     @Bean // Creates and configures a JavaMailSender bean
     public JavaMailSender getJavaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl(); // Creates mail sender instance
@@ -41,6 +44,10 @@ public class MailConfig {
         props.put("mail.smtp.auth", smtpAuth); // Configures SMTP auth
         props.put("mail.smtp.starttls.enable", starttlsEnable); // Configures STARTTLS
         props.put("mail.transport.protocol", "smtp"); // Sets protocol to SMTP
+        // Without timeouts a stalled SMTP connection blocks the calling request thread forever
+        props.put("mail.smtp.connectiontimeout", timeoutMs);
+        props.put("mail.smtp.timeout", timeoutMs);
+        props.put("mail.smtp.writetimeout", timeoutMs);
 
         return mailSender; // Returns configured mail sender
     }
