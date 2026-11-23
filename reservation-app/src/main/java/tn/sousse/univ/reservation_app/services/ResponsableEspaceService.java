@@ -72,7 +72,7 @@ public class ResponsableEspaceService {
                 .orElseThrow(
                         () -> new RuntimeException("Établissement introuvable: " + reservation.getEtablissementId()));
         String calendarId = etab.getGoogleCalendarId();
-        if (calendarId == null || calendarId.isEmpty()) {
+        if (googleCalendarService.isEnabled() && (calendarId == null || calendarId.isEmpty())) {
             throw new IllegalStateException("Pas de calendrier Google configuré pour: " + etab.getNom());
         }
         if (accepted) {
@@ -85,12 +85,16 @@ public class ResponsableEspaceService {
         }
 
         if (accepted) {
-            try {
-                googleCalendarService.confirmReservation(reservation.getId());
-                googleCalendarService.forceCalendarDisplay(calendarId);
-            } catch (Exception e) {
-                logger.error("Échec sync réservation {} → calendrier {}", reservationId, calendarId, e);
-                throw new RuntimeException("Erreur lors de l’ajout au calendrier Google", e);
+            if (googleCalendarService.isEnabled()) {
+                try {
+                    googleCalendarService.confirmReservation(reservation.getId());
+                    googleCalendarService.forceCalendarDisplay(calendarId);
+                } catch (Exception e) {
+                    logger.error("Échec sync réservation {} → calendrier {}", reservationId, calendarId, e);
+                    throw new RuntimeException("Erreur lors de l’ajout au calendrier Google", e);
+                }
+            } else {
+                logger.warn("Google Calendar désactivé : réservation {} acceptée sans synchronisation", reservationId);
             }
             reservation.setStatut(StatusReservation.ACCEPTÉE);
         } else {

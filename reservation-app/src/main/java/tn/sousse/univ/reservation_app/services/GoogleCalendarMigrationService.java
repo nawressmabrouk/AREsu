@@ -34,6 +34,10 @@ public class GoogleCalendarMigrationService implements CommandLineRunner {
     @Override
 
     public void run(String... args) throws MessagingException {
+        if (!googleCalendarService.isEnabled()) {
+            log.info("Google Calendar désactivé : création des calendriers d'établissement ignorée.");
+            return;
+        }
         log.info("Starting Google Calendar migration for Etablissements...");
 
         try {

@@ -150,7 +150,7 @@ public List<Reservation> getReservationsToHandleBySG(String etablissementId) {
                 .orElseThrow(
                         () -> new RuntimeException("Etablissement not found: " + reservation.getEtablissementId()));
         String calendarId = etab.getGoogleCalendarId();
-        if (calendarId == null || calendarId.isEmpty()) {
+        if (googleCalendarService.isEnabled() && (calendarId == null || calendarId.isEmpty())) {
             throw new IllegalStateException("No Google Calendar configured for établissement: " + etab.getNom());
         }
         if (accepted) {
@@ -163,14 +163,18 @@ public List<Reservation> getReservationsToHandleBySG(String etablissementId) {
         }
         //  If accepted, push into the calendar and make it visible
         if (accepted) {
-            try {
-                // confirmReservation will wrap any checked exceptions in a RuntimeException
-                googleCalendarService.confirmReservation(reservation.getId());
-                // forceCalendarDisplay may throw checked exceptions internally—caught below
-                googleCalendarService.forceCalendarDisplay(calendarId);
-            } catch (Exception e) {
-                logger.error("Failed to sync reservation {} into Google Calendar {}", reservationId, calendarId, e);
-                throw new RuntimeException("Error while pushing to Google Calendar", e);
+            if (googleCalendarService.isEnabled()) {
+                try {
+                    // confirmReservation will wrap any checked exceptions in a RuntimeException
+                    googleCalendarService.confirmReservation(reservation.getId());
+                    // forceCalendarDisplay may throw checked exceptions internally—caught below
+                    googleCalendarService.forceCalendarDisplay(calendarId);
+                } catch (Exception e) {
+                    logger.error("Failed to sync reservation {} into Google Calendar {}", reservationId, calendarId, e);
+                    throw new RuntimeException("Error while pushing to Google Calendar", e);
+                }
+            } else {
+                logger.warn("Google Calendar désactivé : réservation {} acceptée sans synchronisation", reservationId);
             }
             reservation.setStatut(StatusReservation.ACCEPTÉE);
         } else {
@@ -253,7 +257,7 @@ public List<Reservation> getReservationsToHandleBySG(String etablissementId) {
         }
 
         try {
-            if (reservation.getGoogleEventId() != null) {
+            if (reservation.getGoogleEventId() != null && googleCalendarService.isEnabled()) {
                 // Get the establishment's calendar ID
                 Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
                         .orElseThrow(() -> new RuntimeException("Etablissement not found"));

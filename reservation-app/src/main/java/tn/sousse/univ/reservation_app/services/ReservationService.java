@@ -34,7 +34,8 @@ import tn.sousse.univ.reservation_app.repositories.UserRepository;
 @Service
 public class ReservationService {
         private static final Logger logger = LoggerFactory.getLogger(SecretaireGeneraleService.class);
-        @Autowired
+        // null when Google Calendar is not configured (see GoogleCalendarConfig)
+        @Autowired(required = false)
         private Calendar googleCalendar;
 
         @Autowired
@@ -111,6 +112,10 @@ public class ReservationService {
 
         // Adds reservation to Google Calendar
         public void addReservationToCalendar(Reservation reservation) throws IOException {
+                if (googleCalendar == null) {
+                        logger.warn("Google Calendar désactivé : événement non créé pour la réservation {}", reservation.getId());
+                        return;
+                }
                 // Get the establishment's calendar ID
                 Etablissement etab = etablissementRepository.findById(reservation.getEtablissementId())
                                 .orElseThrow(() -> new RuntimeException("Establishment not found"));
