@@ -2,7 +2,6 @@ package tn.sousse.univ.reservation_app.services;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -199,7 +198,11 @@ public class UserService {
     private String loadEmailTemplate(String path) {
         try {
             ClassPathResource resource = new ClassPathResource(path);
-            byte[] bytes = Files.readAllBytes(resource.getFile().toPath());
+            // getInputStream() also works inside the packaged jar (getFile() only works on disk)
+            byte[] bytes;
+            try (java.io.InputStream in = resource.getInputStream()) {
+                bytes = in.readAllBytes();
+            }
             return new String(bytes, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException("Erreur de chargement du template email", e);
