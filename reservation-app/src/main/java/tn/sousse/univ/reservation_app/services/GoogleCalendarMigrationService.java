@@ -72,17 +72,21 @@ public class GoogleCalendarMigrationService implements CommandLineRunner {
                         log.warn("Failed to make calendar visible (non-critical): {}", e.getMessage());
                     }
 
-                    // 3. Set permissions
-                    AclRule adminRule = new AclRule()
-                            .setScope(new AclRule.Scope().setType("user").setValue(adminEmail))
-                            .setRole("owner");
-
-                    AclRule serviceAccountRule = new AclRule()
-                            .setScope(new AclRule.Scope().setType("user").setValue(serviceAccountEmail))
-                            .setRole("writer");
-
-                    service.acl().insert(calendarId, adminRule).execute();
-                    service.acl().insert(calendarId, serviceAccountRule).execute();
+                    // 3. Share with the application's mail account. The service account
+                    // created the calendar, so it is already its owner: Google refuses
+                    // any ACL change on its own access (403 cannotChangeOwnAcl).
+                    if (adminEmail != null && !adminEmail.isBlank()
+                            && !adminEmail.equalsIgnoreCase(serviceAccountEmail)) {
+                        try {
+                            AclRule adminRule = new AclRule()
+                                    .setScope(new AclRule.Scope().setType("user").setValue(adminEmail))
+                                    .setRole("owner");
+                            service.acl().insert(calendarId, adminRule).execute();
+                        } catch (Exception e) {
+                            log.warn("Could not share calendar {} with {} (non-critical): {}",
+                                    calendarId, adminEmail, e.getMessage());
+                        }
+                    }
 
                     // 4. Verify calendar
                     if (!verifyCalendarCreation(service, calendarId, etab.getNom())) {
