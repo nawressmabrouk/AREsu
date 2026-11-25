@@ -28,7 +28,7 @@
 
 <!-- Profile -->
 @if (showProfileModal) {
-  <div class="overlay" (click)="closeModal()">
+  <div class="overlay" appPortalToBody (click)="closeModal()">
     <section class="panel" role="dialog" aria-modal="true" aria-labelledby="profil-titre" (click)="$event.stopPropagation()">
       <header class="panel-head">
         <h2 id="profil-titre">Mon profil</h2>
@@ -60,7 +60,7 @@
 
 <!-- Edit profile -->
 @if (showEditModal) {
-  <div class="overlay" (click)="closeModal()">
+  <div class="overlay" appPortalToBody (click)="closeModal()">
     <section class="panel wide" role="dialog" aria-modal="true" aria-labelledby="edition-titre" (click)="$event.stopPropagation()">
       <header class="panel-head">
         <h2 id="edition-titre">Modifier le profil</h2>
@@ -123,7 +123,7 @@
 
 <!-- Change password -->
 @if (showPasswordModal) {
-  <div class="overlay" (click)="closeModal()">
+  <div class="overlay" appPortalToBody (click)="closeModal()">
     <section class="panel" role="dialog" aria-modal="true" aria-labelledby="mdp-titre" (click)="$event.stopPropagation()">
       <header class="panel-head">
         <h2 id="mdp-titre">Changer le mot de passe</h2>
@@ -174,7 +174,7 @@
 
 <!-- My reservations (requesters) -->
 @if (showReservationsModal && isDemandeur()) {
-  <div class="overlay" (click)="closeModal()">
+  <div class="overlay" appPortalToBody (click)="closeModal()">
     <section class="panel xwide" role="dialog" aria-modal="true" aria-labelledby="resa-titre" (click)="$event.stopPropagation()">
       <header class="panel-head">
         <div>

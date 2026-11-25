@@ -18,6 +18,7 @@ import { EmptyStateComponent } from '../../ui/empty-state.component';
 import { SkeletonComponent } from '../../ui/skeleton.component';
 import { hasStatus } from '../../ui/status';
 import { StatusBadgeComponent } from '../../ui/status-badge.component';
+import { PortalToBodyDirective } from '../../ui/portal-to-body.directive';
 
 /** User menu of the top bar: profile, edit, password, my reservations, logout. */
 @Component({
@@ -25,7 +26,7 @@ import { StatusBadgeComponent } from '../../ui/status-badge.component';
   templateUrl: './profile.component.html',
   imports: [
     FormsModule, DatePipe, MatButtonModule, MatIcon, MatMenuModule, MatFormFieldModule, MatInputModule,
-    MatRadioModule, StatusBadgeComponent, EmptyStateComponent, SkeletonComponent,
+    MatRadioModule, StatusBadgeComponent, EmptyStateComponent, SkeletonComponent, PortalToBodyDirective,
   ],
   styleUrls: ['./profile.component.scss']
 })
