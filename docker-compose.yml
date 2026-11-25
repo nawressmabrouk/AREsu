@@ -1,0 +1,20 @@
+# Local MongoDB for development (no Atlas account needed).
+#
+#   docker compose up -d       start (data is kept in the "mongodb-data" volume)
+#   docker compose down        stop
+#
+# The backend's default MONGODB_URI (mongodb://localhost:27017/reservation)
+# points here. The port is bound to 127.0.0.1 only: this database has no
+# password and must not be reachable from the network.
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: reservation-mongodb
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+
+volumes:
+  mongodb-data:

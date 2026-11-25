@@ -1,40 +1,42 @@
-
-
-<div class="main-container">
-    <div class="unified-box">
-
-      <!-- Partie gauche (Message) -->
-      <div class="welcome-section">
-        <h2>tu as oublié votre mot de passe ?</h2>
-        <div class="welcome-text">
-          <p>Veuillez entrer votre adresse email enregistrée. Nous vous enverrons un lien de réinitialisation .</p>
-          
+<div class="auth-page">
+  <div class="auth-card narrow">
+    <section class="auth-form">
+      @if (sent) {
+        <div class="state" role="status">
+          <span class="state-icon" aria-hidden="true"><mat-icon>mark_email_read</mat-icon></span>
+          <h1>Vérifiez votre boîte mail</h1>
+          <p>Si l'adresse <strong>{{ email }}</strong> est enregistrée, vous recevrez un lien de réinitialisation dans les 15 minutes.</p>
+          <a mat-flat-button routerLink="/login">Retour à la connexion</a>
+          <button mat-button type="button" (click)="sent = false">Utiliser une autre adresse</button>
         </div>
-      </div>
-     
-      <!-- Partie droite (Formulaire) -->
-      <div class="login-section">
-        <div class="form-container">
-          <h2 class="form-title">Récupération</h2>
-          <form class="login-form" (ngSubmit)="onSubmit()">
-            <div class="form-group">
-              <label>Email</label>
-              <div class="input-field">
-                <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
-                <input type="email" placeholder="Entrez votre email" [(ngModel)]="email" name="email" required>
-              </div>
-            </div>
-            <button type="submit" class="btn-login">Envoyer</button>
+      } @else {
+        <header class="auth-head">
+          <span class="state-icon small" aria-hidden="true"><mat-icon>lock_reset</mat-icon></span>
+          <h1>Mot de passe oublié ?</h1>
+          <p class="muted">Entrez l'adresse e-mail de votre compte : nous vous enverrons un lien pour choisir un nouveau mot de passe.</p>
+        </header>
 
-            <div *ngIf="isLoading" class="loading-indicator">
-              <i class="fas fa-spinner fa-spin"></i> Envoi en cours...
-            </div>
-          </form>
-        
-        </div>
-       
-      </div>
-  
-    </div>
+        @if (errorMessage) {
+          <div class="form-alert" role="alert">
+            <mat-icon aria-hidden="true">error_outline</mat-icon><span>{{ errorMessage }}</span>
+          </div>
+        }
+
+        <form (ngSubmit)="onSubmit()" novalidate>
+          <mat-form-field>
+            <mat-label>Adresse e-mail</mat-label>
+            <mat-icon matPrefix aria-hidden="true">mail</mat-icon>
+            <input matInput type="email" name="email" [(ngModel)]="email" #emailCtrl="ngModel" required email autocomplete="email" />
+            @if (emailCtrl.hasError('required')) { <mat-error>L'adresse e-mail est obligatoire</mat-error> }
+            @else { <mat-error>Adresse e-mail invalide</mat-error> }
+          </mat-form-field>
+          <button mat-flat-button type="submit" class="submit" [disabled]="isLoading">
+            @if (isLoading) { <mat-progress-spinner mode="indeterminate" diameter="18" /> Envoi en cours… }
+            @else { Envoyer le lien }
+          </button>
+        </form>
+        <p class="back"><a routerLink="/login"><mat-icon aria-hidden="true">arrow_back</mat-icon>Retour à la connexion</a></p>
+      }
+    </section>
   </div>
-  <app-notification></app-notification> 
+</div>

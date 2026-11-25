@@ -1,246 +1,126 @@
+<div class="page">
+  <button mat-button type="button" class="back" (click)="changeSlot()">
+    <mat-icon>arrow_back</mat-icon>Retour au calendrier
+  </button>
+  <app-page-header eyebrow="Étape 3 sur 3" title="Demande de réservation"
+    subtitle="Complétez les informations de votre événement ; la demande sera envoyée au responsable de l'espace." />
 
-<div class="main">
-<div class="reservation-container">
-<header class="spaces-header">
-  <div class="header-content">
+  @if (errorMessage) {
+    <div class="form-alert" role="alert"><mat-icon aria-hidden="true">error_outline</mat-icon><span>{{ errorMessage }}</span></div>
+  }
 
-    <!-- Logo à gauche -->
-    <div class="header-brand">
-      <img src="/logo2.png" alt="Université de Sousse" class="logo-image">
-    </div>
+  <div class="layout">
+    <!-- Summary of the chosen slot -->
+    <aside class="summary" aria-label="Récapitulatif du créneau">
+      <h2>Votre créneau</h2>
+      <dl>
+        <div><dt><mat-icon aria-hidden="true">meeting_room</mat-icon>Espace</dt><dd>{{ selectedSpaceName || '…' }}</dd></div>
+        <div><dt><mat-icon aria-hidden="true">event</mat-icon>Date</dt><dd>{{ reservation.heureDebut | date: 'EEEE d MMMM y' }}</dd></div>
+        <div><dt><mat-icon aria-hidden="true">schedule</mat-icon>Horaire</dt><dd>{{ reservation.heureDebut | date: 'HH:mm' }} – {{ reservation.heureFin | date: 'HH:mm' }}</dd></div>
+        <div><dt><mat-icon aria-hidden="true">groups</mat-icon>Capacité</dt>
+          <dd>@if (loadingSpaceDetails) { … } @else if (selectedSpaceCapacity) { {{ selectedSpaceCapacity }} personnes } @else { — }</dd></div>
+      </dl>
+      <button mat-stroked-button type="button" (click)="changeSlot()"><mat-icon>edit_calendar</mat-icon>Modifier le créneau</button>
+    </aside>
 
-    <!-- Titre et sous-titre au centre -->
-    <div class="header-text">
-      <h1 class="page-title">
-           Formulaire de Réservation
-      </h1>
-      <p class="page-subtitle">
-         Complétez les informations nécessaires pour votre événement
-      </p>
-    </div>
+    <form class="form-card" #reservationForm="ngForm" (ngSubmit)="onSubmit(reservationForm)" novalidate>
+      <fieldset>
+        <legend><mat-icon aria-hidden="true">person</mat-icon>Responsable de l'action</legend>
+        <div class="form-grid">
+          <mat-form-field>
+            <mat-label>Nom du responsable</mat-label>
+            <input matInput id="responsableAction" name="responsableAction" [(ngModel)]="reservation.responsableAction" required />
+            <mat-error>Ce champ est requis</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>E-mail du responsable</mat-label>
+            <input matInput type="email" id="emailR" name="emailR" [(ngModel)]="reservation.emailR" #emailR="ngModel" required email />
+            @if (emailR.hasError('required')) { <mat-error>Ce champ est requis</mat-error> }
+            @else { <mat-error>Veuillez entrer un e-mail valide</mat-error> }
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Fonction</mat-label>
+            <input matInput id="fonctionR" name="fonctionR" [(ngModel)]="reservation.fonctionR" required />
+            <mat-error>Ce champ est requis</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Structure</mat-label>
+            <input matInput id="structure" name="structure" [(ngModel)]="reservation.structure" required />
+            <mat-error>Ce champ est requis</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Téléphone</mat-label>
+            <input matInput type="tel" id="numTelR" name="numTelR" [(ngModel)]="reservation.numTelR" required />
+            <mat-error>Ce champ est requis</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Profil LinkedIn</mat-label>
+            <input matInput type="url" id="lienLinkedInR" name="lienLinkedInR" [(ngModel)]="reservation.lienLinkedInR" required placeholder="https://www.linkedin.com/in/…" />
+            @if (showError('lienLinkedInR')) { <mat-hint class="hint-error">Veuillez entrer une URL valide</mat-hint> }
+            <mat-error>Ce champ est requis</mat-error>
+          </mat-form-field>
+        </div>
+      </fieldset>
 
-    <!-- Profil à droite -->
-    <app-profile class="profile-icon" [user]="currentUser"></app-profile>
+      <fieldset>
+        <legend><mat-icon aria-hidden="true">campaign</mat-icon>Événement</legend>
+        <div class="form-grid">
+          <mat-form-field>
+            <mat-label>Intitulé de l'action</mat-label>
+            <input matInput id="intituleAction" name="intituleAction" [(ngModel)]="reservation.intituleAction" required />
+            <mat-error>Ce champ est requis</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Nombre de participants</mat-label>
+            <input matInput type="number" id="nbrParticipant" name="nbrParticipant" [(ngModel)]="reservation.nbrParticipant"
+                   #nbr="ngModel" required min="1" [max]="selectedSpaceCapacity ?? 100000" (blur)="checkCapacity()" />
+            @if (selectedSpaceCapacity) { <mat-hint>Maximum : {{ selectedSpaceCapacity }} personnes</mat-hint> }
+            @if (nbr.hasError('max')) { <mat-error>Capacité dépassée (max : {{ selectedSpaceCapacity }})</mat-error> }
+            @else { <mat-error>Doit être supérieur à 0</mat-error> }
+          </mat-form-field>
+          <mat-form-field class="full">
+            <mat-label>Public cible</mat-label>
+            <input matInput id="cible" name="cible" [(ngModel)]="reservation.cible" required placeholder="Étudiants, enseignants, grand public…" />
+            <mat-error>Ce champ est requis</mat-error>
+          </mat-form-field>
+          <mat-form-field class="full">
+            <mat-label>Description</mat-label>
+            <textarea matInput id="description" name="description" rows="4" [(ngModel)]="reservation.description" required></textarea>
+            <mat-error>Ce champ est requis</mat-error>
+          </mat-form-field>
+        </div>
+      </fieldset>
 
-  </div>
-</header>
-<div class="form-container">
-   <form class="reservation-form" #reservationForm="ngForm" (ngSubmit)="onSubmit(reservationForm)">
-    <!-- Première ligne : Responsable + Email -->
-    <div class="form-row">
-      <div class="form-group half-width with-icon">
-        <label for="responsableAction">Responsable de l'action</label>
-        <div class="input-container">
-          <fa-icon [icon]="faUser" class="input-icon"></fa-icon>
-          <input type="text" id="responsableAction" name="responsableAction" 
-                 [(ngModel)]="reservation.responsableAction" required>
+      <fieldset>
+        <legend><mat-icon aria-hidden="true">devices</mat-icon>Équipements souhaités</legend>
+        <div class="equipments">
+          @for (eq of equipmentsList; track eq) {
+            <mat-checkbox [checked]="isEquipmentSelected(eq)" (change)="toggleEquipmentSelection(eq)">{{ eq }}</mat-checkbox>
+          }
         </div>
-        <div *ngIf="showError('responsableAction')" class="error-message">
-          Ce champ est requis
-        </div>
-      </div>
-      
-      <div class="form-group half-width with-icon">
-        <label for="emailR">Email de responsable</label>
-        <div class="input-container">
-          <fa-icon [icon]="faEnvelope" class="input-icon"></fa-icon>
-          <input type="email" id="emailR" name="emailR" 
-                 [(ngModel)]="reservation.emailR" required>
-        </div>
-        <div *ngIf="showError('emailR')" class="error-message">
-          Veuillez entrer un email valide
-        </div>
-      </div>
-    </div>
+        @if (canAddEquipment) {
+          @if (showEquipmentModal) {
+            <div class="add-equipment">
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Autre équipement / logistique</mat-label>
+                <input matInput name="customEquipment" [(ngModel)]="customEquipment" (keydown.enter)="$event.preventDefault(); addCustomEquipment()" />
+              </mat-form-field>
+              <button mat-flat-button type="button" (click)="addCustomEquipment()" [disabled]="!customEquipment.trim()">Ajouter</button>
+              <button mat-button type="button" (click)="cancelAddEquipment()">Annuler</button>
+            </div>
+          } @else {
+            <button mat-button type="button" class="add-link" (click)="showAddEquipmentModal()"><mat-icon>add</mat-icon>Ajouter un équipement</button>
+          }
+        }
+      </fieldset>
 
-    <!-- Deuxième ligne : Fonction + Structure -->
-    <div class="form-row">
-      <div class="form-group half-width with-icon">
-        <label for="fonctionR">Fonction de responsable </label>
-        <div class="input-container">
-          <fa-icon [icon]="faBriefcase" class="input-icon"></fa-icon>
-          <input type="text" id="fonctionR" name="fonctionR" 
-                 [(ngModel)]="reservation.fonctionR" required>
-        </div>
-        <div *ngIf="showError('fonctionR')" class="error-message">
-          Ce champ est requis
-        </div>
-      </div>
-      
-      <div class="form-group half-width with-icon">
-        <label for="structure">Structure de responsable</label>
-        <div class="input-container">
-          <fa-icon [icon]="faBuilding" class="input-icon"></fa-icon>
-          <input type="text" id="structure" name="structure" 
-                 [(ngModel)]="reservation.structure" required>
-        </div>
-        <div *ngIf="showError('structure')" class="error-message">
-          Ce champ est requis
-        </div>
-      </div>
-    </div>
-
-    <!-- Troisième ligne : Téléphone + LinkedIn -->
-    <div class="form-row">
-      <div class="form-group half-width with-icon">
-        <label for="numTelR">Numéro de téléphone de responsable</label>
-        <div class="input-container">
-          <fa-icon [icon]="faPhone" class="input-icon"></fa-icon>
-          <input type="tel" id="numTelR" name="numTelR" 
-                 [(ngModel)]="reservation.numTelR" required>
-        </div>
-        <div *ngIf="showError('numTelR')" class="error-message">
-          Ce champ est requis
-        </div>
-      </div>
-      
-      <div class="form-group half-width with-icon">
-        <label for="lienLinkedInR">Profil LinkedIn de responsable</label>
-        <div class="input-container">
-          <fa-icon [icon]="faLink" class="input-icon"></fa-icon>
-          <input type="url" id="lienLinkedInR" name="lienLinkedInR" 
-                 [(ngModel)]="reservation.lienLinkedInR" required 
-                 placeholder="https://...">
-        </div>
-        <div *ngIf="showError('lienLinkedInR')" class="error-message">
-          Veuillez entrer une URL valide
-        </div>
-      </div>
-    </div>
-
-    <!-- Quatrième ligne : Intitulé + Participants -->
-    <div class="form-row">
-      <div class="form-group half-width with-icon">
-        <label for="intituleAction">Intitulé de l'action</label>
-        <div class="input-container">
-          <fa-icon [icon]="faClipboard" class="input-icon"></fa-icon>
-          <input type="text" id="intituleAction" name="intituleAction" 
-                 [(ngModel)]="reservation.intituleAction" required>
-        </div>
-        <div *ngIf="showError('intituleAction')" class="error-message">
-          Ce champ est requis
-        </div>
-      </div>
-      <div class="form-group half-width with-icon">
-        <label for="nbrParticipant">Nombre de participants</label>
-        <div class="input-container">
-          <fa-icon [icon]="faUsers" class="input-icon"></fa-icon>
-          <input type="number" id="nbrParticipant" name="nbrParticipant" 
-                 [(ngModel)]="reservation.nbrParticipant" required
-                 min="1">
-        </div>
-         <!-- Add these lines for capacity information -->
-    <div *ngIf="loadingSpaceDetails" class="capacity-loading">
-      Chargement des détails de l'espace...
-    </div>
-    <div *ngIf="selectedSpaceCapacity" class="capacity-info">
-      Capacité maximale: {{selectedSpaceCapacity}} personnes
-    </div>
-      <div *ngIf="showError('nbrParticipant')" class="error-message">
-      <span *ngIf="reservation.nbrParticipant === null || reservation.nbrParticipant <= 0">
-        Doit être supérieur à 0
-      </span>
-      <span *ngIf="reservation.nbrParticipant && selectedSpaceCapacity && reservation.nbrParticipant > selectedSpaceCapacity">
-        Capacité dépassée (max: {{selectedSpaceCapacity}})
-      </span>
-    </div>
-      </div>
-    </div>
-
-    <!-- Cinquième ligne : Cible + Description -->
-    <div class="form-row">
-      <div class="form-group half-width with-icon">
-        <label for="cible">Cible</label>
-        <div class="input-container">
-          <fa-icon [icon]="faUserTag" class="input-icon"></fa-icon>
-          <input type="text" id="cible" name="cible" 
-                 [(ngModel)]="reservation.cible" required>
-        </div>
-        <div *ngIf="showError('cible')" class="error-message">
-          Ce champ est requis
-        </div>
-      </div>
-        
-      <div class="form-group half-width with-icon">
-        <label for="description">Description</label>
-        <div class="input-container">
-          <fa-icon [icon]="faAlignLeft" class="input-icon"></fa-icon>
-          <input id="description" name="description" rows="4"
-                    [(ngModel)]="reservation.description" required>
-        </div>
-        <div *ngIf="showError('description')" class="error-message">
-          Ce champ est requis
-        </div>
-      </div>
-    </div>
-
-        <!-- Equipment Section -->
-      <div class="equipment-section">
-        <label>Équipements</label>
-        
-        <div class="checkbox-container">
-          <label class="checkbox-label" *ngFor="let eq of equipmentsList">
-            <input 
-              type="checkbox" 
-              [checked]="isEquipmentSelected(eq)"
-              (change)="toggleEquipmentSelection(eq)"
-              class="hidden-checkbox">
-            <span class="custom-checkbox"></span>
-            {{eq}}
-          </label>
-        </div>
-      </div>
-      
-      <!-- Add Equipment Button -->
-<!-- Add Equipment Button -->
-<div class="add-button" *ngIf="canAddEquipment">
-  <button 
-      type="button" 
-      class="addd-equipment" 
-      (click)="showAddEquipmentModal()">
-      <fa-icon [icon]="faPlus" class="add-icon"></fa-icon>
-      Ajouter Logistique
-  </button> 
-</div>
-      
-      <!-- Add Equipment Modal -->
-      <div class="modal-overlay" *ngIf="showEquipmentModal">
-        <div class="modal-content">
-          <h3>Ajouter un Logistique</h3>
-          <input type="text" 
-                [(ngModel)]="customEquipment" 
-                name="customEquipment"
-                placeholder="Nom de l'équipement"
-                (keyup.enter)="addCustomEquipment()">
-          
-          <div class="modal-actions">
-            <button type="button" (click)="addCustomEquipment()">
-              <span *ngIf="!isLoading">Ajouter</span>
-              <span *ngIf="isLoading">
-                <i class="fa fa-spinner fa-spin"></i> Processing...
-              </span>
-            </button>
-            <button type="button" (click)="cancelAddEquipment()">Annuler</button>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Submit Button Section -->
-    <div class="form-actions">
-        <button type="button" class="cancel-btn" (click)="goBack()">Annuler</button>
-        <button type="submit" class="submit-btn">
-          <span *ngIf="!isLoading">Envoyer</span>
-          <span *ngIf="isLoading">
-            <i class="fa fa-spinner fa-spin"></i> Envoi en cours...
-          </span>
+      <div class="form-actions">
+        <button mat-button type="button" (click)="goBack()">Annuler</button>
+        <button mat-flat-button type="submit" [disabled]="isLoading">
+          @if (isLoading) { <mat-progress-spinner mode="indeterminate" diameter="18" /> } @else { <mat-icon>send</mat-icon> }
+          {{ isLoading ? 'Envoi en cours…' : 'Envoyer la demande' }}
         </button>
       </div>
-  </form>
+    </form>
+  </div>
 </div>
-<app-chat></app-chat>
-<app-notification></app-notification>
-</div>
-</div>
-
-
-  

@@ -18,13 +18,16 @@ import { forkJoin, Subject, takeUntil } from 'rxjs';
 import { StatusReservation } from '../models/reservation.model';
 import { CalendarService } from '../services/calendar/calendar.service';
 import { CalendarSlotDTO } from '../shared/interfaces/calendar-slot.dto';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { StatusBadgeComponent } from '../shared/ui/status-badge.component';
 
 @Component({
   selector: 'app-reservations-calendar',
   templateUrl: './reservations-calendar.component.html',
   styleUrls: ['./reservations-calendar.component.scss'],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule, MatButtonModule, MatIcon, StatusBadgeComponent]
 })
 export class ReservationsCalendarComponent implements OnChanges, OnDestroy {
   // Input property for establishment ID
@@ -35,6 +38,7 @@ export class ReservationsCalendarComponent implements OnChanges, OnDestroy {
   slots: CalendarSlotDTO[] = [];
   loading = false;
   public StatusReservation = StatusReservation;
+  readonly weekdayLabels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
   // Selection state
   selectedDay: Date | null = null;
   public selectedSlot: CalendarSlotDTO | null = null;

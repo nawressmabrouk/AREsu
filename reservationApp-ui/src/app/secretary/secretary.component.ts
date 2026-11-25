@@ -1,474 +1,227 @@
-
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import {
-  faArrowRight,
-  faBars,
-  faCalendarAlt,
-  faCheckCircle,
-  faClock,
-  faEye,
-  faEyeSlash,
-  faHome,
-  faKey,
-  faSearch, faSpinner,
-  faTimesCircle
-} from '@fortawesome/free-solid-svg-icons';
-import { finalize, forkJoin } from 'rxjs';
-import { Reservation, StatusReservation } from '../models/reservation.model';
+import { Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { filter, finalize, Observable, switchMap } from 'rxjs';
+import { Reservation } from '../models/reservation.model';
 import { ReservationsCalendarComponent } from '../reservations-calendar/reservations-calendar.component';
-import { AuthService } from '../services/auth/auth.service';
+import { NotificationService } from '../services/alert-notif/notification.service';
 import { SecretaryService } from '../services/secretary/secretary.service';
 import { UserService } from '../services/user/user.service';
-import { ProfileComponent } from '../shared/components/profile/profile.component';
-import { User } from '../shared/interfaces/user.model';
+import { ApproveEvent, ReservationTableComponent, reservationSummary } from '../shared/components/reservation-table/reservation-table.component';
+import { apiErrorMessage } from '../shared/ui/api-error';
+import { ConfirmService } from '../shared/ui/confirm-dialog.component';
+import { EmptyStateComponent } from '../shared/ui/empty-state.component';
+import { PageHeaderComponent } from '../shared/ui/page-header.component';
+import { StatCardComponent } from '../shared/ui/stat-card.component';
+import { hasStatus } from '../shared/ui/status';
+
+type ListKey = 'toHandle' | 'toView' | 'viewed' | 'accepted' | 'refused';
+type View = ListKey | 'calendar';
+
+interface ListState {
+  items: Reservation[];
+  loading: boolean;
+  failed: boolean;
+}
+
+const VIEWS: { key: View; label: string; icon: string; description: string }[] = [
+  { key: 'toHandle', label: 'À traiter', icon: 'pending_actions',
+    description: "Demandes en attente pour les espaces sans responsable : c'est à vous de les accepter ou de les refuser." },
+  { key: 'toView', label: 'Non vues', icon: 'visibility_off',
+    description: "Demandes des espaces gérés par un responsable, que vous n'avez pas encore consultées." },
+  { key: 'viewed', label: 'Vues', icon: 'visibility',
+    description: 'Demandes des espaces gérés par un responsable, déjà consultées.' },
+  { key: 'accepted', label: 'Acceptées', icon: 'check_circle',
+    description: "Réservations que vous avez acceptées. Celles qui n'ont pas commencé peuvent être annulées." },
+  { key: 'refused', label: 'Refusées', icon: 'cancel', description: 'Réservations que vous avez refusées.' },
+  { key: 'calendar', label: 'Calendrier', icon: 'calendar_month', description: 'Toutes les réservations de votre établissement.' },
+];
+
 @Component({
   selector: 'app-secretary',
-  standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    FontAwesomeModule,
-    ProfileComponent,
-    ReservationsCalendarComponent
+    MatButtonModule,
+    MatIcon,
+    EmptyStateComponent,
+    PageHeaderComponent,
+    ReservationsCalendarComponent,
+    ReservationTableComponent,
+    StatCardComponent,
   ],
   templateUrl: './secretary.component.html',
-  styleUrls: ['./secretary.component.scss']
 })
 export class SecretaryComponent implements OnInit {
-     @ViewChild(ReservationsCalendarComponent) calendarComponent!: ReservationsCalendarComponent;
-  // Expose enum to template
-  StatusReservation = StatusReservation;
- etablissementId: string = '';
-  // Font Awesome icons
-  faHome = faHome;
-  faSearch = faSearch;
-  faPageIcon = faArrowRight;
-  faClock = faClock;
-  faCheckCircle = faCheckCircle;
-  faTimesCircle = faTimesCircle;
-  faAccessIcon = faKey;
-  faEye = faEye;
-  faEyeSlash = faEyeSlash;
-  faBars = faBars;
-  faSpinner = faSpinner;
-faCalendarAlt = faCalendarAlt ;
-  // UI states
- activeTab: StatusReservation = StatusReservation.EN_ATTENTE;
-  searchTerm = '';
-  currentPageTitle = 'Gestion des Réservations';
-  currentPageSubtitle = 'Validation et contrôle des réservations des espaces';
-  activeSection: 'access' | 'unseen' | 'seen' | 'calendar' = 'access';
-  isSidebarExpanded = false;
-  
-  // User data
-  currentUser = {
-    role: 'secretaire',
-    nomPrenom: 'Secrétaire Générale',
-    email: 'secretaire@universite.tn'
+  private readonly secretaryService = inject(SecretaryService);
+  private readonly userService = inject(UserService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly toast = inject(NotificationService);
+
+  private readonly calendar = viewChild(ReservationsCalendarComponent);
+
+  readonly views = VIEWS;
+  readonly view = signal<View>('toHandle');
+  readonly current = computed(() => VIEWS.find(v => v.key === this.view())!);
+
+  readonly lists = signal<Record<ListKey, ListState>>({
+    toHandle: { items: [], loading: true, failed: false },
+    toView: { items: [], loading: true, failed: false },
+    viewed: { items: [], loading: true, failed: false },
+    accepted: { items: [], loading: true, failed: false },
+    refused: { items: [], loading: true, failed: false },
+  });
+
+  readonly pendingCount = computed(() => this.lists().toHandle.items.filter(r => hasStatus(r.statut, 'EN_ATTENTE')).length);
+
+  /** null while loading, '' when the account has no establishment. */
+  readonly etablissementId = signal<string | null>(null);
+  readonly busy = signal<ReadonlySet<string>>(new Set());
+
+  private readonly loaders: Record<ListKey, () => Observable<Reservation[]>> = {
+    toHandle: () => this.secretaryService.getToHandleReservations(),
+    toView: () => this.secretaryService.getToViewReservations(),
+    viewed: () => this.secretaryService.getViewedReservations(),
+    accepted: () => this.secretaryService.getAcceptedReservations(),
+    refused: () => this.secretaryService.getRefusedReservations(),
   };
-
-  // Reservation data
-  reservationsToHandle: Reservation[] = [];
-  reservationsToView: Reservation[] = [];
-  viewedReservations: Reservation[] = [];
-  approvedReservations: Reservation[] = [];
-  rejectedReservations: Reservation[] = [];
-  filteredRequests: Reservation[] = [];
-
-  // Stats
-  stats = {
-    pending: 0,
-    approved: 0,
-    rejected: 0
-  };
-
-approvedEquipment: { [reservationId: string]: string[] } = {};
-  // Loading states
-loading: {
-  toHandle: boolean;
-  toView: boolean;
-  viewed: boolean;
-  approved: boolean;
-  rejected: boolean;
-
-  // index signature to allow dynamic keys
-  [key: string]: boolean; 
-} = {
-  toHandle: false,
-  toView: false,
-  viewed: false,
-  approved: false,
-  rejected: false
-};
-  constructor(
-    private router: Router,
-    private authService: AuthService,
-    private secretaryService: SecretaryService , private userSvc :UserService
-  ) {}
 
   ngOnInit(): void {
-    
-    this.loadInitialData();
+    // The lists come from the account's establishment server-side; the profile is only needed for the calendar.
+    this.userService.getProfile().subscribe({
+      next: profile => this.etablissementId.set(profile.etablissementId ?? ''),
+      error: () => this.etablissementId.set(''),
+    });
+    this.refresh();
   }
 
-private loadInitialData(): void {
-  this.userSvc.getProfile().subscribe({
-    next: (profile: User) => {
-      console.log('Full profile structure:', profile);
-      
-      
-      const effectiveEtabId = profile.etablissementId || '68036ba5bea561813e4008f7';
-      
-      if (!effectiveEtabId) {
-        console.error('No etablissementId available');
-        alert('Votre compte n\'est pas associé à un établissement');
-        return;
-      }
-      
-      this.etablissementId = effectiveEtabId;
-      console.log('Using establishment ID:', this.etablissementId);
-      
-      // Load reservation data
-      forkJoin([
-        this.loadToHandleReservations(),
-        this.loadToViewReservations(),
-        this.loadViewedReservations()
-      ]).subscribe();
-    },
-    error: (err) => {
-      console.error('Error loading profile:', err);
-      alert('Erreur de chargement du profil');
-    }
-  });
-}
-
-
-//Filters reservations based on active tab
-private updateFilteredRequests(): void {
-  switch(this.activeTab) {
-    case StatusReservation.EN_ATTENTE: 
-      this.filteredRequests = this.reservationsToHandle.filter(r => 
-        r.statut === StatusReservation.EN_ATTENTE
-      );
-      break;
-    case StatusReservation.ACCEPTEE:
-      this.filteredRequests = this.approvedReservations;
-      break;
-    case StatusReservation.REFUSEE:
-      this.filteredRequests = this.rejectedReservations;
-      break;
-    default:
-      this.filteredRequests = [];
+  count(key: View): number | null {
+    if (key === 'calendar') return null;
+    const state = this.lists()[key];
+    if (state.loading) return null;
+    return key === 'toHandle' ? this.pendingCount() : state.items.length;
   }
-}
 
-  private loadToHandleReservations(): void {
-    this.loading.toHandle = true;
-    this.secretaryService.getToHandleReservations().subscribe({
-      next: (reservations) => {
-        this.reservationsToHandle = reservations;
-        this.stats.pending = reservations.filter(r => r.statut === StatusReservation.EN_ATTENTE).length;
-        this.updateFilteredRequests();
-        this.loading.toHandle = false;
-      },
-      error: (err) => {
-        console.error('Error loading reservations to handle:', err);
-        this.loading.toHandle = false;
-      }
+  setView(view: View): void {
+    this.view.set(view);
+  }
+
+  refresh(): void {
+    (Object.keys(this.loaders) as ListKey[]).forEach(key => this.load(key));
+    this.calendar()?.loadSlots();
+  }
+
+  /** silent: refresh without the loading skeleton (after an action, the list stays in place). */
+  load(key: ListKey, silent = false): void {
+    if (!silent) this.patch(key, { loading: true, failed: false });
+    this.loaders[key]().subscribe({
+      next: items => this.patch(key, { items, loading: false }),
+      error: () => this.patch(key, { loading: false, failed: !silent || !this.lists()[key].items.length }),
     });
   }
 
-  private loadToViewReservations(): void {
-    this.loading.toView = true;
-    this.secretaryService.getToViewReservations().subscribe({
-      next: (reservations) => {
-        this.reservationsToView = reservations;
-        this.loading.toView = false;
-      },
-      error: (err) => {
-        console.error('Error loading reservations to view:', err);
-        this.loading.toView = false;
-      }
-    });
-  }
-
-  private loadViewedReservations(): void {
-    this.loading.viewed = true;
-    this.secretaryService.getViewedReservations().subscribe({
-      next: (reservations) => {
-        console.log('Viewed reservations:', reservations); 
-        this.viewedReservations = reservations;
-        this.loading.viewed = false;
-      },
-      error: (err) => {
-        console.error('Error loading viewed reservations:', err);
-        this.loading.viewed = false;
-      }
-    });
-  }
-
-private loadApprovedReservations(): void {
-  this.loading.approved = true;
-  this.secretaryService.getReservationsByStatus(StatusReservation.ACCEPTEE)
-    .subscribe({
-      next: (reservations) => {
-        this.approvedReservations = reservations.filter(r => 
-        r.statut === StatusReservation.ACCEPTEE // ✅ Filtre principal sur le statut
-        );
-        this.stats.approved = this.approvedReservations.length;
-        this.updateFilteredRequests();
-      },
-      error: (err) => console.error('Error loading approved:', err)
-    });
-}
-
-private loadRejectedReservations(): void {
-  this.loading.rejected = true;
-  this.secretaryService.getReservationsByStatus(StatusReservation.REFUSEE)
-    .subscribe({
-      next: (reservations) => {
-        this.rejectedReservations = reservations.filter(r => 
-          r.DecideePar === 'SecretaireGenerale' && r.vueParSecretaire
-        );
-        this.stats.rejected = this.rejectedReservations.length;
-        this.updateFilteredRequests();
-      },
-      error: (err) => console.error('Error loading rejected:', err)
-    });
-}
-
-setActiveTab(tab: StatusReservation): void {
-  this.activeTab = tab;
-  this.searchTerm = '';
-  
-  if (tab === StatusReservation.ACCEPTEE) {
-    this.loadAcceptedReservations();
-  } else if (tab === StatusReservation.REFUSEE) {
-    this.loadRefusedReservations();
-  } else {
-    this.loadToHandleReservations();
-  }
-}
-
-  markAsSeen(reservation: Reservation): void {
-    this.secretaryService.viewReservation(reservation.id).subscribe({
-      next: () => {
-        this.loadToViewReservations();
-        this.loadViewedReservations();
-      },
-      error: (err) => console.error('Error marking as seen:', err)
-    });
-  }
-
-approveRequest(reservation: Reservation): void {
-  // Get approved equipment for this reservation
-  const approvedEquipments = this.approvedEquipment[reservation.id] || [];
-  
-  // Confirm if no equipment is selected
-  if (approvedEquipments.length === 0) {
-    if (!confirm('Aucun équipement sélectionné. Voulez-vous accepter sans équipement ?')) {
-      return;
-    }
-  }
-
-  // Show loading state
-  this.loading['approving_' + reservation.id] = true;
-
-  this.secretaryService.makeDecision(
-    reservation.id, 
-    true,
-    approvedEquipments
-  ).pipe(
-    finalize(() => {
-      delete this.loading['approving_' + reservation.id];
-    })
-  ).subscribe({
-    next: () => {
-      // Clean up and refresh data
-      delete this.approvedEquipment[reservation.id];
-      
-      // Refresh all relevant lists AND the calendar
-      forkJoin([
-        this.loadToHandleReservations(),
-        this.loadApprovedReservations(),
-        this.loadViewedReservations()
-      ]).subscribe(() => {
-        // Refresh the calendar after lists are loaded
-        this.calendarComponent?.loadSlots();
+  approve({ reservation, equipments }: ApproveEvent): void {
+    const requested = reservation.equipements?.length ?? 0;
+    this.confirm
+      .confirm({
+        title: 'Accepter la demande ?',
+        message: requested && !equipments.length
+          ? "Aucun équipement n'est coché : la réservation sera acceptée sans équipement."
+          : 'Le demandeur sera informé de votre décision.',
+        details: reservationSummary(reservation, requested ? equipments.join(', ') || 'Aucun' : undefined),
+        confirmLabel: 'Accepter',
+        icon: 'check_circle',
+      })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.track(reservation, this.secretaryService.makeDecision(reservation.id, true, equipments))),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.showSuccess('Réservation acceptée.');
+          this.afterChange('toHandle', 'accepted', 'viewed');
+        },
+        error: err => this.toast.showError(apiErrorMessage(err, "L'acceptation a échoué.")),
       });
-      
-      // Show success message
-      alert('Réservation approuvée avec succès');
-    },
-    error: (err) => {
-      console.error('Erreur lors de l\'approbation:', err);
-      const errorMsg = err.error?.erreur || err.message || 'Une erreur est survenue';
-      alert(`Échec de l'approbation: ${errorMsg}`);
-    }
-  });
-}
-rejectRequest(reservation: Reservation): void {
-  this.secretaryService.makeDecision(reservation.id, false).subscribe({
-    next: () => {
-      delete this.approvedEquipment[reservation.id]; 
-      this.loadToHandleReservations();
-      this.loadRejectedReservations();
-      this.loadViewedReservations();
-    },
-    error: (err) => console.error('Error rejecting reservation:', err)
-  });
-}
-switchSection(section: 'access' | 'unseen' | 'seen' | 'calendar'): void {
-  this.activeSection = section;
-  this.searchTerm = '';
-  
-  switch (section) {
-    case 'access':
-      this.currentPageTitle = 'Gestion des Réservations';
-      this.currentPageSubtitle = 'Validation et contrôle des réservations des espaces';
-      break;
-    case 'unseen':
-      this.currentPageTitle = 'Demandes non vues';
-      this.currentPageSubtitle = 'Liste des demandes des espaces non encore consultées';
-      break;
-    case 'seen':
-      this.currentPageTitle = 'Demandes déjà vues';
-      this.currentPageSubtitle = 'Liste des demandes des espaces déjà consultées';
-      break;
-    case 'calendar':
-      this.currentPageTitle = 'Calendrier des Réservations';
-      this.currentPageSubtitle = 'Visualisation des réservations par calendrier';
-      break;
-  }
-}
-
-  toggleEquipment(reservation: Reservation, equipment: string): void {
-    const index = reservation.equipements.indexOf(equipment);
-    if (index === -1) {
-      reservation.equipements.push(equipment);
-    } else {
-      reservation.equipements.splice(index, 1);
-    }
   }
 
-  getStatusCircleClass(statut: StatusReservation): string {
-    const baseClass = 'status-circle';
-    switch (statut) {
-      case StatusReservation.ACCEPTEE: return `${baseClass} approved`;
-      case StatusReservation.REFUSEE: return `${baseClass} rejected`;
-      case StatusReservation.EN_ATTENTE: return `${baseClass} pending`;
-      default: return baseClass;
-    }
+  reject(reservation: Reservation): void {
+    this.confirm
+      .confirm({
+        title: 'Refuser la demande ?',
+        message: 'Le demandeur sera informé du refus.',
+        details: reservationSummary(reservation),
+        confirmLabel: 'Refuser',
+        tone: 'danger',
+        icon: 'cancel',
+      })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.track(reservation, this.secretaryService.makeDecision(reservation.id, false))),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.showSuccess('Réservation refusée.');
+          this.afterChange('toHandle', 'refused', 'viewed');
+        },
+        error: err => this.toast.showError(apiErrorMessage(err, 'Le refus a échoué.')),
+      });
   }
 
-// In your component.ts
-toggleSidebar(event: Event) {
-  event.stopPropagation(); // Prevents event bubbling
-  this.isSidebarExpanded = !this.isSidebarExpanded;
-}
-
-  private calculateStats(): void {
-  this.stats = {
-    pending: this.reservationsToHandle.filter(r => r.statut === StatusReservation.EN_ATTENTE).length,
-    approved: this.approvedReservations.length,
-    rejected: this.rejectedReservations.length
-  };
-}
-
-
-private loadAcceptedReservations(): void {
-  this.loading.approved = true;
-  this.secretaryService.getAcceptedReservations().subscribe({
-    next: (reservations) => {
-    this.approvedReservations = reservations.map(res => ({
-        ...res,
-        heureDebut: new Date(res.heureDebut), 
-        heureFin: new Date(res.heureFin)
-      }));
-      this.stats.approved = reservations.length;
-      this.updateFilteredRequests();
-      this.loading.approved = false;
-    },
-    error: (err) => {
-      console.error('Error loading accepted reservations:', err);
-      this.loading.approved = false;
-    }
-  });
-}
-
-private loadRefusedReservations(): void {
-  this.loading.rejected = true;
-  this.secretaryService.getRefusedReservations().subscribe({
-    next: (reservations) => {
-      this.rejectedReservations = reservations;
-      this.stats.rejected = reservations.length;
-      this.updateFilteredRequests();
-      this.loading.rejected = false;
-    },
-    error: (err) => {
-      console.error('Error loading refused reservations:', err);
-      this.loading.rejected = false;
-    }
-  });
-}
-
-canCancel(reservation: Reservation): boolean {
-  const now = new Date();
-  return reservation.statut === StatusReservation.ACCEPTEE && 
-         new Date(reservation.heureDebut) > now;
-}
-
-
-cancelLoadingStates: { [id: string]: boolean } = {};
-
-handleCancel(reservation: Reservation): void {
-  const reason = prompt('Veuillez indiquer la raison de l\'annulation (optionnel)');
-  
-  if (reason === null) return;
-  
-  if (!confirm(`Êtes-vous sûr de vouloir annuler cette réservation?`)) return;
-
-  this.cancelLoadingStates[reservation.id] = true;
-
-  this.secretaryService.cancelReservation(reservation.id, reason || undefined)
-    .pipe(finalize(() => delete this.cancelLoadingStates[reservation.id]))
-    .subscribe({
+  markSeen(reservation: Reservation): void {
+    this.track(reservation, this.secretaryService.viewReservation(reservation.id)).subscribe({
       next: () => {
-        forkJoin([
-          this.loadApprovedReservations(),
-          this.loadRejectedReservations(),
-          this.loadViewedReservations()
-        ]).subscribe(() => {
-          // Refresh the calendar after lists are loaded
-          this.calendarComponent?.loadSlots();
-        });
+        this.toast.showSuccess('Demande marquée comme vue.');
+        this.afterChange('toView', 'viewed');
       },
-      error: (err) => {
-        console.error('Erreur lors de l\'annulation:', err);
-        alert('Échec de l\'annulation: ' + err.message);
-      }
+      error: err => this.toast.showError(apiErrorMessage(err, "La demande n'a pas pu être marquée comme vue.")),
     });
-}
-isEquipmentApproved(reservationId: string, equip: string): boolean {
-  return this.approvedEquipment[reservationId]?.includes(equip) || false;
-}
-
-toggleEquipmentApproval(reservationId: string, equip: string): void {
-  if (!this.approvedEquipment[reservationId]) {
-    this.approvedEquipment[reservationId] = [];
   }
-  const index = this.approvedEquipment[reservationId].indexOf(equip);
-  if (index === -1) {
-    this.approvedEquipment[reservationId].push(equip);
-  } else {
-    this.approvedEquipment[reservationId].splice(index, 1);
+
+  cancel(reservation: Reservation): void {
+    this.confirm
+      .prompt({
+        title: 'Annuler la réservation ?',
+        message: "La réservation sera annulée et retirée du calendrier. Le créneau redeviendra disponible.",
+        details: reservationSummary(reservation),
+        input: { label: "Motif de l'annulation (facultatif)", multiline: true },
+        confirmLabel: 'Annuler la réservation',
+        cancelLabel: 'Retour',
+        tone: 'danger',
+        icon: 'event_busy',
+      })
+      .pipe(
+        filter((reason): reason is string => reason !== null),
+        switchMap(reason => this.track(reservation, this.secretaryService.cancelReservation(reservation.id, reason || undefined))),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.showSuccess('Réservation annulée.');
+          this.afterChange('accepted');
+        },
+        error: err => this.toast.showError(apiErrorMessage(err, "L'annulation a échoué.")),
+      });
   }
-}
 
 
+  /** Marks the reservation busy while the request runs. */
+  private track<T>(r: Reservation, request: Observable<T>): Observable<T> {
+    this.busy.update(s => new Set(s).add(r.id));
+    return request.pipe(
+      finalize(() =>
+        this.busy.update(s => {
+          const next = new Set(s);
+          next.delete(r.id);
+          return next;
+        }),
+      ),
+    );
+  }
 
+  private afterChange(...keys: ListKey[]): void {
+    keys.forEach(key => this.load(key, true));
+    this.calendar()?.loadSlots();
+  }
+
+  private patch(key: ListKey, change: Partial<ListState>): void {
+    this.lists.update(all => ({ ...all, [key]: { ...all[key], ...change } }));
+  }
 }

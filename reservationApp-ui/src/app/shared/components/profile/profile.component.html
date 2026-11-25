@@ -1,359 +1,219 @@
- <!-- shared/profile/profile.component.html -->
- <div class="profile-container" #profileDropdown>
-  <!-- Profile icon with first letter of name -->
-  <div class="profile-icon" (click)="toggleDropdown($event)">
-    {{ profileData?.nom?.charAt(0) || 'U' }}
-  </div>
+<!-- Trigger -->
+<button type="button" class="trigger" [matMenuTriggerFor]="menu" aria-label="Menu du compte">
+  <span class="avatar" aria-hidden="true">{{ initial }}</span>
+  <span class="who">
+    <span class="name">{{ displayName }}</span>
+    <span class="role">{{ roleText }}</span>
+  </span>
+  <mat-icon class="chevron" aria-hidden="true">expand_more</mat-icon>
+</button>
 
-  <!-- Profile dropdown menu -->
-  <div class="profile-dropdown" *ngIf="showDropdown">
-    <div class="profile-header">
-      <div class="user-avatar">{{ profileData?.nom?.charAt(0) || 'U' }}</div>
-      <div class="user-info">
-        <div class="greeting">Bonjour {{ profileData?.nom || 'Utilisateur' }} ! </div>
-        <div class="email">{{ profileData?.email || '' }}</div>
-      </div>
-    </div>
-    
-    <div class="dropdown-content">
-      <!-- View Profile -->
-      <div class="dropdown-item" (click)="openProfileModal()">
-        <fa-icon [icon]="faUser"></fa-icon>
-        <span>Voir votre profil</span>
-      </div>
-      
-      <!-- Edit Profile -->
-      <div class="dropdown-item" (click)="openEditModal()">
-        <fa-icon [icon]="faEdit"></fa-icon>
-        <span>Modifier votre profil</span>
-      </div>
-      
-      <!-- Change Password -->
-      <div class="dropdown-item" (click)="openPasswordModal()">
-        <fa-icon [icon]="faLock"></fa-icon>
-        <span>Changer mot de passe</span>
-      </div>
-      
-      <!-- View Reservations (only for demandeur) -->
-      <div class="dropdown-item" (click)="openReservationsModal()" *ngIf="isDemandeur()">
-        <fa-icon [icon]="faCalendar"></fa-icon>
-        <span>Consulter vos réservations</span>
-      </div>
-      
-      <!-- Logout -->
-      <div class="dropdown-item logout" (click)="openLogoutModal()">
-        <fa-icon [icon]="faSignOutAlt"></fa-icon>
-        <span>Se déconnecter</span>
-      </div>
+<mat-menu #menu="matMenu" xPosition="before" class="profile-menu">
+  <div class="menu-header" (click)="$event.stopPropagation()">
+    <span class="avatar lg" aria-hidden="true">{{ initial }}</span>
+    <div>
+      <p class="menu-name">{{ displayName }}</p>
+      <p class="menu-email">{{ profileData?.email || '' }}</p>
     </div>
   </div>
-</div>
+  <button mat-menu-item (click)="openProfileModal()"><mat-icon>person</mat-icon>Mon profil</button>
+  <button mat-menu-item (click)="openEditModal()"><mat-icon>edit</mat-icon>Modifier le profil</button>
+  <button mat-menu-item (click)="openPasswordModal()"><mat-icon>lock</mat-icon>Changer le mot de passe</button>
+  @if (isDemandeur()) {
+    <button mat-menu-item (click)="openReservationsModal()"><mat-icon>event_note</mat-icon>Mes réservations</button>
+  }
+  <div class="menu-divider"></div>
+  <button mat-menu-item class="danger" (click)="openLogoutModal()"><mat-icon>logout</mat-icon>Se déconnecter</button>
+</mat-menu>
 
-<!-- Profile View Modal -->
-<!-- Profile View Modal -->
-<div class="modal-overlay" *ngIf="showProfileModal" (click)="closeModal()">
-<div class="modal-box" (click)="$event.stopPropagation()">
-  <div class="modal-header">
-  
-    <h3>Mon Profil</h3>
-    <button class="modal-close" (click)="closeModal()">&times;</button>
-  </div>
-
-  <div class="profile-content">
-    <div class="profile-header">
-      <div class="user-avatar">{{ profileData?.nom?.charAt(0) || 'U' }}</div>
-      <div class="user-main-info">
-        <h4>{{ profileData?.prenom || '-' }} {{ profileData?.nom || '-' }}</h4>
-        <p class="user-email">{{ profileData?.email || '-' }}</p>
-      </div>
-    
-    </div>
-
-    <div class="personal-info-section">
-      <h4>Informations personnelles</h4>
-      <div class="info-grid">
-        <!-- Keep existing info items -->
-        <div class="info-item">
-          <label>Nom</label>
-          <p>{{ profileData?.nom || '-' }}</p>
-        </div>
-        <div class="info-item">
-          <label>Prénom</label>
-          <p>{{ profileData?.prenom || '-' }}</p>
-        </div>
-        <div class="info-item">
-          <label>Téléphone</label>
-          <p>{{ profileData?.numTel || '-' }}</p>
-        </div>
-        <div class="info-item">
-          <label>Fonction</label>
-          <p>{{ profileData?.fonction || '-' }}</p>
-        </div>
-        <div class="info-item">
-          <label>Établissement</label>
-          <p>{{ profileData?.nomEtablissement || '-' }}</p>
-        </div>
-        <div class="info-item">
-          <label>Structure</label>
-          <p>{{ profileData?.structure || '-' }}</p>
-        </div>
-        <div class="info-item">
-          <label>Rôle</label>
-          <p>{{ profileData?.role || '-' }}</p>
-        </div>
-        <button class="edit-profile-btn" (click)="openEditModal()"> 
-          <fa-icon [icon]="faEdit"></fa-icon>
-           Modifier  
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- Edit Profile Modal -->
-<!-- Edit Profile Modal -->
-<div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
-<div class="modal-box edit-modal" (click)="$event.stopPropagation()">
-  <app-notification></app-notification>
-  <div class="modal-header">
-    <h3>Modifier le Profil</h3>
-    <button class="modal-close" (click)="closeModal()">&times;</button>
-  </div>
-
-  <div class="profile-content">
-    <!-- En-tête avec avatar et infos -->
-    <div class="profile-header">
-      <div class="user-avatar">{{ profileData?.nom?.charAt(0) || 'U' }}</div>
-      <div class="user-main-info">
-        <h4>{{ profileData?.prenom || '-' }} {{ profileData?.nom || '-' }}</h4>
-        <p class="user-email">{{ profileData?.email || '-' }}</p>
-      </div>
-    </div>
-
-    <!-- Formulaire d'édition -->
-    <form class="edit-form" #editForm="ngForm" (ngSubmit)="saveProfile()">
-      <div class="form-grid">
-        <!-- Rangée 1 -->
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nom</label>
-            <input type="text" [(ngModel)]="editData.nom" name="nom" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Prénom</label>
-            <input type="text" [(ngModel)]="editData.prenom" name="prenom" required>
-          </div>
-        </div>
-
-        <!-- Rangée 2 -->
-        <div class="form-row">
-          <div class="form-group">
-            <label>Téléphone</label>
-            <input type="tel" [(ngModel)]="editData.numTel" name="numTel" pattern="[0-9]{8}" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Fonction</label>
-            <input type="text" [(ngModel)]="editData.fonction" name="fonction" required>
-          </div>
-        </div>
-
-        <!-- Rangée 3 -->
-        <div class="form-row">
-          <div class="form-group">
-            <label>Structure</label>
-            <input type="text" [(ngModel)]="editData.structure" name="structure" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Établissement</label>
-            <input type="text" [(ngModel)]="editData.nomEtablissement" name="nomEtablissement" required>
-          </div>
-        </div>
-        <!-- Ajoutez cette section pour le choix du rôle -->
-<div class="form-row" *ngIf="isDemandeur()">
-    <div class="form-group role-selection">
-        <label>Type de Demandeur</label>
-        <div class="radio-group">
-            <label>
-                <input type="radio" name="role" 
-                       [(ngModel)]="editData.role" 
-                       value="DEMANDEUR_INTERNE"
-                       [checked]="editData.role === 'DEMANDEUR_INTERNE'">
-                Interne
-            </label>
-            <label>
-                <input type="radio" name="role" 
-                       [(ngModel)]="editData.role" 
-                       value="DEMANDEUR_EXTERNE"
-                       [checked]="editData.role === 'DEMANDEUR_EXTERNE'">
-                Externe
-            </label>
-        </div>
-    </div>
-</div>
-        <!-- LinkedIn -->
-        <div class="form-row">
-          <div class="form-group1 ">
-            <label>Profil LinkedIn</label>
-            <input type="url" [(ngModel)]="editData.linkedInLink" name="linkedInLink">
-        
-        
-          </div>
-          
-      <div class="form-actions">
-        <button type="button" class="cancel-btn" (click)="closeModal()">Annuler</button>
-        <button type="submit" class="save-btn">Enregistrer</button>
-      </div>
+<!-- Profile -->
+@if (showProfileModal) {
+  <div class="overlay" appPortalToBody (click)="closeModal()">
+    <section class="panel" role="dialog" aria-modal="true" aria-labelledby="profil-titre" (click)="$event.stopPropagation()">
+      <header class="panel-head">
+        <h2 id="profil-titre">Mon profil</h2>
+        <button mat-icon-button type="button" (click)="closeModal()" aria-label="Fermer"><mat-icon>close</mat-icon></button>
+      </header>
+      <div class="identity">
+        <span class="avatar xl" aria-hidden="true">{{ initial }}</span>
+        <div>
+          <p class="identity-name">{{ profileData?.prenom || '-' }} {{ profileData?.nom || '-' }}</p>
+          <p class="muted">{{ profileData?.email || '-' }}</p>
+          @if (roleText) { <span class="role-chip">{{ roleText }}</span> }
         </div>
       </div>
-
-    </form>
+      <dl class="info-grid">
+        <div><dt>Nom</dt><dd>{{ profileData?.nom || '-' }}</dd></div>
+        <div><dt>Prénom</dt><dd>{{ profileData?.prenom || '-' }}</dd></div>
+        <div><dt>Téléphone</dt><dd>{{ profileData?.numTel || '-' }}</dd></div>
+        <div><dt>Fonction</dt><dd>{{ profileData?.fonction || '-' }}</dd></div>
+        <div><dt>Établissement</dt><dd>{{ profileData?.nomEtablissement || '-' }}</dd></div>
+        <div><dt>Structure</dt><dd>{{ profileData?.structure || '-' }}</dd></div>
+      </dl>
+      <footer class="panel-actions">
+        <button mat-button type="button" (click)="closeModal()">Fermer</button>
+        <button mat-flat-button type="button" (click)="openEditModal()"><mat-icon>edit</mat-icon>Modifier</button>
+      </footer>
+    </section>
   </div>
-</div>
-</div>
+}
 
-<!-- Change Password Modal (reste inchangé) -->
-<div class="modal-overlay" *ngIf="showPasswordModal" (click)="closeModal()">
-  <div class="modal-box password-modal" (click)="$event.stopPropagation()">
-    <app-notification></app-notification>
-    <div class="modal-header">
-      
-      <h3>Changer le mot de passe</h3>
-      <button class="modal-close" (click)="closeModal()">&times;</button>
-    </div>
+<!-- Edit profile -->
+@if (showEditModal) {
+  <div class="overlay" appPortalToBody (click)="closeModal()">
+    <section class="panel wide" role="dialog" aria-modal="true" aria-labelledby="edition-titre" (click)="$event.stopPropagation()">
+      <header class="panel-head">
+        <h2 id="edition-titre">Modifier le profil</h2>
+        <button mat-icon-button type="button" (click)="closeModal()" aria-label="Fermer"><mat-icon>close</mat-icon></button>
+      </header>
+      <form #editForm="ngForm" (ngSubmit)="saveProfile()" class="panel-body">
+        <div class="form-grid">
+          <mat-form-field>
+            <mat-label>Nom</mat-label>
+            <input matInput name="nom" [(ngModel)]="editData.nom" required />
+            <mat-error>Le nom est obligatoire</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Prénom</mat-label>
+            <input matInput name="prenom" [(ngModel)]="editData.prenom" required />
+            <mat-error>Le prénom est obligatoire</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Téléphone</mat-label>
+            <input matInput type="tel" name="numTel" [(ngModel)]="editData.numTel" required />
+            <mat-error>Le téléphone est obligatoire</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Fonction</mat-label>
+            <input matInput name="fonction" [(ngModel)]="editData.fonction" required />
+            <mat-error>La fonction est obligatoire</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Structure</mat-label>
+            <input matInput name="structure" [(ngModel)]="editData.structure" required />
+            <mat-error>La structure est obligatoire</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Établissement</mat-label>
+            <input matInput name="nomEtablissement" [(ngModel)]="editData.nomEtablissement" required />
+            <mat-error>L'établissement est obligatoire</mat-error>
+          </mat-form-field>
+          <mat-form-field class="full">
+            <mat-label>Profil LinkedIn</mat-label>
+            <input matInput type="url" name="linkedInLink" [(ngModel)]="editData.linkedInLink" placeholder="https://www.linkedin.com/in/…" />
+          </mat-form-field>
+          @if (isDemandeur()) {
+            <div class="full radio-row">
+              <span id="type-demandeur" class="radio-label">Type de demandeur</span>
+              <mat-radio-group name="role" [(ngModel)]="editData.role" aria-labelledby="type-demandeur">
+                <mat-radio-button value="DEMANDEUR_INTERNE">Interne</mat-radio-button>
+                <mat-radio-button value="DEMANDEUR_EXTERNE">Externe</mat-radio-button>
+              </mat-radio-group>
+            </div>
+          }
+        </div>
+        <footer class="panel-actions">
+          <button mat-button type="button" (click)="closeModal()">Annuler</button>
+          <button mat-flat-button type="submit" [disabled]="saving">{{ saving ? 'Enregistrement…' : 'Enregistrer' }}</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
 
-    <form (ngSubmit)="changePassword()">
-      <div class="password-content">
-        <!-- Ancien mot de passe -->
-        <div class="password-group">
-          <label>Ancien mot de passe</label>
-          <div class="password-input">
-            <fa-icon [icon]="faKey" class="input-icon"></fa-icon>
-            <input [type]="showOldPassword ? 'text' : 'password'"
-                   [(ngModel)]="passwordData.oldPassword" 
-                   name="oldPassword" 
-                   required>
-    
+<!-- Change password -->
+@if (showPasswordModal) {
+  <div class="overlay" appPortalToBody (click)="closeModal()">
+    <section class="panel" role="dialog" aria-modal="true" aria-labelledby="mdp-titre" (click)="$event.stopPropagation()">
+      <header class="panel-head">
+        <h2 id="mdp-titre">Changer le mot de passe</h2>
+        <button mat-icon-button type="button" (click)="closeModal()" aria-label="Fermer"><mat-icon>close</mat-icon></button>
+      </header>
+      <form #pwForm="ngForm" (ngSubmit)="changePassword()" class="panel-body">
+        <mat-form-field>
+          <mat-label>Mot de passe actuel</mat-label>
+          <input matInput [type]="showOldPassword ? 'text' : 'password'" name="oldPassword"
+                 [(ngModel)]="passwordData.oldPassword" required autocomplete="current-password" />
+          <button mat-icon-button matSuffix type="button" (click)="showOldPassword = !showOldPassword"
+                  [attr.aria-label]="showOldPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+            <mat-icon>{{ showOldPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error>Obligatoire</mat-error>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Nouveau mot de passe</mat-label>
+          <input matInput [type]="showNewPassword ? 'text' : 'password'" name="newPassword"
+                 [(ngModel)]="passwordData.newPassword" required minlength="8" autocomplete="new-password" />
+          <button mat-icon-button matSuffix type="button" (click)="showNewPassword = !showNewPassword"
+                  [attr.aria-label]="showNewPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+            <mat-icon>{{ showNewPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-hint>8 caractères minimum</mat-hint>
+          <mat-error>8 caractères minimum</mat-error>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Confirmer le nouveau mot de passe</mat-label>
+          <input matInput [type]="showConfirmPassword ? 'text' : 'password'" name="confirmPassword"
+                 [(ngModel)]="passwordData.confirmPassword" required autocomplete="new-password" />
+          <button mat-icon-button matSuffix type="button" (click)="showConfirmPassword = !showConfirmPassword"
+                  [attr.aria-label]="showConfirmPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+            <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (passwordData.confirmPassword && passwordData.confirmPassword !== passwordData.newPassword) {
+            <mat-hint class="hint-error">Les mots de passe ne correspondent pas</mat-hint>
+          }
+        </mat-form-field>
+        <footer class="panel-actions">
+          <button mat-button type="button" (click)="closeModal()">Annuler</button>
+          <button mat-flat-button type="submit" [disabled]="saving">{{ saving ? 'Modification…' : 'Modifier' }}</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+<!-- My reservations (requesters) -->
+@if (showReservationsModal && isDemandeur()) {
+  <div class="overlay" appPortalToBody (click)="closeModal()">
+    <section class="panel xwide" role="dialog" aria-modal="true" aria-labelledby="resa-titre" (click)="$event.stopPropagation()">
+      <header class="panel-head">
+        <div>
+          <h2 id="resa-titre">Mes réservations</h2>
+          <p class="muted">Consultez vos demandes ou annulez celles en attente</p>
+        </div>
+        <button mat-icon-button type="button" (click)="closeModal()" aria-label="Fermer"><mat-icon>close</mat-icon></button>
+      </header>
+      <div class="panel-body">
+        @if (loadingReservations) {
+          <app-skeleton variant="rows" [count]="4" />
+        } @else if (errorReservations) {
+          <app-empty-state icon="error_outline" title="Impossible de charger vos réservations" [message]="errorReservations" />
+        } @else if (reservations.length === 0) {
+          <app-empty-state icon="event_busy" title="Aucune réservation" message="Vos demandes de réservation apparaîtront ici." />
+        } @else {
+          <div class="table-wrap">
+            <table class="data-table table-cards">
+              <thead>
+                <tr><th>Espace</th><th>Date</th><th>Statut</th><th class="cell-actions">Actions</th></tr>
+              </thead>
+              <tbody>
+                @for (res of reservations; track res.id) {
+                  <tr>
+                    <td data-label="Espace" class="cell-strong">{{ res.espaceNom || 'Non spécifié' }}</td>
+                    <td data-label="Date">{{ res.heureDebut | date: 'EEE d MMM y, HH:mm' }} – {{ res.heureFin | date: 'HH:mm' }}</td>
+                    <td data-label="Statut"><app-status-badge [status]="res.statut" /></td>
+                    <td class="cell-actions">
+                      @if (canCancel(res)) {
+                        <button mat-stroked-button type="button" class="danger-outline" (click)="onCancelReservation(res.id)">Annuler</button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
-        </div>
-
-        <!-- Nouveau mot de passe -->
-        <div class="password-group">
-          <label>Nouveau mot de passe</label>
-          <div class="password-input">
-            <fa-icon [icon]="faLock" class="input-icon"></fa-icon>
-            <input [type]="showNewPassword ? 'text' : 'password'"
-                   [(ngModel)]="passwordData.newPassword" 
-                   name="newPassword" 
-                   required>
-            
-          </div>
-        </div>
-
-        <!-- Confirmation -->
-        <div class="password-group">
-          <label>Confirmer le nouveau mot de passe</label>
-          <div class="password-input">
-            <fa-icon [icon]="faLock" class="input-icon"></fa-icon>
-            <input [type]="showConfirmPassword ? 'text' : 'password'"
-                   [(ngModel)]="passwordData.confirmPassword" 
-                   name="confirmPassword" 
-                   required>
-         
-          </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="form-actions">
-          <button type="button" class="cancel-btn"  (click)="closeModal()">Annuler</button>
-          <button type="submit" class="save-btn">Modifier</button>
-        </div>
+        }
       </div>
-    </form>
+    </section>
   </div>
-</div>
-<!-- Logout Confirmation Modal -->
-<div class="modal-overlay1" *ngIf="showLogoutModal" (click)="closeLogoutModal()">
-<div class="modal-box logout-modal" (click)="$event.stopPropagation()">
-   <button class="modal-close" (click)="closeModal()">&times;</button>
-  <h3>Souhaitez-vous vraiment <br> vous déconnecter ?</h3>
-  <p>Se déconnecter en tant que <br><strong>{{ profileData?.email || '' }}</strong></p>
-  
-  <div class="logout-actions">
-    <button class="logout-btn" (click)="logout()">Se déconnecter</button>
-    <button class="cancel-btn" (click)="closeLogoutModal()">Annuler</button>
-  </div>
-</div>
-</div>
-<!-- Reservations Modal (only for demandeur) -->
-
-<div class="modal-overlay" *ngIf="showReservationsModal && isDemandeur()" (click)="closeModal()">
-<div class="modal-box reservations-modal" (click)="$event.stopPropagation()">
-  <div class="modal-header">
-    <div class="reservation-title">
-      <h3>Consulter Vos Réservations</h3>
-      <p class="subtitle">Voir ou annuler vos réservations</p>
-    </div>
-    <button class="modal-close" (click)="closeModal()">&times;</button>
-  </div>
-
-  <div class="reservations-content">
-    <!-- État de chargement -->
-    <div *ngIf="loadingReservations" class="loading-spinner">
-      <div class="spinner"></div>
-      Chargement en cours...
-    </div>
-
-    <!-- Message d'erreur -->
-    <div *ngIf="errorReservations" class="error-message">
-      {{ errorReservations }}
-    </div>
-
-    <!-- Liste des réservations -->
-    <div *ngIf="!loadingReservations && reservations.length > 0">
-      <table>
-        <thead>
-          <tr>
-            <th>Espace</th>
-            <th>Date</th>
-            <th>Statut</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let res of reservations">
-            <td>{{ res.espaceNom || 'Non spécifié' }}</td>
-            <td>
-              {{ res.heureDebut | date:'dd/MM/yy HH:mm' }} - 
-              {{ res.heureFin | date:'HH:mm' }}
-            </td>
-            <td>
-              <span class="status-badge" [class.status-pending]="res.statut === 'En attente'"
-                                   [class.status-cancelled]="res.statut === 'Annulée'"
-                                   [class.status-approved]="res.statut === 'Validée'">
-                {{ res.statut }}
-              </span>
-            </td>
-            <td>
-              <button *ngIf="canCancel(res)" 
-                      class="cancel-reservation-btn"
-                      (click)="onCancelReservation(res.id)">
-                Annuler
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Aucune réservation -->
-    <div *ngIf="!loadingReservations && reservations.length === 0" class="no-reservations">
-      <fa-icon [icon]="faCalendarTimes" class="empty-icon"></fa-icon>
-      <p>Aucune réservation trouvée</p>
-    </div>
-  </div>
-</div>
-</div>
+}

@@ -1,58 +1,96 @@
-<div class="auth-header">
-  <div class="header-content">
-    <div class="left-section">
-       <img src="/logo2.png" alt="Université de Sousse" class="logo-image" >
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <p class="eyebrow"><mat-icon aria-hidden="true">school</mat-icon>Université de Sousse</p>
+      <h1>Réservez les espaces universitaires en quelques clics</h1>
+      <p class="lead">
+        Salles, amphithéâtres et espaces de {{ etablissements.length }} établissements :
+        consultez les disponibilités, envoyez votre demande et suivez sa validation, au même endroit.
+      </p>
+      <div class="cta">
+        <a mat-flat-button routerLink="/spaces" class="cta-main">
+          <mat-icon>travel_explore</mat-icon>Explorer les espaces
+        </a>
+        @if (loggedIn) {
+          <a mat-stroked-button [routerLink]="homeRoute">Mon espace</a>
+        } @else {
+          <a mat-stroked-button routerLink="/register">Créer un compte</a>
+        }
+      </div>
+      <ul class="trust">
+        <li><mat-icon aria-hidden="true">check_circle</mat-icon>Calendrier des disponibilités</li>
+        <li><mat-icon aria-hidden="true">check_circle</mat-icon>Validation par les responsables</li>
+        <li><mat-icon aria-hidden="true">check_circle</mat-icon>Notifications par e-mail</li>
+      </ul>
     </div>
-    
-    <div class="right-section">
-        
-      <div class="nav-links">
-        <a routerLink="/home" class="nav-link">Accueil</a>
-        <a routerLink="/navbar/auth" class="nav-link">Se connecter</a>
-        <a routerLink="/navbar/register" class="nav-link">S'inscrire</a>
+
+    <div class="hero-visual">
+      <img src="/LUniversite-de-Sousse.png" alt="Bâtiment de l'Université de Sousse" width="660" height="360" />
+      <div class="ticker" aria-live="polite">
+        <span class="ticker-label">Bienvenue à</span>
+        <span class="ticker-value">{{ currentEtablissement }}</span>
       </div>
     </div>
   </div>
-</div>
+</section>
 
-<!-- Conteneur principal avec l'image -->
-<div class="full-page-image">
-   
-  <div class="image-blur-wrapper">
-    <img src="/LUniversite-de-Sousse.png" alt="Université de Sousse" class="univ-image">
-    <div class="image-overlay">
-      
-      <div class="welcome-content">
-        <h1 class="welcome-title">
+<!-- How it works -->
+<section id="comment-ca-marche" class="section">
+  <div class="section-inner">
+    <header class="section-head">
+      <p class="eyebrow">Comment ça marche</p>
+      <h2>Une réservation en quatre étapes</h2>
+    </header>
+    <ol class="steps">
+      @for (step of steps; track step.title; let i = $index) {
+        <li class="step">
+          <span class="step-icon" aria-hidden="true"><mat-icon>{{ step.icon }}</mat-icon></span>
+          <span class="step-number">Étape {{ i + 1 }}</span>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.text }}</p>
+        </li>
+      }
+    </ol>
+  </div>
+</section>
 
-Bienvenue sur notre plateforme de réservation des espaces universitaires au sein de l'université de Sousse et ses  établissements affiliés  :   <span class="etablissement" >
-{{currentEtablissement}}
-</span></h1>
-      
-        <h3 class="welcome-description">Simplifiez votre gestion des espaces académiques avec notre solution innovante. Réservez en quelques clics, gérez efficacement, et optimisez l'utilisation de vos infrastructures universitaires.</h3>
-        
+<!-- Partner establishments -->
+<section class="section section-alt">
+  <div class="section-inner">
+    <header class="section-head">
+      <p class="eyebrow">Réseau</p>
+      <h2>Nos établissements partenaires</h2>
+      <p class="muted">Les espaces de ces établissements sont réservables sur la plateforme.</p>
+    </header>
+    <ul class="logos">
+      @for (etab of etablissements; track etab) {
+        <li class="logo-card" tabindex="0"
+            (mouseenter)="highlight(etab)" (mouseleave)="resetCurrentEtablissement()"
+            (focus)="highlight(etab)" (blur)="resetCurrentEtablissement()"
+            [class.current]="etab === currentEtablissement" [attr.title]="etab">
+          <img [src]="'/' + getLogoPath(etab)" [alt]="'Logo ' + etab" loading="lazy" />
+          <span>{{ getShortName(etab) }}</span>
+        </li>
+      }
+    </ul>
+  </div>
+</section>
+
+<!-- Final call to action -->
+<section class="section">
+  <div class="section-inner">
+    <div class="cta-band">
+      <div>
+        <h2>Prêt à réserver votre prochain événement ?</h2>
+        <p>Créez un compte en une minute ou parcourez dès maintenant les espaces disponibles.</p>
+      </div>
+      <div class="cta">
+        <a mat-flat-button routerLink="/spaces" class="on-dark">Voir les espaces</a>
+        @if (!loggedIn) {
+          <a mat-stroked-button routerLink="/login" class="on-dark-outline">Se connecter</a>
+        }
       </div>
     </div>
-    
   </div>
-
-
-
- 
-
-</div>
-
- <!-- Section Logos -->
-<div class="etablissements-section">
-  <h3 class="section-title">Nos établissements partenaires : </h3>
-  <div class="logos-wall">
-    <div *ngFor="let etab of etablissements" class="logo-card" 
-         (mouseenter)="currentEtablissement = etab"
-         (mouseleave)="resetCurrentEtablissement()">
-      <img [src]="'/' + getLogoPath(etab)" 
-     [alt]="etab" 
-     class="logo-img">
-      <div class="logo-tooltip">{{getShortName(etab)}}</div>
-    </div>
-  </div>
-</div>
+</section>

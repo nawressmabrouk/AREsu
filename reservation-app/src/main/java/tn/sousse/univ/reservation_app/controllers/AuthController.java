@@ -50,11 +50,13 @@ public class AuthController {
             }
 
             // Generate JWT token
-            String token = jwtUtil.generateToken(user);
-            System.out.println("Token généré : " + token);
+            String token = jwtUtil.generateToken(user); // never log the token itself
 
             return ResponseEntity.ok(Map.of("token", token));
 
+        } catch (org.springframework.security.authentication.DisabledException e) {
+            // Account not activated yet: a clear 403 instead of a generic 500
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500)
@@ -72,7 +74,13 @@ public class AuthController {
         }
 
         String token = authHeader.substring(7);
-        Date expiresAt = jwtUtil.extractExpiration(token);
+        Date expiresAt;
+        try {
+            expiresAt = jwtUtil.extractExpiration(token);
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+            // Expired or invalid token: nothing left to revoke
+            return ResponseEntity.ok(Map.of("message", "Successfully logged out"));
+        }
         Date createdAt = new Date();
 
         TokenBlacklist blacklisted = new TokenBlacklist(null, token, createdAt, expiresAt);

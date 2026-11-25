@@ -34,22 +34,20 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": [
-              "./node_modules/jquery/dist/jquery.js"
-            ]
+            "scripts": []
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1.4MB",
+                  "maximumError": "1.8MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kB",
-                  "maximumError": "4kB"
+                  "maximumWarning": "8kB",
+                  "maximumError": "16kB"
                 }
               ],
               "outputHashing": "all"
@@ -96,7 +94,6 @@
               }
             ],
             "styles": [
-              
               "src/styles.scss"
             ],
             "scripts": []

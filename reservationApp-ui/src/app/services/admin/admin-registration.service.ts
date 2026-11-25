@@ -48,7 +48,7 @@ export interface AdminUser {
   providedIn: 'root'
 })
 export class AdminRegistrationService {
-  private apiUrl = 'http://localhost:8080/api/admin';
+  private apiUrl = '/api/admin';
 
   constructor(private http: HttpClient) { }
 

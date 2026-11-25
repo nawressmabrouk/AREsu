@@ -1,13 +1,29 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>PfeProject</title>
+  <title>AREsu · Réservation des espaces – Université de Sousse</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta name="description" content="Plateforme de réservation des espaces de l'Université de Sousse : salles, amphithéâtres et espaces des établissements partenaires.">
+  <meta name="theme-color" content="#0f4c97">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <script>
+    // Apply the saved colour theme before Angular starts (avoids a white flash in dark mode)
+    try {
+      var t = localStorage.getItem('aresu-theme');
+      if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('theme-dark');
+      }
+    } catch (e) {}
+  </script>
 </head>
-<body>
+<body class="mat-typography">
   <app-root></app-root>
 </body>
 </html>

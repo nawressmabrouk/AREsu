@@ -3,60 +3,30 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import {
-  faAlignLeft,
-  faArrowRight,
-  faBriefcase,
-  faBuilding,
-  faBullseye,
-  faClipboard,
-  faEnvelope,
-  faHeading,
-  faHome,
-  faLink, faPhone,
-  faPlus,
-  faTimes,
-  faUser,
-  faUsers,
-  faUserTag
-} from '@fortawesome/free-solid-svg-icons';
 import { NotificationService } from '../services/alert-notif/notification.service';
 import { AuthService } from '../services/auth/auth.service';
 import { ReservationsubmissionService } from '../services/reservationflow/reservationsubmission.service';
 
 import { lastValueFrom } from 'rxjs/internal/lastValueFrom';
 import { catchError } from 'rxjs/operators';
-import { NotificationComponent } from "../alert-notif/notification.component";
-import { ChatComponent } from "../chatbot/chatbot.component";
-import { ProfileComponent } from '../shared/components/profile/profile.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { PageHeaderComponent } from '../shared/ui/page-header.component';
 
 @Component({
   selector: 'app-reservation-form',
   standalone: true,
-  imports: [FontAwesomeModule, FormsModule, CommonModule, RouterModule, ProfileComponent, ChatComponent, NotificationComponent],
+  imports: [FormsModule, CommonModule, RouterModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatCheckboxModule, MatIcon, MatProgressSpinner, PageHeaderComponent],
   templateUrl: './reservation-form.component.html',
   styleUrls: ['./reservation-form.component.scss'],
   providers: [DatePipe]
 })
 export class ReservationFormComponent implements OnInit {
   // Font Awesome icons
-  faPageIcon = faArrowRight;
-  faHome = faHome;
-  faPlus = faPlus;
-  faTimes = faTimes;
-  faBuilding = faBuilding;
-  faAlignLeft = faAlignLeft;
-  faBullseye = faBullseye;
-  faUsers = faUsers;
-  faHeading = faHeading;
-  faPhone = faPhone;
-  faLink = faLink;
-  faUser = faUser;
-  faEnvelope = faEnvelope;
-  faBriefcase = faBriefcase;
-  faClipboard = faClipboard;
-  faUserTag = faUserTag;
 
   // Form state
   isTooltipVisible = false;
@@ -143,10 +113,9 @@ export class ReservationFormComponent implements OnInit {
         // Load space details including capacity
         this.loadEspaceDetails(params['espaceId']);
 
-        console.log('Reservation data initialized:', this.reservation);
       } catch (error) {
         console.error('Error initializing reservation:', error);
-        this.errorMessage = 'Invalid time parameters. Please select a new time slot.';
+        this.errorMessage = 'Créneau invalide. Veuillez choisir un nouveau créneau.';
         this.router.navigate(['/selection-calendar'], {
           queryParams: {
             etablissementId: params['etablissementId'],
@@ -272,8 +241,8 @@ private loadEspaceDetails(espaceId: string): void {
     if (this.reservation.nbrParticipant && this.selectedSpaceCapacity) {
       if (this.reservation.nbrParticipant > this.selectedSpaceCapacity) {
         this.notificationService.showError(
-          `The capacity of "${this.selectedSpaceName}" is ${this.selectedSpaceCapacity}. ` +
-          `Please select a smaller number of participants or choose a different space.`
+          `La capacité de « ${this.selectedSpaceName} » est de ${this.selectedSpaceCapacity} personnes. ` +
+          `Réduisez le nombre de participants ou choisissez un autre espace.`
         );
       }
     }
@@ -314,20 +283,6 @@ private loadEspaceDetails(espaceId: string): void {
   }
 
   isFormValid(form: NgForm): boolean {
-    console.log('Form validation check:', {
-  formValid: form.valid,
-  responsableAction: this.reservation.responsableAction,
-  intituleAction: this.reservation.intituleAction,
-  nbrParticipant: this.reservation.nbrParticipant,
-  cible: this.reservation.cible,
-  emailValid: this.emailIsValid(),
-  fonctionR: this.reservation.fonctionR,
-  structure: this.reservation.structure,
-  linkedInValid: this.linkedInIsValid(),
-  description: this.reservation.description,
-  timeSlotValid: this.timeSlotIsValid(),
-  capacity: this.selectedSpaceCapacity
-});
     return !!form.valid &&
            this.reservation.responsableAction.trim() !== '' &&
            this.reservation.intituleAction.trim() !== '' &&
@@ -344,15 +299,19 @@ private loadEspaceDetails(espaceId: string): void {
   async onSubmit(form: NgForm): Promise<void> {
     this.formSubmitted = true;
     this.errorMessage = null;
-    this.isLoading = true;
 
+    // Invalid form: the fields show their own errors, nothing is sent
+    if (!this.isFormValid(form)) {
+      form.control.markAllAsTouched();
+      this.errorMessage = 'Veuillez remplir correctement tous les champs obligatoires.';
+      return;
+    }
+
+    this.isLoading = true;
     try {
-      if (!this.isFormValid(form)) {
-        throw new Error('Veuillez remplir correctement tous les champs obligatoires.');
-      }
 
       if (!this.currentUser?.userId) {
-        throw new Error('Session expired, please log in again');
+        throw new Error('Session expirée, veuillez vous reconnecter.');
       }
 
       const reservationPayload = {
@@ -364,26 +323,25 @@ private loadEspaceDetails(espaceId: string): void {
         heureFin: this.reservation.heureFin
       };
 
-      console.log('Submission payload:', reservationPayload);
 
       // Create reservation
       const createResponse = await lastValueFrom(
         this.reservationService.createReservation(reservationPayload).pipe(
           catchError(err => {
-            throw new Error(`Creation failed: ${this.extractErrorMessage(err)}`);
+            throw new Error(`Échec de la création : ${this.extractErrorMessage(err)}`);
           })
         )
       );
 
       if (!createResponse?.id) {
-        throw new Error('Invalid server response - missing ID');
+        throw new Error('Réponse du serveur invalide (identifiant manquant).');
       }
 
       // Send to responsible
       await lastValueFrom(
         this.reservationService.sendReservation(createResponse.id).pipe(
           catchError(err => {
-            throw new Error(`Sending failed: ${this.extractErrorMessage(err)}`);
+            throw new Error(`Échec de l'envoi : ${this.extractErrorMessage(err)}`);
           })
         )
       );
@@ -403,13 +361,20 @@ private loadEspaceDetails(espaceId: string): void {
 
   private extractErrorMessage(error: any): string {
     if (error instanceof HttpErrorResponse) {
-      return error.error?.message || error.message || 'Unknown server error';
+      return error.error?.message || error.error?.error || error.message || 'Erreur serveur inconnue';
     }
-    return error.message || 'Unknown error';
+    return error.message || 'Erreur inconnue';
   }
 
   goBack(): void {
     this.router.navigate(['/spaces']);
+  }
+
+  /** Back to the calendar of the same space to pick another slot. */
+  changeSlot(): void {
+    this.router.navigate(['/selection-calendar'], {
+      queryParams: { etablissementId: this.reservation.etablissementId, espaceId: this.reservation.espaceId }
+    });
   }
 
   showError(field: keyof typeof this.reservation): boolean {

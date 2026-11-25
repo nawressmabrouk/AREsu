@@ -3,6 +3,7 @@ package tn.sousse.univ.reservation_app.services;
 import java.util.Date;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +23,17 @@ public class PasswordRecoveryService {
     private final PasswordResetTokenRepository tokenRepository;
     private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PasswordRecoveryService.class);
+
+    // Public URL of the Angular app, used in the reset link (APP_FRONTEND_URL)
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
+
+    // Sender address = the application's mail account (MAIL_USERNAME)
+    @Value("${spring.mail.username:}")
+    private String mailFrom;
 
     // Processes a password reset request by generating and sending a reset token
     public void processPasswordResetRequest(String email) {
@@ -65,12 +77,18 @@ public class PasswordRecoveryService {
 
     // Sends a password reset email containing the reset token
     private void sendResetEmail(String toEmail, String token) {
+        String resetLink = frontendUrl + "/reset-password?token=" + token;
+        if (!emailService.isEnabled()) {
+            // Local development without SMTP: the link is only written to the server log
+            log.warn("Envoi d'e-mails désactivé : lien de réinitialisation pour {} : {}", toEmail, resetLink);
+            return;
+        }
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("REDACTED_OLD_APP_EMAIL");
+        message.setFrom(mailFrom);
         message.setTo(toEmail);
         message.setSubject("Réinitialisation de mot de passe");
         message.setText("Cliquez sur ce lien pour réinitialiser votre mot de passe:\n"
-                + "http://localhost:4200/reset-password?token=" + token
+                + resetLink
                 + "\nCe lien expirera dans 15 minutes.");
 
         mailSender.send(message);

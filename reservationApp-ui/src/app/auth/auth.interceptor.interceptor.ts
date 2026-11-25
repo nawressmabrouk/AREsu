@@ -51,8 +51,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     // Catch any errors in the response
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
-        authService.logout();
-        router.navigate(['/auth/login'], {
+        // Session missing or expired: clear it locally and open the login page
+        // (logout() returns an Observable that was never subscribed, so it did nothing)
+        authService.clearAuth();
+        router.navigate(['/login'], {
           queryParams: { returnUrl: router.url }
         });
       }

@@ -36,10 +36,7 @@ public class AuthService {
         System.out.println("Utilisateur trouvé : " + user.getEmail());
 
         if (user.getPassword() != null && password != null) {
-            System.out.println("Vérification du mot de passe...");
-            System.out.println("Mot de passe haché en base : " + user.getPassword());
-            System.out.println("Mot de passe saisi : " + password);
-
+            // Never log passwords or password hashes.
             if (!passwordEncoder.matches(password, user.getPassword())) {
                 System.out.println("Mot de passe incorrect");
                 return null;
@@ -52,7 +49,8 @@ public class AuthService {
         }
 
         if (!user.isEnabled()) {
-            throw new RuntimeException("Votre compte n’est pas activé. Veuillez vérifier votre email.");
+            throw new org.springframework.security.authentication.DisabledException(
+                    "Votre compte n’est pas activé. Veuillez vérifier votre email.");
         }
 
         return user;

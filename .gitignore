@@ -1,0 +1,40 @@
+# ---------------------------------------------------------------
+# Secrets - never commit (see reservation-app/.env.example)
+# ---------------------------------------------------------------
+.env
+.env.*
+!.env.example
+**/secrets/
+client_secret*.json
+service-account*.json
+*credentials*.json
+StoredCredential
+tokens/
+*.p12
+*.pfx
+*.pem
+*.jks
+*.key
+
+# ---------------------------------------------------------------
+# VS Code "Local History" extension backups (may contain secrets)
+# ---------------------------------------------------------------
+.history/
+
+# ---------------------------------------------------------------
+# Build output and dependencies
+# ---------------------------------------------------------------
+target/
+node_modules/
+.angular/
+dist/
+
+# ---------------------------------------------------------------
+# Local backups
+# ---------------------------------------------------------------
+*-backup-*.zip
+*.bundle
+
+# Python virtual environments (chatbot)
+.venv/
+__pycache__/

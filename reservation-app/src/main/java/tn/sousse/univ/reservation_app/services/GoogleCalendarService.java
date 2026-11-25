@@ -40,6 +40,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 
 import tn.sousse.univ.reservation_app.config.GoogleCalendarConfig;
+import tn.sousse.univ.reservation_app.config.GoogleCalendarUnavailableException;
 import tn.sousse.univ.reservation_app.dto.CalendarSlotDTO;
 import tn.sousse.univ.reservation_app.models.Etablissement;
 import tn.sousse.univ.reservation_app.models.Reservation;
@@ -81,14 +82,22 @@ public class GoogleCalendarService {
         this.reservationRepository = reservationRepository;
         this.etablissementRepo = etablissementRepo;
 
-        try {
-            // Load credentials from the service account key
-            this.credentials = GoogleCredentials.fromStream(calendarProperties.getServiceAccountKey().getInputStream())
-                    .createScoped(SCOPES);
-        } catch (IOException e) {
-            logger.error("Failed to initialize Google Calendar credentials", e);
-            throw new RuntimeException("Failed to initialize Google Calendar credentials", e);
+        // Load credentials from the service account key. If it is missing or invalid the
+        // integration is disabled (isEnabled() == false) instead of aborting startup.
+        GoogleCredentials loaded = null;
+        if (calendarProperties.isServiceAccountKeyAvailable()) {
+            try (java.io.InputStream in = calendarProperties.getServiceAccountKey().getInputStream()) {
+                loaded = GoogleCredentials.fromStream(in).createScoped(SCOPES);
+            } catch (IOException e) {
+                logger.warn("Google Calendar désactivé : clé du compte de service illisible ({})", e.getMessage());
+            }
         }
+        this.credentials = loaded;
+    }
+
+    /** True when the service-account credentials could be loaded. */
+    public boolean isEnabled() {
+        return credentials != null;
     }
 
     // Retrieves all reserved dates for a specific establishment and space
@@ -112,7 +121,8 @@ public class GoogleCalendarService {
             }
 
             boolean foundHolidays = false;
-            for (String calendarId : TUNISIAN_HOLIDAY_CALENDAR_IDS) {
+            // Public holidays come from Google Calendar: skipped when the integration is disabled
+            for (String calendarId : isEnabled() ? TUNISIAN_HOLIDAY_CALENDAR_IDS : new String[0]) {
                 try {
                     reservedDates.addAll(getReservationsFromCalendar(getCalendarService(), calendarId));
                     foundHolidays = true;
@@ -223,6 +233,9 @@ public class GoogleCalendarService {
 
     // Initializes and returns an authenticated Google Calendar API client
     public Calendar getCalendarService() throws GeneralSecurityException, IOException {
+        if (!isEnabled()) {
+            throw new GoogleCalendarUnavailableException();
+        }
         NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         return new Calendar.Builder(
                 httpTransport,
@@ -423,6 +436,9 @@ public class GoogleCalendarService {
 
     // Retrieves the service account email from credentials
     public String getServiceAccountEmail() throws IOException {
+        if (!isEnabled()) {
+            throw new GoogleCalendarUnavailableException();
+        }
         // Load the service account credentials from the JSON file
         GoogleCredentials credentials = GoogleCredentials.fromStream(
                 calendarProperties.getServiceAccountKey().getInputStream())

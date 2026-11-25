@@ -10,7 +10,7 @@ import { HttpHeaders} from '@angular/common/http';
   providedIn: 'root'
 })
 export class SecretaryService {
-  private baseUrl = 'http://localhost:8080/api/secretaire';
+  private baseUrl = '/api/secretaire';
 
   constructor(private http: HttpClient) { }
   private getAuthHeaders(): HttpHeaders {

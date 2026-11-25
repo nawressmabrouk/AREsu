@@ -1,217 +1,145 @@
+<div class="auth-page">
+  <div class="auth-card wide">
+    <aside class="auth-aside" aria-hidden="true">
+      <img src="/aresu-mark.png" alt="" width="56" height="56" />
+      <h2>Bienvenue sur AREsu</h2>
+      <p>Créez votre compte en moins d'une minute pour réserver les espaces de l'Université de Sousse.</p>
+      <ul>
+        <li><mat-icon>travel_explore</mat-icon>Salles et amphithéâtres de 18 établissements</li>
+        <li><mat-icon>event_available</mat-icon>Calendrier des disponibilités</li>
+        <li><mat-icon>mark_email_read</mat-icon>Activation et suivi par e-mail</li>
+      </ul>
+    </aside>
 
-
-<div class="main">
-<div class="main-container" [class.sor-account-page]="isAccountPage">
-  <app-notification></app-notification>
-  <div class="main-content">
-    <!-- SIGN IN CONTAINER (REGISTER) -->
-    <div class="login-container">
-      <div class="signin-container">
-        <div class="signin-content">
-          <div class="form-content">
-          <span class="register-title">Créer un Nouveau compte</span>
-
-                   <form class="form-grid" (ngSubmit)="onRegisterSubmit($event)">
-              <!-- Nom et Prénom -->
-              <div class="form-group">
-                <label>Nom</label>
-                <div class="input-container">
-                  <fa-icon [icon]="faUser" class="icon"></fa-icon>
-                  <input type="text" [(ngModel)]="registerData.nom" name="nom" required>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label>Prénom</label>
-                <div class="input-container">
-                  <fa-icon [icon]="faUser" class="icon"></fa-icon>
-                  <input type="text" [(ngModel)]="registerData.prenom" name="prenom" required>
-                </div>
-              </div>
-
-              <!-- Email et Fonction -->
-              <div class="form-group">
-                <label>Email</label>
-                <div class="input-container">
-                  <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
-                  <input type="email" [(ngModel)]="registerData.email" name="email" required>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label>Fonction</label>
-                <div class="input-container">
-                  <fa-icon [icon]="faBriefcase" class="icon"></fa-icon>
-                  <input type="text" [(ngModel)]="registerData.fonction" name="fonction" required>
-                </div>
-              </div>
-
-              <!-- Téléphone et Établissement -->
-              <div class="form-group">
-                <label>Numéro de téléphone</label>
-                <div class="input-container">
-                  <fa-icon [icon]="faPhone" class="icon"></fa-icon>
-                  <input type="tel" [(ngModel)]="registerData.numTel" name="numTel" required>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label>Établissement</label>
-                <div class="input-container">
-                  <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
-                  <input type="text" [(ngModel)]="registerData.nomEtablissement" name="nomEtablissement" required>
-                </div>
-              </div>
-
-              <!-- LinkedIn et Structure -->
-              <div class="form-group">
-                <label>Profil LinkedIn</label>
-                <div class="input-container">
-                  <fa-icon [icon]="faLink" class="icon"></fa-icon>
-                  <input type="url" [(ngModel)]="registerData.linkedin" name="linkedin" required>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label>Structure</label>
-                <div class="input-container">
-                  <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
-                  <input type="text" [(ngModel)]="registerData.structure" name="structure" required>
-                </div>
-              </div>
-
-              <!-- Type d'utilisateur -->
-              <div class="form-group ">
-                <label>Type d'utilisateur</label>
-                <div class="radio-group">
-                  <label>
-                    <input type="radio" name="user-type" value="interne" 
-                      [(ngModel)]="registerData.role" [value]="'DEMANDEUR_INTERNE'" required> Interne
-                  </label>
-                  <label>
-                    <input type="radio" name="user-type" value="externe" 
-                      [(ngModel)]="registerData.role" [value]="'DEMANDEUR_EXTERNE'" required> Externe
-                  </label>
-                </div>
-              </div>
-              <!-- Add this section before the password fields -->
-<div class="form-group ">
-  <label>Êtes-vous partenaire avec l'établissement ?</label>
-  <div class="radio-group">
-    <label>
-      <input type="radio" name="is-partenaire" [(ngModel)]="registerData.isPartenaire" [value]="true" required> Oui
-    </label>
-    <label>
-      <input type="radio" name="is-partenaire" [(ngModel)]="registerData.isPartenaire" [value]="false" required> Non
-    </label>
-  </div>
-</div>
-
-              <!-- Mot de passe -->
-              <div class="form-group">
-                <label>Mot de passe</label>
-                <div class="input-container">
-                  <fa-icon [icon]="faLock" class="icon"></fa-icon>
-                  <input type="password" [(ngModel)]="registerData.password" name="password" required>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label>Confirmer le mot de passe</label>
-                <div class="input-container">
-                  <fa-icon [icon]="faLock" class="icon"></fa-icon>
-                  <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required>
-                </div>
-              </div>
-
-              <!-- Error messages -->
-              <div *ngIf="errorMessage" class="error-message">
-                {{ errorMessage }}
-              </div>
-
-              <button type="submit" class="main-button1" [disabled]="isLoading">
-                {{ isLoading ? 'Inscription en cours...' : 'S\'inscrire' }}
-              </button>
-            </form>
+    <section class="auth-form">
+      @if (registered) {
+        <div class="success" role="status">
+          <span class="success-icon" aria-hidden="true"><mat-icon>mark_email_read</mat-icon></span>
+          <h1>Vérifiez votre boîte mail</h1>
+          <p>Un lien d'activation a été envoyé à <strong>{{ registeredEmail }}</strong>. Cliquez dessus pour activer votre compte, puis connectez-vous.</p>
+          <a mat-flat-button routerLink="/login">Aller à la connexion</a>
         </div>
-        </div>
-      </div>
-    </div>
+      } @else {
+        <header class="auth-head">
+          <h1>Créer un compte</h1>
+          <p class="muted">Déjà inscrit ? <a routerLink="/login">Se connecter</a></p>
+        </header>
 
-    <!-- SIGN UP CONTAINER (LOGIN) -->
-    <div class="container account-container">
+        @if (errorMessage) {
+          <div class="form-alert" role="alert">
+            <mat-icon aria-hidden="true">error_outline</mat-icon>
+            <span>{{ errorMessage }}</span>
+          </div>
+        }
 
-      <div class="greeting-container">
-                
-      </div>
-      <div class="signup-content">
-        <div class="form-content">
-            <h2 class="title"> Se connecter</h2>
-            
-           <form class="form1-grid" (ngSubmit)="onLoginSubmit($event)">
-            <!-- Email -->
-            <div class="form-group">
-              <label>Email</label>
-              <div class="input-container">
-                <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
-                <input type="email" [(ngModel)]="loginData.email" name="loginEmail" placeholder="Entrez votre email" required>
+        <form (ngSubmit)="onRegisterSubmit($event)" novalidate>
+          <fieldset>
+            <legend>Identité</legend>
+            <div class="form-grid">
+              <mat-form-field>
+                <mat-label>Nom</mat-label>
+                <input matInput name="nom" [(ngModel)]="registerData.nom" required autocomplete="family-name" />
+                <mat-error>Le nom est obligatoire</mat-error>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Prénom</mat-label>
+                <input matInput name="prenom" [(ngModel)]="registerData.prenom" required autocomplete="given-name" />
+                <mat-error>Le prénom est obligatoire</mat-error>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Adresse e-mail</mat-label>
+                <input matInput type="email" name="email" [(ngModel)]="registerData.email" #email="ngModel" required email autocomplete="email" />
+                @if (email.hasError('required')) { <mat-error>L'adresse e-mail est obligatoire</mat-error> }
+                @else { <mat-error>Adresse e-mail invalide</mat-error> }
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Téléphone</mat-label>
+                <input matInput type="tel" name="numTel" [(ngModel)]="registerData.numTel" required autocomplete="tel" />
+                <mat-error>Le téléphone est obligatoire</mat-error>
+              </mat-form-field>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Profil</legend>
+            <div class="form-grid">
+              <mat-form-field>
+                <mat-label>Fonction</mat-label>
+                <input matInput name="fonction" [(ngModel)]="registerData.fonction" required placeholder="Enseignant, étudiant, responsable…" />
+                <mat-error>La fonction est obligatoire</mat-error>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Établissement</mat-label>
+                <input matInput name="nomEtablissement" [(ngModel)]="registerData.nomEtablissement" required [matAutocomplete]="etabAuto" />
+                <mat-autocomplete #etabAuto="matAutocomplete">
+                  @for (name of filteredEtablissements; track name) {
+                    <mat-option [value]="name">{{ name }}</mat-option>
+                  }
+                </mat-autocomplete>
+                <mat-error>L'établissement est obligatoire</mat-error>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Structure</mat-label>
+                <input matInput name="structure" [(ngModel)]="registerData.structure" required placeholder="Département, club, association…" />
+                <mat-error>La structure est obligatoire</mat-error>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Profil LinkedIn (facultatif)</mat-label>
+                <input matInput type="url" name="linkedin" [(ngModel)]="registerData.linkedin" placeholder="https://www.linkedin.com/in/…" />
+              </mat-form-field>
+            </div>
+            <div class="choices">
+              <div class="choice">
+                <span id="type-utilisateur" class="choice-label">Type d'utilisateur</span>
+                <mat-radio-group name="user-type" [(ngModel)]="registerData.role" aria-labelledby="type-utilisateur" required>
+                  <mat-radio-button value="DEMANDEUR_INTERNE">Interne</mat-radio-button>
+                  <mat-radio-button value="DEMANDEUR_EXTERNE">Externe</mat-radio-button>
+                </mat-radio-group>
+              </div>
+              <div class="choice">
+                <span id="partenaire" class="choice-label">Êtes-vous partenaire de l'établissement ?</span>
+                <mat-radio-group name="is-partenaire" [(ngModel)]="registerData.isPartenaire" aria-labelledby="partenaire" required>
+                  <mat-radio-button [value]="true">Oui</mat-radio-button>
+                  <mat-radio-button [value]="false">Non</mat-radio-button>
+                </mat-radio-group>
               </div>
             </div>
+          </fieldset>
 
-            <!-- Password -->
-            <div class="form-group">
-              <label>Mot de passe</label>
-              <div class="input-container">
-                <fa-icon [icon]="faLock" class="icon"></fa-icon>
-                <input type="password" [(ngModel)]="loginData.password" name="loginPassword" placeholder="Entrez votre mot de passe" required>
-              </div>
-              <a routerLink="/navbar/id-oublie" class="forgot-password">Mot de passe oublié ?</a>
+          <fieldset>
+            <legend>Sécurité</legend>
+            <div class="form-grid">
+              <mat-form-field>
+                <mat-label>Mot de passe</mat-label>
+                <input matInput [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="registerData.password" required autocomplete="new-password" />
+                <button mat-icon-button matSuffix type="button" (click)="showPassword = !showPassword"
+                        [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+                  <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                <mat-error>Le mot de passe est obligatoire</mat-error>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Confirmer le mot de passe</mat-label>
+                <input matInput [type]="showPassword ? 'text' : 'password'" name="confirmPassword" [(ngModel)]="confirmPassword" required autocomplete="new-password" />
+                @if (confirmPassword && confirmPassword !== registerData.password) {
+                  <mat-hint class="hint-error">Les mots de passe ne correspondent pas</mat-hint>
+                }
+                <mat-error>Veuillez confirmer le mot de passe</mat-error>
+              </mat-form-field>
             </div>
+            <ul class="rules" aria-label="Règles du mot de passe">
+              @for (rule of passwordRules; track rule.label) {
+                <li [class.ok]="rule.ok"><mat-icon aria-hidden="true">{{ rule.ok ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>{{ rule.label }}</li>
+              }
+            </ul>
+          </fieldset>
 
-            <!-- Error messages -->
-            <div *ngIf="loginErrorMessage" class="error-message">
-              {{ loginErrorMessage }}
-            </div>
-
-            <button type="submit" class="main-button" [disabled]="isLoading">
-              {{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}
-            </button>
-          </form>
-          </div>
-      </div>
-    </div>
-
-    <!-- SLIDE SHAPE WITH TOGGLE BUTTON -->
-    <div class="slide-shape">
-      <div class="form-container">
-        <div class="transparent-card">
-          <h2 class="welcome-title" [class.hidden]="isAccountPage">Bienvenue chez nous !</h2>
-          <h2 class="welcome-title" [class.hidden]="!isAccountPage">Ravis de vous retrouver!</h2>
-
-          <div class="role-text-container">
-            <span class="role-text" [class.hidden]="isAccountPage">
-              <p class="titre">Déjà Inscrit ? </p>
-              <br>  
-              
-            </span>
-            <span class="role-text1" [class.hidden]="!isAccountPage">
-              <p class="titre">Nouveau parmi nous ? </p>
-              <p class="titre1">Créez votre compte en moins d'une minute !</p>
-            </span>
-          </div>
-
-          <button (click)="toggleView()" class="signup-button">
-            <div class="button-content">
-              <span class="sign-in" [class.hidden]="isAccountPage">SE CONNECTER</span>
-              <span class="sign-up" [class.hidden]="!isAccountPage">S'INSCRIRE</span>
-            </div>
+          <button mat-flat-button type="submit" class="submit" [disabled]="isLoading">
+            @if (isLoading) { <mat-progress-spinner mode="indeterminate" diameter="18" /> Inscription en cours… }
+            @else { Créer mon compte }
           </button>
-        </div>
-      </div>
-    </div>
+        </form>
+      }
+    </section>
   </div>
-
-  <app-chat></app-chat>
-</div>
-
 </div>

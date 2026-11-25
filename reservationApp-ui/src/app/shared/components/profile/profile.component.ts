@@ -1,51 +1,51 @@
-
-import { Component, EventEmitter, HostListener, Input, Output, ViewChild, ElementRef } from '@angular/core';
-import { faUser, faEdit, faCalendarTimes ,faLock, faSignOutAlt, faEye, faEyeSlash , faCalendar , faKey   } from '@fortawesome/free-solid-svg-icons';
-import { UserService } from '../../../services/user/user.service';
-
-import { AuthService } from '../../../services/auth/auth.service';
-import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { Component, EventEmitter, HostListener, inject, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatRadioModule } from '@angular/material/radio';
+import { Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { NotificationComponent } from '../../../alert-notif/notification.component';
+import { roleLabel } from '../../../layout/nav';
+import { AuthService } from '../../../services/auth/auth.service';
 import { NotificationService } from '../../../services/alert-notif/notification.service';
+import { UserService } from '../../../services/user/user.service';
+import { ConfirmService } from '../../ui/confirm-dialog.component';
+import { EmptyStateComponent } from '../../ui/empty-state.component';
+import { SkeletonComponent } from '../../ui/skeleton.component';
+import { hasStatus } from '../../ui/status';
+import { StatusBadgeComponent } from '../../ui/status-badge.component';
+import { PortalToBodyDirective } from '../../ui/portal-to-body.directive';
+
+/** User menu of the top bar: profile, edit, password, my reservations, logout. */
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
-  imports: [ CommonModule , FormsModule , FontAwesomeModule , NotificationComponent
+  imports: [
+    FormsModule, DatePipe, MatButtonModule, MatIcon, MatMenuModule, MatFormFieldModule, MatInputModule,
+    MatRadioModule, StatusBadgeComponent, EmptyStateComponent, SkeletonComponent, PortalToBodyDirective,
   ],
   styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent {
-  @ViewChild('profileDropdown') profileDropdown!: ElementRef;
   @Input() user: any; // Input for user data
   @Output() profileUpdated = new EventEmitter<any>();
-  
-  // Icons
-  faUser = faUser;
-  faEdit = faEdit;
-  faCalendarTimes = faCalendarTimes;
-  faKey = faKey ;
-  faLock = faLock;
-  faSignOutAlt = faSignOutAlt;
-  faEye = faEye;
-  faEyeSlash = faEyeSlash;
-  faCalendar = faCalendar ;
-  // UI states
-  showDropdown = false;
+
+  private readonly confirmService = inject(ConfirmService);
+
   showProfileModal = false;
   showEditModal = false;
   showPasswordModal = false;
   showReservationsModal = false;
-  showLogoutModal = false;
-  // Password visibility
+
   showOldPassword = false;
   showNewPassword = false;
   showConfirmPassword = false;
+  saving = false;
 
-  // Form data
   profileData: any;
   editData: any = {};
   passwordData = {
@@ -53,294 +53,256 @@ export class ProfileComponent {
     newPassword: '',
     confirmPassword: ''
   };
-
   reservations: any[] = [];
   loadingReservations = false;
   errorReservations = '';
 
-
   constructor(
     private userService: UserService,
     private authService: AuthService,
-    private router: Router , 
+    private router: Router,
     private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
-    this.loadProfile();
+    // Also shown on public pages (e.g. /spaces): only load the profile when logged in
+    if (this.authService.isLoggedIn()) {
+      this.loadProfile();
+    }
   }
 
-  // Load user profile
- loadProfile(): void {
+  get initial(): string {
+    return (this.profileData?.prenom || this.profileData?.nom || 'U').charAt(0).toUpperCase();
+  }
+
+  get displayName(): string {
+    const name = [this.profileData?.prenom, this.profileData?.nom].filter(Boolean).join(' ');
+    return name || 'Mon compte';
+  }
+
+  get roleText(): string {
+    return roleLabel(this.profileData?.role) || this.profileData?.role || '';
+  }
+
+  loadProfile(): void {
     this.userService.getProfile().pipe(
       catchError(err => {
-        console.error('Erreur lors du chargement du profil:', err);
         if (err.status === 401 || err.status === 403) {
           this.handleAuthError();
         }
         return of(null);
       })
-    ).subscribe({
-      next: (data) => {
-        if (data) {
-          this.profileData = data;
-          this.resetEditForm();
-          console.log('Rôle chargé:', this.profileData.role); 
-        } else {
-          console.error('Aucune donnée reçue');
-        }
-      },
-      error: (err) => {
-        console.error('Erreur dans subscribe:', err);
+    ).subscribe(data => {
+      if (data) {
+        this.profileData = data;
+        this.resetEditForm();
       }
     });
-}
-  // Toggle profile dropdown
-  toggleDropdown(event: Event): void {
-    event.stopPropagation();
-    this.showDropdown = !this.showDropdown;
   }
 
-  // Close dropdown when clicking outside
-  @HostListener('document:click', ['$event'])
-  onClickOutside(event: Event): void {
-    if (this.profileDropdown?.nativeElement && !this.profileDropdown.nativeElement.contains(event.target)) {
-      this.showDropdown = false;
-    }
-  }
-
-  // Open profile view modal
   openProfileModal(): void {
+    this.closeModal();
     this.showProfileModal = true;
-    this.showDropdown = false;
   }
 
-  // Open profile edit modal
   openEditModal(): void {
-    this.showEditModal = true;
+    this.resetEditForm();
     this.showProfileModal = false;
+    this.showEditModal = true;
   }
 
-  // Open password change modal
   openPasswordModal(): void {
+    this.closeModal();
     this.showPasswordModal = true;
-    this.showDropdown = false;
   }
 
-  // Open reservations modal (for demandeur only)
   openReservationsModal(): void {
-       this.showReservationsModal = true;
-    this.showDropdown = false;
+    this.closeModal();
+    this.showReservationsModal = true;
     this.loadReservations();
   }
-openLogoutModal(): void {
-  this.showLogoutModal = true;
-  this.showDropdown = false;
-}
 
-closeLogoutModal(): void {
-  this.showLogoutModal = false;
-}
-
-
-  // Close all modals
+  @HostListener('document:keydown.escape')
   closeModal(): void {
     this.showProfileModal = false;
     this.showEditModal = false;
     this.showPasswordModal = false;
     this.showReservationsModal = false;
+    this.showOldPassword = this.showNewPassword = this.showConfirmPassword = false;
     this.passwordData = { oldPassword: '', newPassword: '', confirmPassword: '' };
   }
 
-  // Reset edit form with current profile data
-resetEditForm(): void {
-  this.editData = {
-    nom: this.profileData?.nom || '',
-    prenom: this.profileData?.prenom || '',
-    email: this.profileData?.email || '',
-    numTel: this.profileData?.numTel || '',
-    fonction: this.profileData?.fonction || '',
-    nomEtablissement: this.profileData?.nomEtablissement || '',
-    structure: this.profileData?.structure || '',
-    linkedInLink: this.profileData?.linkedInLink || '',
-    role: this.profileData?.role || '' 
-  };
-}
-
-saveProfile(): void {
-    const requiredFields = {
-        'Nom': this.editData.nom,
-        'Prénom': this.editData.prenom,
-        'Téléphone': this.editData.numTel,
-        'Fonction': this.editData.fonction,
-        'Établissement': this.editData.nomEtablissement,
-        'Structure': this.editData.structure
+  resetEditForm(): void {
+    this.editData = {
+      nom: this.profileData?.nom || '',
+      prenom: this.profileData?.prenom || '',
+      email: this.profileData?.email || '',
+      numTel: this.profileData?.numTel || '',
+      fonction: this.profileData?.fonction || '',
+      nomEtablissement: this.profileData?.nomEtablissement || '',
+      structure: this.profileData?.structure || '',
+      linkedInLink: this.profileData?.linkedInLink || '',
+      role: this.profileData?.role || ''
     };
+  }
 
+  saveProfile(): void {
+    const requiredFields = {
+      'Nom': this.editData.nom,
+      'Prénom': this.editData.prenom,
+      'Téléphone': this.editData.numTel,
+      'Fonction': this.editData.fonction,
+      'Établissement': this.editData.nomEtablissement,
+      'Structure': this.editData.structure
+    };
     const emptyField = Object.entries(requiredFields).find(([_, value]) => !value);
-
     if (emptyField) {
-        const [fieldName, _] = emptyField;
-        this.notificationService.showError(`Le champ ${fieldName} est obligatoire !`);
-        return;
+      this.notificationService.showError(`Le champ ${emptyField[0]} est obligatoire !`);
+      return;
     }
 
     const dataToSend = {
-        ...this.editData,
-        role: this.isDemandeur() ? this.editData.role : this.profileData.role 
+      ...this.editData,
+      role: this.isDemandeur() ? this.editData.role : this.profileData.role
     };
-
-    console.log('Données avant envoi:', JSON.stringify(dataToSend, null, 2));
-
+    this.saving = true;
     this.userService.updateProfile(dataToSend).subscribe({
-        next: (updatedProfile) => {
-            console.log('Réponse complète du backend:', updatedProfile);
-           
-            if (updatedProfile) {
-                this.profileData = { 
-                    ...this.profileData, 
-                    ...updatedProfile,
-                    role: updatedProfile.role || this.profileData.role 
-                };
-                this.profileUpdated.emit(this.profileData);
-                this.notificationService.showSuccess('Profil mis à jour avec succès!');
-                this.closeModal(); 
-                this.loadProfile();
-            } else {
-                console.error('Réponse vide du backend');
-                this.notificationService.showError('Le serveur a répondu sans données');
-            }
-        },
-        error: (err) => {
-            console.error('Erreur détaillée:', err);
-            let errorMessage = 'Erreur lors de la mise à jour du profil';
-            
-            if (err.status === 401) {
-                errorMessage = 'Session expirée, veuillez vous reconnecter';
-                this.handleAuthError();
-            } else if (err.status === 403) {
-                errorMessage = 'Permission refusée';
-            } else if (err.error?.message) {
-                errorMessage = err.error.message;
-            }
-            
-            this.notificationService.showError(errorMessage);
+      next: (updatedProfile) => {
+        this.saving = false;
+        if (updatedProfile) {
+          this.profileData = {
+            ...this.profileData,
+            ...updatedProfile,
+            role: updatedProfile.role || this.profileData.role
+          };
+          this.profileUpdated.emit(this.profileData);
+          this.notificationService.showSuccess('Profil mis à jour avec succès !');
+          this.closeModal();
+          this.loadProfile();
+        } else {
+          this.notificationService.showError('Le serveur a répondu sans données');
         }
-    });
-}
-changePassword(): void {
-  
-
-
-  if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
-    this.notificationService.showError('Les nouveaux mots de passe ne correspondent pas!');
-    return;
-  }
-
-  this.userService.changePassword({
-    oldPassword: this.passwordData.oldPassword,
-    newPassword: this.passwordData.newPassword
-  }).subscribe({
-    next: (response) => {
-      console.log('Password change successful:', response);
-      this.notificationService.showSuccess('Mot de passe changé avec succès!');
-      
-      this.passwordData = { oldPassword: '', newPassword: '', confirmPassword: '' };
-    },
-    error: (err) => {
-      console.error('Full error details:', err);
-      let errorMessage = 'Erreur lors du changement de mot de passe';
-      
-      if (err.status === 400) {
-        errorMessage = 'Mot de passe ancien est incorrecte';
-      } else if (err.error instanceof ErrorEvent) {
-        errorMessage = `Erreur client: ${err.error.message}`;
-      } else if (err.error?.message) {
-        errorMessage = err.error.message;
-      }
-      
-      this.notificationService.showError(errorMessage);
-    }
-  });
-}
-
-private loadReservations(): void {
-  this.loadingReservations = true;
-  this.errorReservations = '';
-  
-  this.userService.getReservations().subscribe({
-    next: (reservations) => {
-      this.reservations = reservations;
-      this.loadingReservations = false;
-    },
-    error: (err) => {
-      this.errorReservations = 'Erreur lors du chargement des réservations';
-      this.loadingReservations = false;
-    }
-  });
-}
-
-canCancel(reservation: any): boolean {
-  return reservation.statut === 'EN_ATTENTE';
-}
-
-onCancelReservation(reservationId: string): void {
-  if (confirm('Êtes-vous sûr de vouloir annuler cette réservation ?')) {
-    this.userService.cancelReservation(reservationId).subscribe({
-      next: (response) => {
-        this.loadReservations();
-        this.notificationService.showSuccess(response.message || 'Réservation annulée avec succès');
       },
       error: (err) => {
-        this.notificationService.showError(err.message || 'Échec de l\'annulation');
+        this.saving = false;
+        let errorMessage = 'Erreur lors de la mise à jour du profil';
+        if (err.status === 401) {
+          errorMessage = 'Session expirée, veuillez vous reconnecter';
+          this.handleAuthError();
+        } else if (err.status === 403) {
+          errorMessage = 'Permission refusée';
+        } else if (err.error?.message) {
+          errorMessage = err.error.message;
+        }
+        this.notificationService.showError(errorMessage);
       }
     });
   }
-}
 
-  // Logout
-  logout(): void {
-    this.userService.logout().subscribe({
+  changePassword(): void {
+    if (!this.passwordData.oldPassword || !this.passwordData.newPassword) {
+      this.notificationService.showError('Veuillez remplir tous les champs');
+      return;
+    }
+    if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
+      this.notificationService.showError('Les nouveaux mots de passe ne correspondent pas !');
+      return;
+    }
+    this.saving = true;
+    this.userService.changePassword({
+      oldPassword: this.passwordData.oldPassword,
+      newPassword: this.passwordData.newPassword
+    }).subscribe({
       next: () => {
-        // Clear session storage and redirect to login
-        window.sessionStorage.clear();
-        window.location.href = '/login'; 
-        // Désactive le cache navigateur
-        this.router.navigateByUrl('/login', { 
-          replaceUrl: true,
-          state: { noCache: true } 
-        });
-        
-        // delete history state to prevent going back to profile
-        history.pushState(null, '', window.location.href);
-        window.addEventListener('popstate', () => {
-          history.pushState(null, '', window.location.href);
-        });
+        this.saving = false;
+        this.notificationService.showSuccess('Mot de passe changé avec succès !');
+        this.closeModal();
+      },
+      error: (err) => {
+        this.saving = false;
+        let errorMessage = 'Erreur lors du changement de mot de passe';
+        if (err.status === 400) {
+          errorMessage = 'Le mot de passe actuel est incorrect';
+        } else if (err.error instanceof ErrorEvent) {
+          errorMessage = `Erreur client : ${err.error.message}`;
+        } else if (err.error?.message) {
+          errorMessage = err.error.message;
+        }
+        this.notificationService.showError(errorMessage);
+      }
+    });
+  }
+
+  private loadReservations(): void {
+    this.loadingReservations = true;
+    this.errorReservations = '';
+    this.userService.getReservations().subscribe({
+      next: (reservations) => {
+        this.reservations = reservations;
+        this.loadingReservations = false;
       },
       error: () => {
-        window.location.href = '/login'; // Fallback
+        this.errorReservations = 'Erreur lors du chargement des réservations';
+        this.loadingReservations = false;
       }
     });
   }
 
-  
+  canCancel(reservation: any): boolean {
+    return hasStatus(reservation.statut, 'EN_ATTENTE');
+  }
+
+  onCancelReservation(reservationId: string): void {
+    this.confirmService.confirm({
+      title: 'Annuler la réservation ?',
+      message: 'La demande sera annulée et le créneau libéré. Cette action est définitive.',
+      confirmLabel: 'Annuler la réservation',
+      cancelLabel: 'Garder',
+      tone: 'danger',
+    }).subscribe(ok => {
+      if (!ok) return;
+      this.userService.cancelReservation(reservationId).subscribe({
+        next: (response) => {
+          this.loadReservations();
+          this.notificationService.showSuccess(response?.message || 'Réservation annulée avec succès');
+        },
+        error: (err) => {
+          this.notificationService.showError(err.message || 'Échec de l\'annulation');
+        }
+      });
+    });
+  }
+
+  openLogoutModal(): void {
+    this.confirmService.confirm({
+      title: 'Se déconnecter ?',
+      message: `Vous êtes connecté en tant que ${this.profileData?.email || 'utilisateur'}.`,
+      confirmLabel: 'Se déconnecter',
+      icon: 'logout',
+    }).subscribe(ok => ok && this.logout());
+  }
+
+  logout(): void {
+    // Revoke the token on the server, then always clear the local session
+    // (the token used to stay in localStorage after logging out).
+    const done = () => {
+      this.authService.clearAuth();
+      this.router.navigateByUrl('/login', { replaceUrl: true });
+    };
+    this.userService.logout().subscribe({ next: done, error: done });
+  }
 
   private handleAuthError(): void {
-    this.authService.logout(); 
+    // logout() returns an Observable that was never subscribed: clear the session directly
+    this.authService.clearAuth();
     this.router.navigate(['/login'], {
       queryParams: { returnUrl: this.router.url }
     });
   }
-  
 
-  // Check if user is demandeur
-isDemandeur(): boolean {
-  if (!this.profileData?.role) return false;
-  
-  const role = this.profileData.role.toUpperCase();
-  return role === 'DEMANDEUR_INTERNE' || role === 'DEMANDEUR_EXTERNE';
+  isDemandeur(): boolean {
+    if (!this.profileData?.role) return false;
+    const role = this.profileData.role.toUpperCase();
+    return role === 'DEMANDEUR_INTERNE' || role === 'DEMANDEUR_EXTERNE';
+  }
 }
-}            
-
-
-

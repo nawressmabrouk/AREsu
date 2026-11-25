@@ -15,6 +15,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import tn.sousse.univ.reservation_app.models.User;
 
 @Component
@@ -27,6 +28,26 @@ public class JwtUtil {
     // Inject JWT expiration time from application.yml
     @Value("${spring.jwt.expiration}")
     private long expiration;
+
+    // Fail fast with a clear message if the JWT secret is missing or too weak
+    @PostConstruct
+    void validateSecret() {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT_SECRET n'est pas défini (voir reservation-app/.env.example). Démarrage refusé.");
+        }
+        byte[] keyBytes;
+        try {
+            keyBytes = Base64.getDecoder().decode(secret.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("JWT_SECRET doit être encodé en Base64. Démarrage refusé.");
+        }
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException(
+                    "JWT_SECRET est trop court (" + keyBytes.length * 8 + " bits) : 256 bits minimum. Démarrage refusé.");
+        }
+        secret = secret.trim();
+    }
 
     // get the signing key
     private Key getSigningKey() {

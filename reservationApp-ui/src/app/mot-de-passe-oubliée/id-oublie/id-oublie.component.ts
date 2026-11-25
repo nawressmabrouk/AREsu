@@ -1,47 +1,45 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
-import { NotificationComponent } from '../../alert-notif/notification.component';
-import { NotificationService } from '../../services/alert-notif/notification.service';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { RouterLink } from '@angular/router';
 import { PasswordRecoveryService } from '../../services/password-recovery/password-recovery.service';
+
+/** "Mot de passe oublié": asks for the e-mail address and sends a reset link. */
 @Component({
   selector: 'app-id-oublie',
-  imports: [FontAwesomeModule, FormsModule , NotificationComponent , CommonModule],
+  standalone: true,
+  imports: [FormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIcon, MatProgressSpinner],
   templateUrl: './id-oublie.component.html',
-  styleUrl: './id-oublie.component.scss'
+  styleUrls: ['./id-oublie.component.scss']
 })
 export class IdOublieComponent {
-  faEnvelope = faEnvelope;
-  email: string = '';
+  private readonly passwordRecoveryService = inject(PasswordRecoveryService);
+
+  email = '';
   isLoading = false;
-
-  constructor(private router: Router ,  private passwordRecoveryService: PasswordRecoveryService , private notificationService: NotificationService) {}
-  
-
+  sent = false;
+  errorMessage: string | null = null;
 
   onSubmit() {
+    this.errorMessage = null;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email.trim())) {
+      this.errorMessage = 'Veuillez entrer une adresse e-mail valide.';
+      return;
+    }
     this.isLoading = true;
-    
-    this.passwordRecoveryService.sendPasswordResetEmail(this.email).subscribe({
+    this.passwordRecoveryService.sendPasswordResetEmail(this.email.trim()).subscribe({
       next: () => {
-        this.notificationService.showSuccess(
-          "si votre email est enregistrée vous devrez récu Un lien de réinitialisation "
-        );
-       
+        this.isLoading = false;
+        this.sent = true;
       },
       error: (err) => {
-        this.notificationService.showError(
-          err.error?.message || "Erreur lors de l'envoi du lien de réinitialisation"
-        );
-      },
-      complete: () => {
         this.isLoading = false;
+        this.errorMessage = err.error?.error || err.error?.message || 'Erreur lors de l\'envoi du lien de réinitialisation.';
       }
     });
   }
-
-
 }

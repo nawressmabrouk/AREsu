@@ -1,119 +1,63 @@
-<div class="calendar-wrapper">
-  <div class="calendar-container">
-    <div class="calendar-header">
-      <div class="header-left">
-        <button class="btn today-btn" (click)="goToToday()">Today</button>
-        <div class="month-navigation">
-          <button class="btn nav-btn" (click)="prevMonth()">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <button class="btn nav-btn" (click)="nextMonth()">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </div>
-        <h2 class="month-title">{{ currentDate | date:'MMMM yyyy' }}</h2>
-      </div>
+<section class="cal" aria-label="Calendrier des réservations">
+  <header class="cal-head">
+    <div class="nav">
+      <button mat-stroked-button type="button" (click)="goToToday()">Aujourd'hui</button>
+      <button mat-icon-button type="button" (click)="prevMonth()" aria-label="Mois précédent"><mat-icon>chevron_left</mat-icon></button>
+      <button mat-icon-button type="button" (click)="nextMonth()" aria-label="Mois suivant"><mat-icon>chevron_right</mat-icon></button>
+      <h3 class="month">{{ currentDate | date: 'MMMM y' }}</h3>
     </div>
+    <ul class="legend" aria-label="Légende">
+      <li><span class="sw accepted"></span>Acceptée</li>
+      <li><span class="sw pending"></span>En attente</li>
+      <li><span class="sw today"></span>Aujourd'hui</li>
+    </ul>
+  </header>
 
-    <div class="calendar-grid">
-      <div class="day-header" *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']">
-        {{ day }}
-      </div>
-
-      <div *ngFor="let week of weeks" class="week">
-<div *ngFor="let day of week" 
-     class="day" 
-     [class.not-current-month]="!isSameMonth(day)"
-     [class.today]="isToday(day)"
-     [class.selected]="isSelected(day)"
-     [class.expanded]="isDayExpanded(day)"
-     (click)="selectDay(day)">
-  <div class="day-number">{{ day | date:'d' }}</div>
-  
-  <div class="slots">
-    <!-- Show first 2 slots always, or all if expanded -->
-    <div *ngFor="let slot of getSlotsForDay(day).slice(0, isDayExpanded(day) ? undefined : 2)" 
-         class="slot"
-         [class.confirmed]="slot.reserved"
-         [class.unconfirmed]="!slot.reserved && slot.selectable"
-         (click)="$event.stopPropagation(); selectSlot(slot)">
-      <div class="slot-time">{{ getFormattedTime(slot.heureDebut) }}</div>
-      <div class="slot-title" *ngIf="slot.intituleAction">{{ slot.intituleAction }}</div>
-    </div>
-  </div>
-
-  <!-- Show "+X more" only if there are more slots and day isn't expanded -->
-  <div *ngIf="getSlotsForDay(day).length > 2 && !isDayExpanded(day)" 
-       class="more-slots" 
-       (click)="$event.stopPropagation(); toggleDayExpansion(day)">
-    +{{ getSlotsForDay(day).length - 2 }} more 
-  </div>
-
-  <!-- Show "Show less" if expanded -->
-  <div *ngIf="isDayExpanded(day) && getSlotsForDay(day).length > 2" 
-       class="more-slots" 
-       (click)="$event.stopPropagation(); toggleDayExpansion(day)">
-    Show less
-  </div>
-</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Slot Details Panel -->
-  <div class="slot-details" *ngIf="selectedSlot">
-    <div class="slot-details-header">
-      <h3>{{ selectedSlot.heureDebut | date:'EEEE, MMMM d, yyyy' }}</h3>
-      <button class="btn close-btn" (click)="clearSelection()">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-    
-    <div class="slot-details-content">
-      <div class="slot-detail-card">
-        <h4>Reservation Details</h4>
-        
-        <div class="time-display">
-          <div class="time-range">
-            <span class="time-label">Start:</span>
-            <span class="time-value">{{ getFormattedTime(selectedSlot.heureDebut) }}</span>
+  <div class="grid" role="grid">
+    @for (d of weekdayLabels; track d) { <div class="dow" role="columnheader">{{ d }}</div> }
+    @for (week of weeks; track $index) {
+      @for (day of week; track day.getTime()) {
+        <div class="day" role="gridcell"
+             [class.other]="!isSameMonth(day)"
+             [class.today]="isToday(day)"
+             [class.selected]="isSelected(day)"
+             (click)="selectDay(day)">
+          <span class="num">{{ day | date: 'd' }}</span>
+          <div class="events">
+            @for (slot of getSlotsForDay(day).slice(0, isDayExpanded(day) ? undefined : 2); track $index) {
+              <button type="button" class="event" [class.accepted]="slot.reserved" [class.pending]="!slot.reserved"
+                      [attr.aria-label]="getFormattedTime(slot.heureDebut) + ' ' + (slot.intituleAction || 'Réservation') + (slot.reserved ? ', acceptée' : ', en attente')"
+                      (click)="$event.stopPropagation(); selectSlot(slot)">
+                <span class="time">{{ getFormattedTime(slot.heureDebut) }}</span>
+                @if (slot.intituleAction) { <span class="title">{{ slot.intituleAction }}</span> }
+              </button>
+            }
           </div>
-          <div class="time-range">
-            <span class="time-label">End:</span>
-            <span class="time-value">{{ getFormattedTime(selectedSlot.heureFin) }}</span>
-          </div>
+          @if (getSlotsForDay(day).length > 2) {
+            <button type="button" class="more" (click)="$event.stopPropagation(); toggleDayExpansion(day)">
+              {{ isDayExpanded(day) ? 'Réduire' : '+' + (getSlotsForDay(day).length - 2) + ' de plus' }}
+            </button>
+          }
         </div>
-        
-        <div class="detail-section" *ngIf="selectedSlot.intituleAction">
-          <h5>Action Title</h5>
-          <p>{{ selectedSlot.intituleAction }}</p>
-  <div class="detail-section" *ngIf="selectedSlot.espaceNom">
-    <h5>Espace</h5>
-    <p>{{ selectedSlot.espaceNom }}</p>
+      }
+    }
   </div>
-    </div>
-        <div class="detail-section" *ngIf="selectedSlot.description">
-          <h5>Description</h5>
-          <p>{{ selectedSlot.description }}</p>
-        </div>
-        
-<div class="status-display">
-  <span
-    class="status-badge"
-    [class.confirmed]="selectedSlot.statut === StatusReservation.ACCEPTEE"
-    [class.pending]  ="selectedSlot.statut === StatusReservation.EN_ATTENTE"
-  >
-    {{ selectedSlot.statut === StatusReservation.ACCEPTEE ? 'Confirmed' : 'Pending' }}
-  </span>
-</div>
 
-        
-        <!---button *ngIf="selectedSlot.statut === 'EN_ATTENTE'"
-                class="confirm-btn"
-                (click)="confirmSelectedSlot()">
-          Confirm Reservation
-        </-button--->
-      </div>
+  @if (selectedSlot) {
+    <div class="details" role="region" aria-label="Détails de la réservation">
+      <header>
+        <div>
+          <p class="details-date">{{ selectedSlot.heureDebut | date: 'EEEE d MMMM y' }}</p>
+          <h4>{{ selectedSlot.intituleAction || 'Réservation' }}</h4>
+        </div>
+        <button mat-icon-button type="button" (click)="clearSelection()" aria-label="Fermer les détails"><mat-icon>close</mat-icon></button>
+      </header>
+      <dl>
+        <div><dt>Horaire</dt><dd>{{ getFormattedTime(selectedSlot.heureDebut) }} – {{ getFormattedTime(selectedSlot.heureFin) }}</dd></div>
+        @if (selectedSlot.espaceNom) { <div><dt>Espace</dt><dd>{{ selectedSlot.espaceNom }}</dd></div> }
+        <div><dt>Statut</dt><dd><app-status-badge [status]="selectedSlot.statut" /></dd></div>
+        @if (selectedSlot.description) { <div class="full"><dt>Description</dt><dd>{{ selectedSlot.description }}</dd></div> }
+      </dl>
     </div>
-  </div>
-</div>
+  }
+</section>

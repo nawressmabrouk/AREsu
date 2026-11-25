@@ -7,7 +7,7 @@ import { User } from '../../shared/interfaces/user.interface';
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly apiUrl = 'http://localhost:8080/api/auth';
+  private readonly apiUrl = '/api/auth';
   private readonly tokenKey = 'auth_token';
   private readonly refreshTokenKey = 'refresh_token';
   private readonly userDataKey = 'user_data';
@@ -55,7 +55,33 @@ isAuthenticated(): Observable<boolean> {
 
   // Check if user is authenticated
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    return !!this.getToken() && !this.isTokenExpired();
+  }
+
+  // True if the token is missing, unreadable or past its "exp" claim
+  isTokenExpired(token: string | null = this.getToken()): boolean {
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return typeof payload.exp === 'number' && payload.exp * 1000 <= Date.now();
+    } catch {
+      return true;
+    }
+  }
+
+  // Landing page of each role (used by login, registration and the route guards)
+  homeRouteFor(role: string | null | undefined): string {
+    const normalized = this.normalizeRole(role ?? '');
+    const key = normalized.startsWith('ROLE_') ? normalized : 'ROLE_' + normalized;
+    const routes: Record<string, string> = {
+      ROLE_DEMANDEUR_INTERNE: '/spaces',
+      ROLE_DEMANDEUR_EXTERNE: '/spaces',
+      ROLE_SECRETAIRE_GENERALE: '/secretary',
+      ROLE_ADMIN: '/admin',
+      ROLE_RESPONSABLE_SALLE: '/room-manager',
+      ROLE_SUPER_ADMIN: '/super-admin/dashboard',
+    };
+    return routes[key] ?? '/';
   }
  
 
@@ -108,7 +134,6 @@ refreshUserData(): void {
     const userData = this.decodeAndValidateToken(token);
     if (userData) {
       this.saveUserData(userData);
-      console.log('User data refreshed in localStorage:', userData);
     }
   }
 }
@@ -172,9 +197,7 @@ clearAuth(): void {
 // Enhanced token decoding with role validation
 private decodeAndValidateToken(token: string): any {
   try {
-    console.log('Raw token:', token); 
     const userData = this.decodeToken(token);
-    console.log('Decoded token data:', userData); 
     
     if (!userData) {
       throw new Error('Token decoding failed');
@@ -185,22 +208,18 @@ private decodeAndValidateToken(token: string): any {
       throw new Error('No roles found in token');
     }
 
-    console.log('Original roles from token:', userData.roles);
 
     // Normalize and validate roles
     const validatedRoles = userData.roles
       .map((role: string) => {
         const normalized = this.normalizeRole(role);
-        console.log(`Role: ${role} → Normalized: ${normalized}`); 
         return normalized;
       })
       .filter((role: string) => {
         const isValid = this.validRoles.includes(role);
-        console.log(`Checking role ${role}: ${isValid}`); 
         return isValid;
       });
 
-    console.log('Validated roles:', validatedRoles); 
 
     if (validatedRoles.length === 0) {
       console.warn('No roles matched validRoles:', this.validRoles); 
@@ -230,7 +249,6 @@ getCurrentUser(): User & { id: string } | null {
   if (userDataStr) {
     try {
       const parsed = JSON.parse(userDataStr);
-      console.log('User data from localStorage:', parsed); 
       
       return {
         id: parsed.userId || parsed.id || parsed.sub, 
@@ -248,7 +266,6 @@ getCurrentUser(): User & { id: string } | null {
   if (token) {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log('JWT payload:', payload); 
 
       return {
         id: payload.userId || payload.sub, 

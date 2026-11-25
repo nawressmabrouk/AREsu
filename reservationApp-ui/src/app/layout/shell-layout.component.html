@@ -1,0 +1,62 @@
+<a class="skip-link" href="#contenu">Aller au contenu</a>
+
+<div class="shell" [class.collapsed]="collapsed()" [class.mobile-open]="mobileOpen()">
+  <aside class="sidebar" aria-label="Navigation de l'application">
+    <a class="brand" routerLink="/" aria-label="AREsu, site public">
+      <img src="/aresu-mark.png" alt="" width="36" height="36" />
+      <span class="brand-text"><strong>AREsu</strong><span>Université de Sousse</span></span>
+    </a>
+
+    <nav class="nav">
+      <p class="nav-section">{{ roleLabel || 'Navigation' }}</p>
+      @for (item of nav; track item.link) {
+        <a [routerLink]="item.link" routerLinkActive="active" class="nav-item"
+           [matTooltip]="collapsed() ? item.label : ''" matTooltipPosition="right">
+          <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+          <span class="label">{{ item.label }}</span>
+        </a>
+      }
+      <p class="nav-section">Plateforme</p>
+      <a routerLink="/" class="nav-item" [matTooltip]="collapsed() ? 'Site public' : ''" matTooltipPosition="right">
+        <mat-icon aria-hidden="true">public</mat-icon>
+        <span class="label">Site public</span>
+      </a>
+    </nav>
+
+    <button type="button" class="collapse-btn" (click)="toggleCollapsed()"
+            [attr.aria-label]="collapsed() ? 'Déplier le menu' : 'Replier le menu'" [attr.aria-expanded]="!collapsed()">
+      <mat-icon>{{ collapsed() ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left' }}</mat-icon>
+      <span class="label">Replier le menu</span>
+    </button>
+  </aside>
+
+  @if (mobileOpen()) {
+    <div class="backdrop" (click)="mobileOpen.set(false)" aria-hidden="true"></div>
+  }
+
+  <div class="main-col">
+    <header class="topbar">
+      <button mat-icon-button type="button" class="menu-btn" (click)="mobileOpen.set(true)" aria-label="Ouvrir le menu">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <nav class="breadcrumb" aria-label="Fil d'Ariane">
+        <ol>
+          <li><a [routerLink]="home">{{ roleLabel || 'Mon espace' }}</a></li>
+          @if (pageTitle()) {
+            <li aria-current="page">{{ pageTitle() }}</li>
+          }
+        </ol>
+      </nav>
+      <div class="topbar-actions">
+        <app-theme-toggle />
+        <app-profile />
+      </div>
+    </header>
+
+    <main id="contenu" class="content" tabindex="-1">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<app-chat />

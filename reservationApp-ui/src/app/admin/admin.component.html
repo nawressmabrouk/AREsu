@@ -1,467 +1,230 @@
-<header class="spaces-header">
-  <div class="header-content">
-    <div class="header-brand">
-      <img src="/logo2.png" alt="Université de Sousse" class="logo-image">
-    </div>
+<div class="page">
+  <app-page-header eyebrow="Administration" title="Espaces & responsables"
+    subtitle="Gérez les espaces réservables de votre établissement et les responsables de salle qui les valident.">
+    <ng-container actions>
+      <button mat-stroked-button type="button" [disabled]="isBusy('new-responsable')" (click)="addResponsable()">
+        <mat-icon>person_add</mat-icon>Ajouter un responsable
+      </button>
+      <button mat-flat-button type="button" [disabled]="isBusy('new-espace')" (click)="addEspace()">
+        <mat-icon>add</mat-icon>Ajouter un espace
+      </button>
+    </ng-container>
+  </app-page-header>
 
-    <h1 class="page-title">
-      Console Administrative
-    </h1>
-    <p class="page-subtitle">
-      Gestion des responsables et des espaces
-    </p>
-
-    <app-profile class="profile-icon" [user]="currentUser"></app-profile>
+  <div class="stat-grid">
+    <button type="button" class="stat-link" (click)="view.set('espaces')" [attr.aria-pressed]="view() === 'espaces'">
+      <app-stat-card label="Espaces" [value]="count('espaces') ?? '…'" icon="meeting_room" tone="primary"
+        hint="Réservables" [active]="view() === 'espaces'" />
+    </button>
+    <button type="button" class="stat-link" (click)="view.set('responsables')" [attr.aria-pressed]="view() === 'responsables'">
+      <app-stat-card label="Responsables de salle" [value]="count('responsables') ?? '…'" icon="badge" tone="info"
+        hint="Comptes actifs" [active]="view() === 'responsables'" />
+    </button>
+    <app-stat-card label="Capacité totale" [value]="espaces().loading ? '…' : totalCapacity()" icon="groups" tone="success"
+      hint="Places, tous espaces" />
+    <app-stat-card label="Sans responsable" [value]="espaces().loading ? '…' : unassigned()" icon="person_off"
+      [tone]="unassigned() ? 'warning' : 'neutral'" hint="Validés par le secrétariat" />
   </div>
-</header>
 
-<!-- Main Content -->
-<div class="main-content">
-  <!-- Initial Choice Screen -->
-  <div *ngIf="!showModal" class="choice-container">
-    <div class="choice-box">
-      <div class="choice-card">
-        <h2 class="choice-title">Que souhaitez-vous faire aujourd'hui ?</h2>
-        <p class="choice-subtitle">C'est très simple, choisissez une option ci-dessous</p>
-    
-        <div class="icon-button-group">
-          <!-- Responsables Management -->
-          <div class="icon-wrapper">
-            <span class="icon-circle">
-              <fa-icon [icon]="faUsersCog" class="btn-icon"></fa-icon>
-            </span>
-            <button class="choice-btn" (click)="toggleSousAdminOptions()">
-              Gestion des Responsables
-            </button>
-          </div>
-
-          <!-- Sub-buttons for Responsables -->
-          <div *ngIf="showSousAdminOptions" class="sub-buttons-container">
-            <div class="sub-buttons-row">
-              <div class="icon-wrapper">
-                <span class="icon-circle smallA">
-                  <fa-icon [icon]="faPlusCircle" class="btn-icon"></fa-icon>
-                </span>
-                <button class="sub-btn" 
-                        (click)="currentSousAdminView = 'ajouter'; showModal = 'sous-admin'">
-                  Ajouter Responsable
-                </button>
-              </div>
-              <div class="icon-wrapper">
-                <span class="icon-circle smallA">
-                  <fa-icon [icon]="faTasks" class="btn-icon"></fa-icon>
-                </span>
-                <button class="sub-btn" 
-                        (click)="currentSousAdminView = 'gerer'; showModal = 'sous-admin'">
-                  Gérer Responsables
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Spaces Management -->
-          <div class="icon-wrapper">
-            <span class="icon-circle">
-              <fa-icon [icon]="faBuilding" class="btn-icon"></fa-icon>
-            </span>
-            <button class="choice-btn" (click)="toggleEspaceOptions()">
-              Gestion des Espaces
-            </button>
-          </div>
-
-          <!-- Sub-buttons for Spaces -->
-          <div *ngIf="showEspaceOptions" class="sub-buttons-container">
-            <div class="sub-buttons-row">
-              <div class="icon-wrapper">
-                <span class="icon-circle small">
-                  <fa-icon [icon]="faPlusCircle" class="btn-icon"></fa-icon>
-                </span>
-                <button class="sub-btn" 
-                        (click)="currentEspaceView = 'ajouter'; showModal = 'espaces'">
-                  Ajouter Espace
-                </button>
-              </div>
-              <div class="icon-wrapper">
-                <span class="icon-circle small">
-                  <fa-icon [icon]="faTasks" class="btn-icon"></fa-icon>
-                </span>
-                <button class="sub-btn" 
-                        (click)="currentEspaceView = 'gerer'; showModal = 'espaces'">
-                  Gérer Espaces
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="tabs-scroll">
+    <div class="segmented with-icons" role="tablist" aria-label="Sections">
+      <button type="button" role="tab" id="tab-espaces" aria-controls="admin-panel"
+              [attr.aria-selected]="view() === 'espaces'" (click)="view.set('espaces')">
+        <mat-icon aria-hidden="true">meeting_room</mat-icon>Espaces
+        @if (count('espaces'); as n) { <span class="tab-count">{{ n }}</span> }
+      </button>
+      <button type="button" role="tab" id="tab-responsables" aria-controls="admin-panel"
+              [attr.aria-selected]="view() === 'responsables'" (click)="view.set('responsables')">
+        <mat-icon aria-hidden="true">badge</mat-icon>Responsables
+        @if (count('responsables'); as n) { <span class="tab-count">{{ n }}</span> }
+      </button>
     </div>
   </div>
 
-  <!-- Responsables Management Modal -->
-  <div *ngIf="showModal === 'sous-admin'" class="modal-overlay" (click)="closeModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <button class="close-modal" (click)="closeModal()">&times;</button>
-      
-      <!-- Sub-menu -->
-      <div class="espace-submenu">
-        <button (click)="currentSousAdminView = 'ajouter'" 
-                [class.active]="currentSousAdminView === 'ajouter'">
-          Ajouter
-        </button>
-        <button (click)="currentSousAdminView = 'gerer'" 
-                [class.active]="currentSousAdminView === 'gerer'">
-          Gérer
-        </button>
-      </div>
-   
-      <!-- Add/Edit Responsable Form -->
-      <div *ngIf="currentSousAdminView === 'ajouter'" class="form-section">
-        <h2>{{ isEditingSousAdmin ? 'Modifier' : 'Ajouter' }} un Responsable</h2>
-        <form class="register-form" (submit)="onSubmitSousAdmin($event)">
-          <!-- Row 1: First Name and Last Name -->
-          <div class="form-row">
-            <div class="form-group">
-              <label for="prenom">Prénom</label>
-              <div class="input-container">
-                <fa-icon [icon]="faUser" class="icon"></fa-icon>
-                <input type="text" 
-                      id="prenom" 
-                      [(ngModel)]="sousAdminFormData.prenom" 
-                      name="prenom" 
-                      required>
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="nom">Nom</label>
-              <div class="input-container">
-                <fa-icon [icon]="faUserTag" class="icon"></fa-icon>
-                <input type="text" 
-                      id="nom" 
-                      [(ngModel)]="sousAdminFormData.nom" 
-                      name="nom" 
-                      required>
-              </div>
-            </div>
-          </div>
-
-          <!-- Row 2: Email and Function -->
-          <div class="form-row">
-            <div class="form-group">
-              <label for="email">Email</label>
-              <div class="input-container">
-                <fa-icon [icon]="faEnvelope" class="icon"></fa-icon>
-                <input type="email" 
-                      id="email" 
-                      [(ngModel)]="sousAdminFormData.email" 
-                      name="email" 
-                      required>
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="fonction">Fonction</label>
-              <div class="input-container">
-                <fa-icon [icon]="faBriefcase" class="icon"></fa-icon>
-                <input type="text" 
-                      id="fonction" 
-                      [(ngModel)]="sousAdminFormData.fonction" 
-                      name="fonction" 
-                      required>
-              </div>
-            </div>
-          </div>
-
-          <!-- Row 3: Phone and Structure -->
-          <div class="form-row">
-            <div class="form-group">
-              <label for="telephone">Téléphone</label>
-              <div class="input-container">
-                <fa-icon [icon]="faPhone" class="icon"></fa-icon>
-                <input type="tel" 
-                      id="telephone" 
-                      [(ngModel)]="sousAdminFormData.numTel" 
-                      name="numTel"
-                      required>
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="structure">Structure</label>
-              <div class="input-container">
-                <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
-                <input type="text" 
-                      id="structure" 
-                      [(ngModel)]="sousAdminFormData.structure" 
-                      name="structure" 
-                      required>
-              </div>
-            </div>
-          </div>
-
-          <!-- Row 4: LinkedIn and Spaces -->
-          <div class="form-row">
-            <div class="form-group">
-              <label for="linkedin">LinkedIn (optionnel)</label>
-              <div class="input-container">
-                <fa-icon [icon]="faLink" class="icon"></fa-icon>
-                <input type="url" 
-                      id="linkedin" 
-                      [(ngModel)]="sousAdminFormData.linkedInLink" 
-                      name="linkedin">
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="espacesResponsables">Espaces Responsables (séparés par des virgules)</label>
-              <div class="input-container">
-                <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
-                <input type="text" 
-                      id="espacesResponsables" 
-                      [(ngModel)]="sousAdminFormData.espacesResponsables" 
-                      name="espacesResponsables"
-                      placeholder="Ex: Salle1,Salle2,Salle3">
-              </div>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <p class="establishment-info">
-                <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
-                Établissement: {{ currentUser.nomEtablissement || 'Votre établissement' }}
-              </p>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-submit1">
-            {{ isEditingSousAdmin ? 'Modifier' : 'Ajouter' }} le Responsable
-          </button>
-          <button type="button" 
-                  class="btn-cancel" 
-                  (click)="cancelEditSousAdmin()" 
-                  *ngIf="isEditingSousAdmin">
-            Annuler
-          </button>
-        </form>
-      </div>
-   
-      <!-- Responsables List -->
-      <div *ngIf="currentSousAdminView === 'gerer'" class="espace-list">
-        <h2>Liste des Responsables</h2>
-        
-        <div class="search-box">
-          <input type="text" [(ngModel)]="searchSousAdmin" placeholder="Rechercher...">
+  <section id="admin-panel" role="tabpanel" [attr.aria-labelledby]="'tab-' + view()">
+    @if (view() === 'espaces') {
+      @if (espaces().loading) {
+        <app-skeleton variant="rows" [count]="4" />
+      } @else if (espaces().failed) {
+        <app-empty-state icon="cloud_off" title="Chargement impossible" message="Les espaces n'ont pas pu être chargés.">
+          <button mat-stroked-button type="button" (click)="loadEspaces()"><mat-icon>refresh</mat-icon>Réessayer</button>
+        </app-empty-state>
+      } @else if (!espaces().items.length) {
+        <app-empty-state icon="meeting_room" title="Aucun espace"
+          message="Ajoutez le premier espace réservable de votre établissement.">
+          <button mat-flat-button type="button" (click)="addEspace()"><mat-icon>add</mat-icon>Ajouter un espace</button>
+        </app-empty-state>
+      } @else {
+        <div class="toolbar">
+          <mat-form-field class="search" subscriptSizing="dynamic">
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-label>Rechercher</mat-label>
+            <input matInput type="search" [value]="espaceSearch()" (input)="setEspaceSearch($any($event.target).value)"
+                   placeholder="Nom, responsable, type, équipement…" />
+          </mat-form-field>
+          <mat-form-field class="category" subscriptSizing="dynamic">
+            <mat-label>Catégorie</mat-label>
+            <mat-select [value]="espaceCategory()" (valueChange)="setEspaceCategory($event)">
+              <mat-option value="">Toutes les catégories</mat-option>
+              @for (c of categories; track c.value) { <mat-option [value]="c.value">{{ c.label }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+          <span class="toolbar-spacer"></span>
+          <span class="count">{{ filteredEspaces().length }} espace{{ filteredEspaces().length > 1 ? 's' : '' }}</span>
         </div>
-        
-        <div class="espace-grid">
-          <div *ngFor="let admin of filteredSousAdmins" class="espace-card">
-            <h3>{{ admin.prenom }} {{ admin.nom }}</h3>
-            <div class="espace-details">
-              <div class="detail-item">
-                <span class="detail-label">Email:</span>
-                <span class="detail-value">{{ admin.email }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Rôle:</span>
-                <span class="detail-value">Responsable Salle</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Téléphone:</span>
-                <span class="detail-value">{{ admin.numTel }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Établissement:</span>
-                <span class="detail-value">{{ admin.nomEtablissement }}</span>
-              </div>
-            </div>
-            <div class="espace-actions">
-              <button class="btn-edit" (click)="onEditSousAdmin(admin)">
-                <fa-icon [icon]="faEdit"></fa-icon> Modifier
-              </button>
-              <button class="btn-delete" (click)="onSupprimerSousAdmin(admin.id!)">
-                <fa-icon [icon]="faTrash"></fa-icon> Supprimer
-              </button>
-            </div>
+
+        @if (!filteredEspaces().length) {
+          <app-empty-state icon="search_off" title="Aucun résultat" message="Aucun espace ne correspond à vos filtres.">
+            <button mat-stroked-button type="button" (click)="setEspaceSearch(''); setEspaceCategory('')">Effacer les filtres</button>
+          </app-empty-state>
+        } @else {
+          <div class="table-wrap">
+            <table class="data-table table-cards">
+              <thead>
+                <tr>
+                  <th scope="col">Espace</th>
+                  <th scope="col">Catégorie</th>
+                  <th scope="col" class="num">Capacité</th>
+                  <th scope="col">Responsable</th>
+                  <th scope="col">Équipements</th>
+                  <th scope="col" class="cell-actions"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of pagedEspaces(); track e.id) {
+                  <tr>
+                    <td data-label="Espace">
+                      <span class="cell-main">
+                        <span class="cell-strong">{{ e.nom }}</span>
+                        <span class="meta">{{ typeLabel(e.type) || 'Type non spécifié' }}</span>
+                      </span>
+                    </td>
+                    <td data-label="Catégorie">{{ categoryLabel(e.categorie) || '—' }}</td>
+                    <td data-label="Capacité" class="num">{{ e.capacite }}</td>
+                    <td data-label="Responsable">
+                      @if (e.responsableId) { {{ responsableName(e.responsableId, e.responsableNom) || 'Responsable' }} }
+                      @else { <span class="muted">Non attribué</span> }
+                    </td>
+                    <td data-label="Équipements">
+                      <span class="chips">
+                        @for (eq of (e.equipement || []).slice(0, 3); track eq) { <span class="chip">{{ eq }}</span> }
+                        @if ((e.equipement || []).length > 3) {
+                          <span class="chip more" [matTooltip]="(e.equipement || []).slice(3).join(', ')">+{{ (e.equipement || []).length - 3 }}</span>
+                        }
+                        @if (!(e.equipement || []).length) { <span class="muted">—</span> }
+                      </span>
+                    </td>
+                    <td class="cell-actions">
+                      @if (isBusy(e.id)) {
+                        <mat-progress-spinner mode="indeterminate" diameter="22" aria-label="Action en cours" />
+                      } @else {
+                        <button mat-icon-button type="button" (click)="editEspace(e)" matTooltip="Modifier" [attr.aria-label]="'Modifier ' + e.nom">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button type="button" class="danger-icon" (click)="deleteEspace(e)" matTooltip="Supprimer" [attr.aria-label]="'Supprimer ' + e.nom">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
+          @if (filteredEspaces().length > 5) {
+            <mat-paginator [length]="filteredEspaces().length" [pageIndex]="espacePage().index" [pageSize]="espacePage().size"
+                           [pageSizeOptions]="[5, 10, 25, 50]" (page)="onEspacePage($event)" aria-label="Pagination des espaces" />
+          }
+        }
+      }
+    } @else {
+      @if (responsables().loading) {
+        <app-skeleton variant="rows" [count]="4" />
+      } @else if (responsables().failed) {
+        <app-empty-state icon="cloud_off" title="Chargement impossible" message="Les responsables n'ont pas pu être chargés.">
+          <button mat-stroked-button type="button" (click)="loadResponsables()"><mat-icon>refresh</mat-icon>Réessayer</button>
+        </app-empty-state>
+      } @else if (!responsables().items.length) {
+        <app-empty-state icon="badge" title="Aucun responsable de salle"
+          message="Créez un compte pour chaque personne qui valide les réservations d'un espace.">
+          <button mat-flat-button type="button" (click)="addResponsable()"><mat-icon>person_add</mat-icon>Ajouter un responsable</button>
+        </app-empty-state>
+      } @else {
+        <div class="toolbar">
+          <mat-form-field class="search" subscriptSizing="dynamic">
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-label>Rechercher</mat-label>
+            <input matInput type="search" [value]="respSearch()" (input)="setRespSearch($any($event.target).value)"
+                   placeholder="Nom, e-mail, fonction, structure…" />
+          </mat-form-field>
+          <span class="toolbar-spacer"></span>
+          <span class="count">{{ filteredResponsables().length }} responsable{{ filteredResponsables().length > 1 ? 's' : '' }}</span>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Spaces Management Modal -->
-  <div *ngIf="showModal === 'espaces'" class="modal-overlay" (click)="closeModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <button class="close-modal" (click)="closeModal()">&times;</button>
-      <app-notification></app-notification>
-      
-      <!-- Sub-menu -->
-      <div class="espace-submenu">
-        <button (click)="currentEspaceView = 'ajouter'" 
-                [class.active]="currentEspaceView === 'ajouter'">
-          Ajouter Espace
-        </button>
-        <button (click)="currentEspaceView = 'gerer'" 
-                [class.active]="currentEspaceView === 'gerer'">
-          Gérer Espaces
-        </button>
-      </div>
-
-      <!-- Add/Edit Space Form -->
-      <div *ngIf="currentEspaceView === 'ajouter'" class="form-section">
-        <h2>{{ isEditingEspace ? 'Modifier' : 'Ajouter' }} un espace</h2>
-        <form #espaceForm="ngForm" (submit)="onSubmitEspace($event)">
-          <div class="form-row">
-            <!-- Responsable Selector -->
-<div class="form-group">
-  <label for="responsableId">Responsable</label>
-  <div class="input-container">
-    <fa-icon [icon]="faUser" class="icon"></fa-icon>
-    <select
-      id="responsableId"
-      name="responsableId"
-      [(ngModel)]="espaceFormData.responsableId"
-      class="pill-select"
-      required>
-      <option value="">Sélectionner un responsable</option>
-      <option *ngFor="let responsable of sousAdmins"
-              [value]="responsable.id">
-        {{ responsable.prenom }} {{ responsable.nom }}
-      </option>
-    </select>
-  </div>
-</div>
-
-            
-            <!-- Space Name -->
-            <div class="form-group">
-              <label for="nomEspace">Nom de l'espace</label>
-              <div class="input-container">
-                <fa-icon [icon]="faBuilding" class="icon"></fa-icon>
-                <input type="text" id="nomEspace" [(ngModel)]="espaceFormData.nom" name="nom" required>
-              </div>
-            </div>
+        @if (!filteredResponsables().length) {
+          <app-empty-state icon="search_off" title="Aucun résultat" message="Aucun responsable ne correspond à votre recherche.">
+            <button mat-stroked-button type="button" (click)="setRespSearch('')">Effacer la recherche</button>
+          </app-empty-state>
+        } @else {
+          <div class="table-wrap">
+            <table class="data-table table-cards">
+              <thead>
+                <tr>
+                  <th scope="col">Responsable</th>
+                  <th scope="col">Contact</th>
+                  <th scope="col">Structure</th>
+                  <th scope="col">Espaces gérés</th>
+                  <th scope="col" class="cell-actions"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of pagedResponsables(); track r.id) {
+                  <tr>
+                    <td data-label="Responsable">
+                      <span class="person">
+                        <span class="avatar" aria-hidden="true">{{ initials(r) }}</span>
+                        <span class="cell-main">
+                          <span class="cell-strong">{{ r.prenom }} {{ r.nom }}</span>
+                          <span class="meta">{{ r.fonction || 'Responsable de salle' }}</span>
+                        </span>
+                      </span>
+                    </td>
+                    <td data-label="Contact">
+                      <span class="cell-main">
+                        <a [href]="'mailto:' + r.email">{{ r.email }}</a>
+                        @if (r.numTel) { <span class="meta">{{ r.numTel }}</span> }
+                      </span>
+                    </td>
+                    <td data-label="Structure">{{ r.structure || '—' }}</td>
+                    <td data-label="Espaces gérés">
+                      <span class="chips">
+                        @for (e of espacesByResponsable().get(r.id!) ?? []; track e.id) { <span class="chip">{{ e.nom }}</span> }
+                        @empty { <span class="muted">Aucun</span> }
+                      </span>
+                    </td>
+                    <td class="cell-actions">
+                      @if (isBusy(r.id)) {
+                        <mat-progress-spinner mode="indeterminate" diameter="22" aria-label="Action en cours" />
+                      } @else {
+                        <button mat-icon-button type="button" (click)="editResponsable(r)" matTooltip="Modifier" [attr.aria-label]="'Modifier ' + r.prenom + ' ' + r.nom">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button type="button" class="danger-icon" (click)="deleteResponsable(r)" matTooltip="Supprimer" [attr.aria-label]="'Supprimer ' + r.prenom + ' ' + r.nom">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
-
-          <div class="form-row">
-            <!-- Capacity -->
-            <div class="form-group">
-              <label for="capacite">Capacité</label>
-              <div class="input-container">
-                <fa-icon [icon]="faUsers" class="icon"></fa-icon>
-                <input type="number" id="capacite" [(ngModel)]="espaceFormData.capacite" name="capacite" required min="1">
-              </div>
-            </div>
-            
-            <!-- Equipment -->
-            <div class="form-group">
-              <label for="equipement">Équipements (séparés par des virgules)</label>
-              <div class="input-container">
-                <fa-icon [icon]="faTools" class="icon"></fa-icon>
-                <input type="text" id="equipement" [(ngModel)]="espaceFormData.equipement" name="equipement">
-              </div>
-            </div>
-          </div>
-
-          <!-- Category and Type -->
-          <div class="form-row">
-            <div class="form-group">
-              <label>Catégorie</label>
-              <div class="radio-group">
-                <label *ngFor="let cat of categories" class="category-option">
-                  <input type="radio" 
-                        name="categorie" 
-                        [(ngModel)]="espaceFormData.categorie"
-                        [value]="cat.name"
-                        (change)="selectedCategory = cat.name"
-                        required>
-                  <span class="category-label">{{ cat.name }}</span>
-                </label>
-              </div>
-            </div>
-
-            <div class="form-group" *ngIf="selectedCategory">
-              <label>Type</label>
-              <div class="checkbox-group">
-                <label *ngFor="let type of getTypesForCategory(selectedCategory)">
-                  <input type="radio" 
-                        name="type" 
-                        [(ngModel)]="espaceFormData.type"
-                        [value]="type"
-                        required>
-                  {{ formatTypeName(type) }}
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <p class="establishment-info">
-                <fa-icon [icon]="faUniversity" class="icon"></fa-icon>
-                Établissement: {{ currentUser.nomEtablissement || 'Votre établissement' }}
-              </p>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-submit">
-            {{ isEditingEspace ? 'Modifier' : 'Ajouter' }} l'espace
-          </button>
-          <button type="button" 
-                  class="btn-cancel" 
-                  (click)="cancelEditEspace()" 
-                  *ngIf="isEditingEspace">
-            Annuler
-          </button>
-        </form>
-      </div>
-
-      <!-- Spaces List -->
-      <div *ngIf="currentEspaceView === 'gerer'" class="espace-list">
-        <h2>Liste des espaces</h2>
-        
-        <div class="search-box">
-          <input type="text" [(ngModel)]="searchEspace" placeholder="Rechercher...">
-        </div>
-        
-        <div class="espace-grid">
-          <div *ngFor="let espace of filteredEspaces" class="espace-card">
-            <h3>{{ espace.nom }}</h3>
-            <div class="espace-details">
-              <div class="detail-item">
-                <span class="detail-label">Responsable:</span>
-                <span class="detail-value">{{ espace.responsableNom || 'Non attribué' }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Capacité:</span>
-                <span class="detail-value">{{ espace.capacite }} personnes</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Catégorie:</span>
-                <span class="detail-value">{{ espace.categorie }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Type:</span>
-                <span class="detail-value">{{ formatTypeName(espace.type) }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Équipements:</span>
-                <span class="detail-value">
-                  {{ espace.equipement ? espace.equipement.join(', ') : 'Aucun' }}
-                </span>
-              </div>
-            </div>
-            <div class="espace-actions">
-              <button class="btn-edit" (click)="onEditEspace(espace)">
-                <fa-icon [icon]="faEdit"></fa-icon> Modifier
-              </button>
-              <button class="btn-delete" (click)="onSupprimerEspace(espace.id)">
-                <fa-icon [icon]="faTrash"></fa-icon> Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+          @if (filteredResponsables().length > 5) {
+            <mat-paginator [length]="filteredResponsables().length" [pageIndex]="respPage().index" [pageSize]="respPage().size"
+                           [pageSizeOptions]="[5, 10, 25, 50]" (page)="onRespPage($event)" aria-label="Pagination des responsables" />
+          }
+        }
+      }
+    }
+  </section>
 </div>

@@ -1,567 +1,273 @@
-
-import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, ViewChild ,OnInit} from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faLinkedin } from '@fortawesome/free-brands-svg-icons';
-import {
-  faArrowRight,
-  faBars,
-  faBriefcase,
-  faBuilding,
-  faCalendarAlt,
-  faChalkboard,
-  faChalkboardTeacher,
-  faCheckCircle,
-  faClock,
-  faDesktop,
-  faDiagramProject,
-  faDoorOpen,
-  faEdit,
-  faEnvelope,
-  faEye,
-  faEyeSlash,
-  faHome,
-  faKey,
-  faLock,
-  faPhone,
-  faPlusCircle,
-  faPlusSquare,
-  faSave,
-  faSearch,
-  faSignOutAlt,
-  faTimesCircle,
-  faTools,
-  faTrash,
-  faUniversity,
-  faUser,
-  faUserGraduate,
-  faUsers,
-  faUserTag,
-  faUserTie,
-  faVolumeUp,
-  faWifi , faTimes
-} from '@fortawesome/free-solid-svg-icons';
-import { forkJoin } from 'rxjs/internal/observable/forkJoin';
-import { finalize } from 'rxjs/operators';
+import { Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { filter, finalize, Observable, switchMap } from 'rxjs';
+import { Espace } from '../models/espace.model';
 import { Reservation, StatusReservation } from '../models/reservation.model';
 import { ReservationsCalendarComponent } from '../reservations-calendar/reservations-calendar.component';
-import { AuthService } from '../services/auth/auth.service';
+import { NotificationService } from '../services/alert-notif/notification.service';
 import { RoomManagerService } from '../services/room-manager/room-manager.service';
-import { ProfileComponent } from '../shared/components/profile/profile.component';
-import { Espace } from '../models/espace.model';
 import { UserService } from '../services/user/user.service';
+import { ApproveEvent, ReservationTableComponent, reservationSummary } from '../shared/components/reservation-table/reservation-table.component';
+import { SpaceFormService } from '../shared/components/space-form-dialog/space-form-dialog.component';
+import { categoryLabel, typeLabel } from '../shared/space-catalog';
+import { apiErrorMessage } from '../shared/ui/api-error';
+import { ConfirmService } from '../shared/ui/confirm-dialog.component';
+import { EmptyStateComponent } from '../shared/ui/empty-state.component';
+import { PageHeaderComponent } from '../shared/ui/page-header.component';
+import { SkeletonComponent } from '../shared/ui/skeleton.component';
+import { StatCardComponent } from '../shared/ui/stat-card.component';
+
+type ListKey = 'pending' | 'accepted' | 'refused';
+type View = ListKey | 'spaces' | 'calendar';
+
+interface ListState<T> {
+  items: T[];
+  loading: boolean;
+  failed: boolean;
+}
+
+const VIEWS: { key: View; label: string; icon: string; description: string }[] = [
+  { key: 'pending', label: 'En attente', icon: 'pending_actions',
+    description: 'Demandes de réservation de vos espaces : cochez les équipements accordés puis acceptez ou refusez.' },
+  { key: 'accepted', label: 'Acceptées', icon: 'check_circle',
+    description: "Réservations acceptées. Celles qui n'ont pas encore commencé peuvent être annulées." },
+  { key: 'refused', label: 'Refusées', icon: 'cancel', description: 'Demandes que vous avez refusées.' },
+  { key: 'spaces', label: 'Mes espaces', icon: 'meeting_room', description: 'Les espaces dont vous êtes responsable.' },
+  { key: 'calendar', label: 'Calendrier', icon: 'calendar_month', description: 'Toutes les réservations de votre établissement.' },
+];
+
+const STATUS_OF: Record<ListKey, StatusReservation> = {
+  pending: StatusReservation.EN_ATTENTE,
+  accepted: StatusReservation.ACCEPTEE,
+  refused: StatusReservation.REFUSEE,
+};
 
 @Component({
   selector: 'app-room-manager',
-  standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    FontAwesomeModule,
-    ProfileComponent,
-    ReservationsCalendarComponent
+    MatButtonModule,
+    MatIcon,
+    EmptyStateComponent,
+    PageHeaderComponent,
+    ReservationsCalendarComponent,
+    ReservationTableComponent,
+    SkeletonComponent,
+    StatCardComponent,
   ],
   templateUrl: './room-manager.component.html',
-  styleUrls: ['./room-manager.component.scss']
+  styleUrl: './room-manager.component.scss',
 })
 export class RoomManagerComponent implements OnInit {
-  @ViewChild('profileContainer', { static: true }) profileContainer!: ElementRef;
-   @ViewChild(ReservationsCalendarComponent) calendarComponent!: ReservationsCalendarComponent;
-  etablissementId: string = '';
-  // Font Awesome icons
-  faHome = faHome; 
-  faSearch = faSearch;
-  faPageIcon = faArrowRight;
-  faClock = faClock;
-  faCheckCircle = faCheckCircle;
-  faTimesCircle = faTimesCircle;
-  faAccessIcon = faKey;
-  faAddSpaceIcon = faPlusSquare;
-  faBars = faBars;
-  faSave = faSave;
-  faEdit = faEdit;
-  faTrash = faTrash;
-  faDoorOpen = faDoorOpen;
-  faBuilding = faBuilding;
-  faChalkboard = faChalkboard;
-  faUsers = faUsers;
-  faTools = faTools;
-  faPlusCircle = faPlusCircle;
-  faChalkboardTeacher = faChalkboardTeacher;
-  faDesktop = faDesktop;
-  faVolumeUp = faVolumeUp;
-  faWifi = faWifi;
-  faSignOutAlt = faSignOutAlt;
-  faCalendarAlt = faCalendarAlt;
-  faUserTie = faUserTie;
-  faDiagramProject = faDiagramProject;
-  faUser = faUser;
-  faUserGraduate = faUserGraduate; 
-  faPhone = faPhone;
-  faEnvelope = faEnvelope;
-  faUserTag = faUserTag;
-  faLinkedin = faLinkedin;
-  faUniversity = faUniversity;
-  faBriefcase = faBriefcase;
-  faLock = faLock;
-  faEye = faEye;
-  faEyeSlash = faEyeSlash; 
-  faTimes= faTimes ;
-  // UI State
-  isTooltipVisible = false;
-  isSidebarExpanded = false;
-  showDropdown = false;
-  showProfileDropdown = false;
-  showProfileModal = false;
-  showEditModal = false;
-  showReservationsModal = false;
-  showPasswordModal = false;
-  showOldPassword = false;
-  showNewPassword = false;
-  showConfirmPassword = false;
-  showEquipmentModal = false;
+  private readonly roomManagerService = inject(RoomManagerService);
+  private readonly userService = inject(UserService);
+  private readonly confirm = inject(ConfirmService);
+  private readonly spaceForm = inject(SpaceFormService);
+  private readonly toast = inject(NotificationService);
 
-  // Data
-  institutions = ['ESSTHS', 'IZET', 'ISSAT', 'ISITCOM'];
-  spaceTypes = ['Amphithéâtre', 'Salle de conférence', 'Laboratoire', 'Salle de réunion', 'Salle de cours'];
-  equipmentsList = ['Projecteur', 'Tableau blanc', 'Ordinateurs', 'Système audio', 'Wi-Fi'];
-  customEquipment: string = '';
-  
-  currentPageTitle: string = 'Gestion des Réservations';
-  currentPageSubtitle: string = 'Validation et contrôle des réservations des espaces';
+  private readonly calendar = viewChild(ReservationsCalendarComponent);
 
-  searchTerm: string = '';
- activeSection: 'access' | 'space' | 'calendar' = 'access'; 
-approvedEquipment: { [reservationId: string]: string[] } = {};
-  managedSpaces: Espace[] = [];
-currentSpace: Espace = {
-  id: '',
-  nom: '',
-  disponibilite: true,
-  capacite: 0,
-  equipement: [],
-  type: '',
-  categorie: '',
-  responsableId: '',
-  equipementsDisponibles: {}
-};
-selectedEquipments: string[] = [];
+  readonly views = VIEWS;
+  readonly view = signal<View>('pending');
+  readonly current = computed(() => VIEWS.find(v => v.key === this.view())!);
 
-spaceCategories = [
-  {
-    name: 'Espaces administratifs & académiques',
-    types: ['Laboratoire_de_recherche', 'Salle_de_conference', 'Salle_de_marche/bourse']
-  },
-  {
-    name: 'Espaces d\'employabilité & d\'innovation', 
-    types: ['Espace_4C', 'Incubateur', 'FabLab', 'Coworking_space', 'Pole_etudiant_entrepreneur']
-  }
-];
-customEquipmentInput = '';
-
-editingSpace: Espace | null = null;
-showAddSpaceModal = false;
-isLoadingSpaces = false;
-
-  spaces: any[] = []; 
- 
-   reservations: Reservation[] = [];
-   currentStatus: StatusReservation = StatusReservation.EN_ATTENTE;
-   isLoading = false;
-   errorMessage?: string;
- 
-   statusTabs = [
-     { key: StatusReservation.EN_ATTENTE, label: 'En attente' },
-     { key: StatusReservation.ACCEPTEE, label: 'Acceptées' },
-     { key: StatusReservation.REFUSEE, label: 'Refusées' }
-   ];
-   
- pendingCount: number = 0;
-approvedCount: number = 0;
-rejectedCount: number = 0;
-
-  editingIndex: number | null = null;
-
-  constructor(private router: Router, private authService: AuthService ,  private roomManagerService: RoomManagerService , private userService: UserService) {}
-
-  // User data
-  currentUser = {
-    role: 'roomManager',
-    nomPrenom: 'Responsable Salle',
-    email: 'salle@universite.tn'
-  };
-
-  ngOnInit() {
-    this.loadUserProfile();
-  }
-
-    private loadUserProfile(): void {
-    this.userService.getProfile().subscribe({
-      next: (profile: any) => {
-        console.log('Room Manager Profile:', profile);
-        
-        if (!profile.etablissementId) {
-          console.error('No etablissementId in profile!');
-          return;
-        }
-        
-        this.etablissementId = profile.etablissementId;
-        console.log('Using establishment ID:', this.etablissementId);
-        
-        // Load reservations after profile is loaded
-        this.loadAllReservations();
-      },
-      error: (err) => {
-        console.error('Error loading profile:', err);
-      }
-    });
-  }
-
-
-    private loadAllReservations(): void {
-    this.statusTabs.forEach(tab => {
-      this.loadReservations(tab.key);
-    });
-  }
-  @HostListener('document:click', ['$event'])
-  onClick(event: MouseEvent) {
-    if (this.profileContainer?.nativeElement && !this.profileContainer.nativeElement.contains(event.target)) {
-      this.showProfileDropdown = false;
-    }
-  }
-  private loadSpaces(): void {
-    this.isLoadingSpaces = true;
-    setTimeout(() => {
-      this.isLoadingSpaces = false;
-    }, 1000); 
-  }
-
-private loadManagedSpaces(): void {
-  this.isLoadingSpaces = true;
-  this.roomManagerService.getManagedSpaces()
-    .pipe(finalize(() => this.isLoadingSpaces = false))
-    .subscribe({
-      next: (spaces) => this.managedSpaces = spaces,
-      error: (err) => {
-        console.error('Erreur chargement espaces:', err);
-        this.errorMessage = "Échec du chargement des espaces";
-      }
-    });
-}
-
-openEditSpaceModal(espace: Espace): void {
-  this.editingSpace = espace;
-  this.currentSpace = { ...espace };
-  this.showAddSpaceModal = true;
-}
-
-getTypesForCategory(category: string): string[] {
-  const found = this.spaceCategories.find(cat => cat.name === category);
-  return found ? found.types : [];
-}
-
-addCustomEquipment(): void {
-  if (this.customEquipmentInput && this.customEquipmentInput.trim() !== '') {
-    const newEquipment = this.customEquipmentInput.trim();
-    
-    if (!this.currentSpace.equipement.includes(newEquipment)) {
-      this.currentSpace.equipement.push(newEquipment);
-      this.customEquipmentInput = '';
-      
-      if (!this.equipmentsList.includes(newEquipment)) {
-        this.equipmentsList.push(newEquipment);
-      }
-    } else {
-      alert('Cet équipement existe déjà !');
-    }
-  }
-}
-removeEquipment(equip: string): void {
-  const index = this.currentSpace.equipement.indexOf(equip);
-  if (index !== -1) {
-    this.currentSpace.equipement.splice(index, 1);
-  }
-}
-
-closeSpaceModal(): void {
-  this.showAddSpaceModal = false;
-  this.editingSpace = null;
-  this.currentSpace = {
-    id: '',
-    nom: '',
-    disponibilite: true,
-    capacite: 0,
-    equipement: [],
-    type: '',
-    categorie: '',
-    responsableId: '',
-    equipementsDisponibles: {}
-  };
-}
-toggleEquipment(equip: string): void {
-  const index = this.currentSpace.equipement.indexOf(equip);
-  if (index === -1) {
-    this.currentSpace.equipement.push(equip);
-  } else {
-    this.currentSpace.equipement.splice(index, 1);
-  }
-}
-
-addSpace(): void {
-  this.isLoadingSpaces = true; 
-  this.closeSpaceModal();
-  this.loadManagedSpaces();
-}
-updateSpace(): void {
-  if (!this.editingSpace) return;
-  
-  this.isLoadingSpaces = true;
-  this.roomManagerService.updateSpace(this.editingSpace.id, this.currentSpace)
-    .pipe(finalize(() => this.isLoadingSpaces = false))
-    .subscribe({
-      next: () => {
-        this.closeSpaceModal();
-        this.loadManagedSpaces();
-      },
-      error: (err) => console.error('Erreur modification:', err)
-    });
-}
-
-confirmDeleteSpace(spaceId: string): void {
-  if (!confirm('Êtes-vous sûr de vouloir supprimer cet espace?')) return;
-  
-  this.isLoadingSpaces = true;
-  this.roomManagerService.deleteSpace(spaceId)
-    .pipe(finalize(() => this.isLoadingSpaces = false))
-    .subscribe({
-      next: () => this.loadManagedSpaces(),
-      error: (err) => console.error('Erreur suppression:', err)
-    });
-}
-
-loadReservations(status: StatusReservation): void {
-    this.isLoading = true;
-    this.errorMessage = undefined;
-    
-    this.roomManagerService.getReservationsByStatus(status)
-        .pipe(finalize(() => this.isLoading = false))
-        .subscribe({
-            next: (reservations) => {
-                this.reservations = reservations;
-                
-                this.loadAllCounts();
-            },
-            error: (err) => this.errorMessage = err.message
-        });
-}
-
-private loadAllCounts(): void {
-    forkJoin([
-        this.roomManagerService.getReservationsByStatus(StatusReservation.EN_ATTENTE),
-        this.roomManagerService.getReservationsByStatus(StatusReservation.ACCEPTEE),
-        this.roomManagerService.getReservationsByStatus(StatusReservation.REFUSEE)
-    ]).subscribe({
-        next: ([pending, approved, rejected]) => {
-            this.pendingCount = pending.length;
-            this.approvedCount = approved.length;
-            this.rejectedCount = rejected.length;
-        },
-        error: (err: any) => console.error("Erreur lors du chargement des comptes", err)
-    });
-}
-
-
-handleDecision(reservationId: string, accept: boolean): void {
-  const approvedEquipments = this.approvedEquipment[reservationId] || [];
-  
-  if (accept && approvedEquipments.length === 0) {
-    if (!confirm('Aucun équipement sélectionné. Voulez-vous accepter sans équipement ?')) return;
-  }
-  
-  if (!confirm(`Êtes-vous sûr de vouloir ${accept ? 'accepter' : 'refuser'} cette réservation ?`)) return;
-
-  this.isLoading = true;
-  this.errorMessage = undefined;
-
-  this.roomManagerService.makeDecision(reservationId, accept, approvedEquipments).pipe(
-    finalize(() => this.isLoading = false)
-  ).subscribe({
-    next: () => {
-      delete this.approvedEquipment[reservationId];
-      this.loadReservations(this.currentStatus);
-    },
-    error: (err) => {
-      this.errorMessage = err.message || 'Erreur lors de la décision';
-      this.loadReservations(this.currentStatus);
-    }
+  readonly lists = signal<Record<ListKey, ListState<Reservation>>>({
+    pending: { items: [], loading: true, failed: false },
+    accepted: { items: [], loading: true, failed: false },
+    refused: { items: [], loading: true, failed: false },
   });
-}
-  setActiveTab(status: StatusReservation): void {
-    this.currentStatus = status;
-    this.loadReservations(status);
+  readonly spaces = signal<ListState<Espace>>({ items: [], loading: true, failed: false });
+
+  /** null while loading, '' when the account has no establishment. */
+  readonly etablissementId = signal<string | null>(null);
+  readonly busy = signal<ReadonlySet<string>>(new Set());
+
+  readonly categoryLabel = categoryLabel;
+  readonly typeLabel = typeLabel;
+
+  ngOnInit(): void {
+    this.userService.getProfile().subscribe({
+      next: profile => this.etablissementId.set(profile.etablissementId ?? ''),
+      error: () => this.etablissementId.set(''),
+    });
+    this.refresh();
   }
 
-  
-  toggleProfileDropdown(event: MouseEvent) {
-    event.stopPropagation();
-    this.showProfileDropdown = !this.showProfileDropdown;
+  count(key: View): number | null {
+    if (key === 'calendar') return null;
+    const state = key === 'spaces' ? this.spaces() : this.lists()[key];
+    return state.loading ? null : state.items.length;
   }
 
-  // Navigation methods
-switchSection(section: 'access' | 'space' | 'calendar'): void {
-  this.activeSection = section;
-  this.searchTerm = '';
-
-  switch(section) {
-    case 'access':
-      this.currentPageTitle = 'Gestion des Réservations';
-      this.currentPageSubtitle = 'Validation et contrôle des accès utilisateurs';
-      this.currentStatus = StatusReservation.EN_ATTENTE;
-      this.loadReservations(this.currentStatus);
-      break;
-    case 'space':
-      this.currentPageTitle = 'Gestion des Espaces';
-      this.currentPageSubtitle = 'Création et configuration des espaces';
-      this.loadManagedSpaces();
-      break;
-    case 'calendar':
-      this.currentPageTitle = 'Calendrier des Réservations';
-      this.currentPageSubtitle = 'Visualisation des réservations par calendrier';
-      break;
+  setView(view: View): void {
+    this.view.set(view);
   }
-}
 
-toggleSidebar(event: Event) {
-  // Prevents event bubbling
-  event.stopPropagation(); 
-  this.isSidebarExpanded = !this.isSidebarExpanded;
-}
+  refresh(): void {
+    (Object.keys(STATUS_OF) as ListKey[]).forEach(key => this.load(key));
+    this.loadSpaces();
+    this.calendar()?.loadSlots();
+  }
+
+  /** silent: refresh without the loading skeleton (after an action). */
+  load(key: ListKey, silent = false): void {
+    if (!silent) this.patch(key, { loading: true, failed: false });
+    this.roomManagerService.getReservationsByStatus(STATUS_OF[key]).subscribe({
+      next: items => this.patch(key, { items, loading: false, failed: false }),
+      error: () => this.patch(key, { loading: false, failed: !silent || !this.lists()[key].items.length }),
+    });
+  }
+
+  loadSpaces(silent = false): void {
+    if (!silent) this.spaces.update(s => ({ ...s, loading: true, failed: false }));
+    this.roomManagerService.getManagedSpaces().subscribe({
+      next: items => this.spaces.set({ items, loading: false, failed: false }),
+      error: () => this.spaces.update(s => ({ ...s, loading: false, failed: !silent || !s.items.length })),
+    });
+  }
+
+  approve({ reservation, equipments }: ApproveEvent): void {
+    const requested = reservation.equipements?.length ?? 0;
+    this.confirm
+      .confirm({
+        title: 'Accepter la demande ?',
+        message: requested && !equipments.length
+          ? "Aucun équipement n'est coché : la réservation sera acceptée sans équipement."
+          : 'Le demandeur sera informé de votre décision.',
+        details: reservationSummary(reservation, requested ? equipments.join(', ') || 'Aucun' : undefined),
+        confirmLabel: 'Accepter',
+        icon: 'check_circle',
+      })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.track(reservation.id, this.roomManagerService.makeDecision(reservation.id, true, equipments))),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.showSuccess('Réservation acceptée.');
+          this.afterChange('pending', 'accepted');
+        },
+        error: err => {
+          this.toast.showError(apiErrorMessage(err, "L'acceptation a échoué."));
+          this.afterChange('pending');
+        },
+      });
+  }
+
+  reject(reservation: Reservation): void {
+    this.confirm
+      .confirm({
+        title: 'Refuser la demande ?',
+        message: 'Le demandeur sera informé du refus.',
+        details: reservationSummary(reservation),
+        confirmLabel: 'Refuser',
+        tone: 'danger',
+        icon: 'cancel',
+      })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.track(reservation.id, this.roomManagerService.makeDecision(reservation.id, false))),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.showSuccess('Réservation refusée.');
+          this.afterChange('pending', 'refused');
+        },
+        error: err => {
+          this.toast.showError(apiErrorMessage(err, 'Le refus a échoué.'));
+          this.afterChange('pending');
+        },
+      });
+  }
+
+  cancel(reservation: Reservation): void {
+    this.confirm
+      .prompt({
+        title: 'Annuler la réservation ?',
+        message: 'La réservation sera annulée et retirée du calendrier. Le créneau redeviendra disponible.',
+        details: reservationSummary(reservation),
+        input: { label: "Motif de l'annulation (facultatif)", multiline: true },
+        confirmLabel: 'Annuler la réservation',
+        cancelLabel: 'Retour',
+        tone: 'danger',
+        icon: 'event_busy',
+      })
+      .pipe(
+        filter((reason): reason is string => reason !== null),
+        switchMap(reason => this.track(reservation.id, this.roomManagerService.cancelReservation(reservation.id, reason || undefined))),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.showSuccess('Réservation annulée.');
+          this.afterChange('accepted');
+        },
+        error: err => this.toast.showError(apiErrorMessage(err, "L'annulation a échoué.")),
+      });
+  }
+
+  editSpace(espace: Espace): void {
+    this.spaceForm
+      .open({ espace })
+      .pipe(
+        filter(value => !!value),
+        switchMap(value => this.track(espace.id, this.roomManagerService.updateSpace(espace.id, { ...espace, ...value }))),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.showSuccess('Espace enregistré.');
+          this.loadSpaces(true);
+        },
+        error: err => this.toast.showError(apiErrorMessage(err, "L'espace n'a pas pu être enregistré.")),
+      });
+  }
+
+  deleteSpace(espace: Espace): void {
+    this.confirm
+      .confirm({
+        title: `Supprimer « ${espace.nom} » ?`,
+        message: "L'espace ne pourra plus être réservé. Cette action est définitive.",
+        confirmLabel: 'Supprimer',
+        tone: 'danger',
+        icon: 'delete',
+      })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.track(espace.id, this.roomManagerService.deleteSpace(espace.id))),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.showSuccess('Espace supprimé.');
+          this.loadSpaces(true);
+        },
+        error: err => this.toast.showError(apiErrorMessage(err, "L'espace n'a pas pu être supprimé.")),
+      });
+  }
+
+  isBusy(id: string): boolean {
+    return this.busy().has(id);
+  }
 
 
-
-readonly StatusReservation = StatusReservation; 
-
-
-getStatusClass(status: StatusReservation) {
-  return {
-    'status-en_attente': status === StatusReservation.EN_ATTENTE,
-    'status-acceptee': status === StatusReservation.ACCEPTEE,
-    'status-refusee': status === StatusReservation.REFUSEE
-  };
-}
-
-onSearch() {
-  if (this.searchTerm) {
-   
-    this.reservations = this.reservations.filter(r =>
-      r.intituleAction.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      r.responsableAction.toLowerCase().includes(this.searchTerm.toLowerCase())
+  /** Marks an item busy while the request runs. */
+  private track<T>(id: string, request: Observable<T>): Observable<T> {
+    this.busy.update(s => new Set(s).add(id));
+    return request.pipe(
+      finalize(() =>
+        this.busy.update(s => {
+          const next = new Set(s);
+          next.delete(id);
+          return next;
+        }),
+      ),
     );
-  } else {
-    this.loadReservations(this.currentStatus);
+  }
+
+  private afterChange(...keys: ListKey[]): void {
+    keys.forEach(key => this.load(key, true));
+    this.calendar()?.loadSlots();
+  }
+
+  private patch(key: ListKey, change: Partial<ListState<Reservation>>): void {
+    this.lists.update(all => ({ ...all, [key]: { ...all[key], ...change } }));
   }
 }
-
-  openProfile() {
-    this.showProfileModal = true;
-    this.showProfileDropdown = false;
-  }
-
-  logout() {
-    this.authService.logout().subscribe({
-      next: () => {
-      },
-      error: (err) => {
-        console.error('Logout error:', err);
-      }
-    });
-  }
-
- 
-
-  onPasswordInput(field: string) {
-  }
-
-  getStatusIcon(status: StatusReservation) {
-    const icons = {
-      [StatusReservation.EN_ATTENTE]: faClock,
-      [StatusReservation.ACCEPTEE]: faCheckCircle,
-      [StatusReservation.REFUSEE]: faTimesCircle,
-      [StatusReservation.ANNULEE]: faTimesCircle,
-      [StatusReservation.ATTRIBUEE]: faCheckCircle,
-      [StatusReservation.TERMINEE]: faClock
-    };
-    return icons[status] || faClock; 
-  }
-  
-getReservationCount(status: StatusReservation): number {
-    switch(status) {
-        case StatusReservation.EN_ATTENTE: return this.pendingCount;
-        case StatusReservation.ACCEPTEE: return this.approvedCount;
-        case StatusReservation.REFUSEE: return this.rejectedCount;
-        default: return 0;
-    }
-}
-  getStatusLabel(status: StatusReservation): string {
-    const labels = {
-      [StatusReservation.EN_ATTENTE]: 'À traiter',
-      [StatusReservation.ACCEPTEE]: 'Acceptées',
-      [StatusReservation.REFUSEE]: 'Refusées',
-      [StatusReservation.ANNULEE]: 'Annulées',
-      [StatusReservation.ATTRIBUEE]: 'Attribuées',
-      [StatusReservation.TERMINEE]: 'Terminées'
-    };
-    return labels[status] || 'Inconnu';
-  }
-
-canCancel(reservation: Reservation): boolean {
-  const now = new Date();
-  return reservation.statut === StatusReservation.ACCEPTEE && 
-         new Date(reservation.heureDebut) > now;
-}
-
-handleCancel(reservation: Reservation): void {
-  const reason = prompt('Veuillez indiquer la raison de l\'annulation (optionnel)');
-  
-  if (reason === null) return; 
-  
-  if (!confirm(`Êtes-vous sûr de vouloir annuler cette réservation?`)) return;
-
-  this.isLoading = true;
-  this.roomManagerService.cancelReservation(reservation.id, reason || undefined)
-    .pipe(finalize(() => this.isLoading = false))
-    .subscribe({
-      next: () => {
-        this.loadReservations(this.currentStatus);
-        this.loadAllCounts();
-      },
-      error: (err) => {
-        console.error('Erreur lors de l\'annulation:', err);
-        alert('Échec de l\'annulation: ' + err.message);
-      }
-    });
-}
-
-
-
- isEquipmentApproved(reservationId: string, equip: string): boolean {
-  return this.approvedEquipment[reservationId]?.includes(equip) || false;
-}
-
-toggleEquipmentApproval(reservationId: string, equip: string): void {
-  if (!this.approvedEquipment[reservationId]) {
-    this.approvedEquipment[reservationId] = [];
-  }
-  const index = this.approvedEquipment[reservationId].indexOf(equip);
-  if (index === -1) {
-    this.approvedEquipment[reservationId].push(equip);
-  } else {
-    this.approvedEquipment[reservationId].splice(index, 1);
-  }
-}
-
-}
-
-
