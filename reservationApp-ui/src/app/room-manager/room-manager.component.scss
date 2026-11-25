@@ -27,12 +27,15 @@
     div {
       display: flex;
       justify-content: space-between;
+      align-items: baseline;
       gap: var(--space-3);
     }
   }
 
   dt {
     display: flex;
+    flex: none;
+    align-self: flex-start;
     align-items: center;
     gap: 6px;
     color: var(--color-text-muted);
@@ -46,18 +49,39 @@
   }
 
   dd {
+    min-width: 0;
     margin: 0;
     font-weight: 600;
     font-size: var(--text-sm);
+    line-height: 1.4;
     text-align: right;
+    overflow-wrap: anywhere;
   }
 
   footer {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: var(--space-2);
     margin-top: auto;
-    padding-top: var(--space-3);
+    padding-top: var(--space-4);
     border-top: 1px solid var(--color-border);
+
+    button {
+      width: 100%;
+      min-width: 0;
+      height: 40px;
+    }
+
+    // Keep the icon at its full size next to the label, never squeezed.
+    mat-icon {
+      flex: none;
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      line-height: 18px;
+      margin-right: 6px;
+      overflow: visible;
+    }
   }
 }
 
